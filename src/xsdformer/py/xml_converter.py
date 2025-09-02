@@ -105,6 +105,7 @@ def _(proto_type: xsd.Enumeration, var: str) -> str:
   method = _method_name(proto_type.path)
   return f"{method}({var})"
 
+
 def _method_name(path: tuple[str, ...]) -> str:
   method = "_".join(path)
   if len(path) > 1:
@@ -171,7 +172,6 @@ def _make_map_consumer(
   proto_type: xsd.MapType,
   val: str,
 ) -> Callable[[], Iterable[str]]:
-
   def _consume_elem_once() -> Iterable[str]:
     k = _get_map_value("kv", proto_type.key_source, proto_type.key_type)
     v = _get_map_value("kv", proto_type.value_source, proto_type.value_type)
@@ -185,13 +185,11 @@ def _make_elem_consumer(
   field: xsd.Elem,
   val: str,
 ) -> Callable[[], Iterable[str]]:
-
   if isinstance(field.proto_type, xsd.Message):
     return _make_message_consumer(field, field.proto_type, val)
 
   if isinstance(field.proto_type, xsd.MapType):
     return _make_map_consumer(field, field.proto_type, val)
-
 
   if field.proto_type == xsd.AtomicType.COMPLEXANY:
     caster = f"_xml_as_str({val})"
@@ -201,9 +199,11 @@ def _make_elem_consumer(
     raise NotImplementedError(f"{field.proto_type=}")
 
   if field.is_repeated:
+
     def _consume_elem_once() -> Iterable[str]:
       yield f"proto.{field.name}.append({caster})"
   else:
+
     def _consume_elem_once() -> Iterable[str]:
       yield f"proto.{field.name} = {caster}"
 

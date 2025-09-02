@@ -249,7 +249,6 @@ class FieldContainer(FieldDefinition):
         raise ValueError("{self}: field containers can't contain attributes")
 
 
-
 class Seq(FieldContainer): ...
 
 
@@ -308,7 +307,6 @@ class ValueElem(Field):
       raise ValueError(f"{self}: element values cannot be repeated (occurs={value})")
     self._computed_occurs = value
 
-
   def proto_type_str(self, path: tuple[str, ...]) -> str:
     if isinstance(self.proto_type, AtomicType):
       return self.proto_type.proto_str
@@ -317,7 +315,6 @@ class ValueElem(Field):
   @property
   def is_complex_any(self) -> bool:
     return self.proto_type is AtomicType.COMPLEXANY
-
 
 
 @dataclasses.dataclass(eq=False, kw_only=True)

@@ -14,7 +14,9 @@ class IGenerator(Protocol):
 
 
 def generate_with(
-  gen: IGenerator, namespace: str, defs: Sequence[xsd.TypeDefinition],
+  gen: IGenerator,
+  namespace: str,
+  defs: Sequence[xsd.TypeDefinition],
 ) -> Iterator[str]:
   yield from gen.header()
   yield from gen.begin_namespace(namespace)

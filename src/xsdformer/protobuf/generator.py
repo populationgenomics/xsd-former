@@ -49,7 +49,9 @@ class ProtobufGenerator:
 
   @functools.singledispatchmethod
   def message_field(
-    self, field_def: xsd.FieldDefinition, path: tuple[str, ...],
+    self,
+    field_def: xsd.FieldDefinition,
+    path: tuple[str, ...],
   ) -> Iterable[str]:
     raise NotImplementedError(f"Not implemented for {field_def=}")
 
@@ -87,6 +89,7 @@ class ProtobufGenerator:
 
 
 def generate(
-  namespace: str, type_defs: tuple[xsd.TypeDefinition, ...],
+  namespace: str,
+  type_defs: tuple[xsd.TypeDefinition, ...],
 ) -> Iterator[str]:
   yield from generator.generate_with(ProtobufGenerator(), namespace, type_defs)

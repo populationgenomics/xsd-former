@@ -112,9 +112,14 @@ def _compile_proto(
   spec.loader.exec_module(module_pb2)
   return module_pb2
 
+
 class Pb2ModuleFactory(Protocol):
   def __call__(
-    self, xsd_str: str, *, config: xsd.Config | None = None, namespace: str,
+    self,
+    xsd_str: str,
+    *,
+    config: xsd.Config | None = None,
+    namespace: str,
   ) -> types.ModuleType: ...
 
 
@@ -129,13 +134,15 @@ def pb2_module_factory(tmp_path_factory: pytest.TempPathFactory) -> Pb2ModuleFac
   proto_include_path = pathlib.Path(spec.origin).parent.parent
 
   def _factory(
-    xsd_str: str, *, config: xsd.Config | None = None, namespace: str,
+    xsd_str: str,
+    *,
+    config: xsd.Config | None = None,
+    namespace: str,
   ) -> types.ModuleType:
     type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
     proto_def = "\n".join(generator.generate(namespace, type_defs))
     _print_code(proto_def)
     return _compile_proto(proto_def, namespace, tmp_path, proto_include_path)
-
 
   return _factory
 
@@ -190,7 +197,9 @@ def book_converter_module_fixture(
   py_converter_module_factory: PyConverterModuleFactory,
 ) -> Generator[types.ModuleType, None, None]:
   module = py_converter_module_factory(
-      _BOOK_XSD, proto_namespace="book", py_module="book_converter",
+    _BOOK_XSD,
+    proto_namespace="book",
+    py_module="book_converter",
   )
   with _insert_module(module):
     yield module
