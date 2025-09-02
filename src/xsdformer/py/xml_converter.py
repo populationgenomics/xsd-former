@@ -5,6 +5,7 @@ import inspect
 import itertools
 import re
 from collections.abc import Callable, Iterable, Iterator
+from typing import Any
 
 from lxml import etree
 
@@ -54,14 +55,14 @@ def _xml_date(val: str) -> datetime.datetime:
   return datetime.datetime.strptime(val, "%Y-%m-%d")  # noqa: DTZ007
 
 
-_PROTO_PY_CONVERTER_METHODS = [
+_PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
   _node_is,
   _consume,
   _consume_if,
   _xml_as_str,
   _xml_bool,
   _xml_date,
-]
+)
 
 
 def _make_atom_caster(atom_type: xsd.AtomicType, var: str) -> str:
@@ -91,7 +92,7 @@ def _make_atom_caster(atom_type: xsd.AtomicType, var: str) -> str:
 
 
 @functools.singledispatch
-def _make_caster(value_type: xsd.TypeDefinition, var: str) -> str:
+def _make_caster(value_type: xsd.TypeDefinition | xsd.AtomicType, var: str) -> str:
   raise NotImplementedError(f"{value_type=}")
 
 
@@ -308,8 +309,6 @@ class PyXMLConverterGenerator:
   indent: str = "  "
 
   def __init__(self, module: str) -> None:
-    self._enum_defs = []
-    self._message_defs = {}
     self._package, _, self._module = module.rpartition(".")
 
   def header(self) -> Iterable[str]:

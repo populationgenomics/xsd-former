@@ -51,6 +51,7 @@ def test_process_xsd() -> None:
   status_def = defs_by_name["status"]
   assert status_def.occurs == (0, 1)
   assert status_def.proto_type is xsd.AtomicType.STRING
+  assert isinstance(status_def, xsd.Attr)
   assert status_def.default == "active"
 
   # Test root element

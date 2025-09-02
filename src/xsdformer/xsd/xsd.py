@@ -13,13 +13,13 @@ import elementpath
 import xmlschema
 import xmlschema.aliases
 import xmlschema.names
+from xmlschema.validators import complex_types, simple_types
 
 from xsdformer.xsd import text
 
 Occurs: TypeAlias = tuple[int, int | None]
-_XsdComplexType = xmlschema.validators.complex_types.XsdComplexType
-_XsdSimpleType = xmlschema.validators.simple_types.XsdSimpleType
-_BaseXsdType: TypeAlias = _XsdComplexType | _XsdSimpleType
+
+_BaseXsdType: TypeAlias = complex_types.XsdComplexType | simple_types.XsdSimpleType
 
 
 def _remove_common_prefix(
@@ -197,15 +197,15 @@ class Field(FieldDefinition, abc.ABC):
   _computed_occurs: Occurs | None = dataclasses.field(default=None, init=False)
   num: int | None = None
 
-  @property
-  def computed_occurs(self) -> Occurs:
+  def _get_computed_occurs(self) -> Occurs:
     if self._computed_occurs is None:
       raise RuntimeError("{self}: field occurrence has not been computed.")
     return self._computed_occurs
 
-  @computed_occurs.setter
-  def computed_occurs(self, value: Occurs) -> None:
+  def _set_computed_occurs(self, value: Occurs) -> None:
     self._computed_occurs = value
+
+  computed_occurs = property(_get_computed_occurs, _set_computed_occurs)
 
   @abc.abstractmethod
   def get_source(self) -> Source: ...
@@ -301,8 +301,7 @@ class ValueElem(Field):
   def __repr__(self) -> str:
     return f"ValueElem({self.name})"
 
-  @Field.computed_occurs.setter
-  def computed_occurs(self, value: Occurs) -> None:
+  def _set_computed_occurs(self, value: Occurs) -> None:
     if _is_repeated(value):
       raise ValueError(f"{self}: element values cannot be repeated (occurs={value})")
     self._computed_occurs = value
@@ -330,8 +329,7 @@ class Attr(Field):
   def __repr__(self) -> str:
     return f"Attr({self.name})"
 
-  @Field.computed_occurs.setter
-  def computed_occurs(self, value: Occurs) -> None:
+  def _set_computed_occurs(self, value: Occurs) -> None:
     if _is_repeated(value):
       raise ValueError(f"{self}: attributes cannot be repeated (occurs={value})")
     self._computed_occurs = value
@@ -505,27 +503,26 @@ def _(
 
 
 def _message_content(
-  t: _XsdComplexType,
+  t: complex_types.XsdComplexType,
   type_defs: dict[xmlschema.XsdType, TypeDefinition],
 ) -> Iterator[FieldDefinition]:
   yield from _generate_attributes(t.attributes, type_defs)
-  if isinstance(t.content, _XsdSimpleType):
+  if isinstance(t.content, simple_types.XsdSimpleType):
     yield ValueElem(
       comment=_get_comment(t),
       proto_type=_resolve_proto_type(t.content, type_defs),
     )
   else:
     fields = _process_content(t.content, type_defs)
-    fields = tuple(_flatten_simple_seqs(fields))
-    yield from fields
+    leaves = tuple(_flatten_simple_seqs(fields))
+    if t.mixed and leaves:
+      raise NotImplementedError("Mixed content type with elements.")
+    yield from leaves
     if t.mixed:
-      if fields:
-        raise NotImplementedError("Mixed content type with elements.")
-      else:
-        yield ValueElem(
-          comment=_get_comment(t),
-          proto_type=AtomicType.STRING,
-        )
+      yield ValueElem(
+        comment=_get_comment(t),
+        proto_type=AtomicType.STRING,
+      )
 
 
 def _print_message_content(c: FieldDefinition, depth: int = 0) -> None:
@@ -565,7 +562,7 @@ def _get_type_name(t: xmlschema.XsdType) -> str | None:
 
 def _flatten_simple_seqs(f: FieldDefinition) -> Iterator[FieldDefinition]:
   if isinstance(f, FieldContainer):
-    content = []
+    content: list[FieldDefinition] = []
     for c in f.content:
       content.extend(_flatten_simple_seqs(c))
     if isinstance(f, Seq) and f.occurs == (1, 1):
@@ -577,7 +574,7 @@ def _flatten_simple_seqs(f: FieldDefinition) -> Iterator[FieldDefinition]:
 
 
 def _make_message_for(
-  t: _XsdComplexType,
+  t: complex_types.XsdComplexType,
   type_defs: dict[xmlschema.XsdType, TypeDefinition],
 ) -> Message:
   content = tuple(_message_content(t, type_defs))
@@ -593,7 +590,7 @@ def _make_message_for(
   return message
 
 
-def _make_enum_for(t: _XsdSimpleType) -> Enumeration:
+def _make_enum_for(t: simple_types.XsdSimpleType) -> Enumeration:
   if t.enumeration is None:
     raise ValueError(f"expected {t} to be an enumeration.")
   return Enumeration(
@@ -608,11 +605,11 @@ def _make_definition_for(
   type_defs: dict[xmlschema.XsdType, TypeDefinition],
 ) -> TypeDefinition | None:
   match t:
-    case _XsdSimpleType(
+    case simple_types.XsdSimpleType(
       name=xmlschema.names.XSD_ANY_SIMPLE_TYPE,
     ):
       return None
-    case _XsdComplexType(
+    case complex_types.XsdComplexType(
       name="{http://www.w3.org/2001/XMLSchema}anyType",
     ):
       return None
@@ -620,9 +617,9 @@ def _make_definition_for(
       return None
     case xmlschema.validators.XsdUnion():
       return None
-    case _XsdSimpleType(enumeration=e) if e is not None:
+    case simple_types.XsdSimpleType() if t.enumeration is not None:
       return _make_enum_for(t)
-    case _XsdComplexType():
+    case complex_types.XsdComplexType():
       return _make_message_for(t, type_defs)
     case _:
       raise NotImplementedError(f"not implemented: {t=}")
@@ -631,9 +628,9 @@ def _make_definition_for(
 def _include_type(xsd_type: xmlschema.XsdType | None) -> bool:
   def _is_any_type(xsd_type: xmlschema.XsdType) -> bool:
     match xsd_type:
-      case _XsdComplexType(name=xmlschema.names.XSD_ANY_TYPE):
+      case complex_types.XsdComplexType(name=xmlschema.names.XSD_ANY_TYPE):
         return True
-      case _XsdSimpleType(name=xmlschema.names.XSD_ANY_SIMPLE_TYPE):
+      case simple_types.XsdSimpleType(name=xmlschema.names.XSD_ANY_SIMPLE_TYPE):
         return True
       case _:
         return False
@@ -687,7 +684,7 @@ def _get_xsd_type_dependencies(t: xmlschema.XsdType) -> set[_BaseXsdType]:
         deps.update(_get_xsd_dependencies(member))
     case xmlschema.validators.simple_types.XsdList():
       deps.update(_get_xsd_dependencies(t.item_type))
-    case _XsdComplexType():
+    case complex_types.XsdComplexType():
       deps.update(_get_xsd_dependencies(t.attributes))
       deps.update(_get_xsd_dependencies(t.content))
     case _:
