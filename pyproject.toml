@@ -1,40 +1,50 @@
-[tool.ruff]
-line-length = 120
-
-[tool.ruff.format]
-quote-style = "single"
-
-[tool.ruff.lint]
-# ignore pydocstyle, flake8-boolean-trap (FBT)
-select = ["A", "B", "C",  "E", "F", "G", "I", "N", "Q", "S", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "ERA", "EXE", "ICN", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "UP", "YTT"]
-
-fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "ERA", "EXE", "FBT", "ICN", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "UP", "YTT"]
-
-ignore = [
-    "ANN101",  # Missing type annotation for self in method
-    "ANN201",  # Missing return type annotation for public function
-    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`
-    "G004",    # Logging statement uses f-string
-    "PLW0603", # Using the global statement to update `<VAR>` is discouraged
-    "PT018",   # Assertion should be broken down into multiple parts
-    "Q000",    # Single quotes found but double quotes preferred
-    "S101",    # Use of assert detected
+[project]
+name = "xsdformer"
+version = "1.0.0"
+description = "A tool to convert XSD to Protobuf definitions."
+requires-python = ">=3.9"
+dependencies = [
+    "click",
+    "jinja2>=3.1.6",
+    "lxml",
+    "protobuf>=6.31.1",
+    "pytest>=8.4.1",
+    "xmlschema",
+    "xsdata[cli]>=25.4",
 ]
 
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+    "grpcio-tools",
+]
+
+[project.scripts]
+xsd-to-proto = "xsd_to_proto.tool:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+indent-width = 2
+
+[tool.ruff.lint]
+select = ["A", "B", "C",  "E", "F", "G", "I", "N", "Q", "S", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "ERA", "EXE", "ICN", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "UP", "YTT"]
+ignore = [
+    "ANN101"  # missing-type-self
+]
+fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "ERA", "EXE", "FBT", "ICN", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "UP", "YTT"]
+
 [tool.ruff.lint.isort]
-section-order = ["future", "standard-library", "third-party", "hail", "cpg", "first-party", "local-folder"]
+known-first-party = ["src"]
 
-[tool.ruff.lint.isort.sections]
-hail = ["hail", "hailtop"]
-
-# Adjust these for each repository, e.g., removing those that should be
-# local rather than CPG. Also fill in extend_skip below if there are any
-# subdirectories that should be ignored.
-cpg = [
-    "analysis_runner",
-    "cpg_infra",
-    "cpg_utils",
-    "cpg_workflows",
-    "gnomad",
-    "metamist",
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",     # asserts.
+    "S102",     # exec().
+    "PLR2004",  # magic value comparisons.
+    "SLF001"    # private method access.
 ]

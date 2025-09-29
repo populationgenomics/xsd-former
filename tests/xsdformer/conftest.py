@@ -1,0 +1,205 @@
+import contextlib
+import functools
+import importlib.util
+import io
+import pathlib
+import subprocess
+import sys
+import types
+from collections.abc import Generator
+from typing import Protocol
+
+import pytest
+
+from xsdformer.protobuf import generator
+from xsdformer.py import xml_converter
+from xsdformer.xsd import xsd
+
+_BOOK_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="author">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string" />
+      <xs:element name="role" type="role" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="authorList">
+    <xs:sequence>
+      <xs:element name="author" type="author" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="book">
+    <xs:sequence>
+      <xs:element name="authors" type="authorList" />
+      <xs:element name="title" type="xs:string" />
+      <xs:element name="isbn" type="xs:string" />
+      <xs:element name="comment" type="xs:string" minOccurs="0" />
+      <xs:element name="metadata" type="xs:anyType" minOccurs="0" />
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required" />
+    <xs:attribute name="status" type="status" use="optional" />
+  </xs:complexType>
+
+  <xs:simpleType name="role">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="author" />
+      <xs:enumeration value="editor" />
+      <xs:enumeration value="reviewer" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="status">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="new" />
+      <xs:enumeration value="used" />
+      <xs:enumeration value="out-of-print" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="book" type="book" />
+</xs:schema>
+"""
+
+
+@contextlib.contextmanager
+def _insert_module(module: types.ModuleType) -> Generator[None, None, None]:
+  old_module = sys.modules.get(module.__name__)
+  sys.modules[module.__name__] = module
+  try:
+    yield
+  finally:
+    if old_module is None:
+      del sys.modules[module.__name__]
+    else:
+      sys.modules[module.__name__] = old_module
+
+
+def _print_code(code: str) -> None:
+  for i, line in enumerate(code.split("\n"), start=1):
+    print(f"{i:5d}: {line}")
+
+
+@functools.cache
+def _compile_proto(
+  proto_def: str,
+  namespace: str,
+  tmp_path: pathlib.Path,
+  proto_include_path: pathlib.Path,
+) -> types.ModuleType:
+  proto_path = tmp_path / (namespace.replace(".", "_") + ".proto")
+  python_file = proto_path.name.replace(".proto", "_pb2.py")
+  python_module = namespace + "_pb2"
+  proto_path.write_text(proto_def)
+  subprocess.run(  # noqa: S603
+    [
+      sys.executable,
+      "-m",
+      "grpc_tools.protoc",
+      f"--proto_path={tmp_path}",
+      f"--proto_path={proto_include_path}",
+      f"--python_out={tmp_path}",
+      str(proto_path.relative_to(tmp_path)),
+    ],
+    check=True,
+  )
+
+  spec = importlib.util.spec_from_file_location(python_module, tmp_path / python_file)
+  assert spec is not None
+  assert spec.loader is not None
+  module_pb2 = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(module_pb2)
+  return module_pb2
+
+
+class Pb2ModuleFactory(Protocol):
+  def __call__(
+    self,
+    xsd_str: str,
+    *,
+    config: xsd.Config | None = None,
+    namespace: str,
+  ) -> types.ModuleType: ...
+
+
+@pytest.fixture(scope="session")
+def pb2_module_factory(tmp_path_factory: pytest.TempPathFactory) -> Pb2ModuleFactory:
+  # The protoc compiler needs to be able to find the google.protobuf.timestamp_pb2
+  # module. We can find its parent directory and add it to the search path.
+  spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+  assert spec is not None
+  assert spec.origin is not None
+  tmp_path = tmp_path_factory.mktemp("data")
+  proto_include_path = pathlib.Path(spec.origin).parent.parent
+
+  def _factory(
+    xsd_str: str,
+    *,
+    config: xsd.Config | None = None,
+    namespace: str,
+  ) -> types.ModuleType:
+    type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
+    proto_def = "\n".join(generator.generate(namespace, type_defs))
+    _print_code(proto_def)
+    return _compile_proto(proto_def, namespace, tmp_path, proto_include_path)
+
+  return _factory
+
+
+class PyConverterModuleFactory(Protocol):
+  def __call__(
+    self,
+    xsd_str: str,
+    *,
+    config: xsd.Config | None = None,
+    proto_namespace: str,
+    py_module: str,
+  ) -> types.ModuleType: ...
+
+
+@pytest.fixture(scope="session")
+def py_converter_module_factory(
+  pb2_module_factory: Pb2ModuleFactory,
+) -> PyConverterModuleFactory:
+  def _factory(
+    xsd_str: str,
+    *,
+    config: xsd.Config | None = None,
+    proto_namespace: str,
+    py_module: str,
+  ) -> types.ModuleType:
+    module_pb2 = pb2_module_factory(xsd_str, config=config, namespace=proto_namespace)
+    with _insert_module(module_pb2):
+      type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
+      converter_code = "\n".join(
+        xml_converter.generate(py_module, type_defs, module_pb2.__name__),
+      )
+      _print_code(converter_code)
+      module = types.ModuleType(py_module)
+      exec(converter_code, module.__dict__)
+    return module
+
+  return _factory
+
+
+@pytest.fixture(name="book_pb2", scope="session")
+def book_pb2_module_fixture(
+  pb2_module_factory: Pb2ModuleFactory,
+) -> Generator[types.ModuleType, None, None]:
+  module = pb2_module_factory(_BOOK_XSD, namespace="book")
+  with _insert_module(module):
+    yield module
+
+
+@pytest.fixture(name="book_converter", scope="session")
+def book_converter_module_fixture(
+  py_converter_module_factory: PyConverterModuleFactory,
+) -> Generator[types.ModuleType, None, None]:
+  module = py_converter_module_factory(
+    _BOOK_XSD,
+    proto_namespace="book",
+    py_module="book_converter",
+  )
+  with _insert_module(module):
+    yield module
