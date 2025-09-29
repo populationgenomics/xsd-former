@@ -52,10 +52,12 @@ def _is_repeated(occurs: Occurs) -> bool:
   return occurs[1] is None or occurs[1] > 1
 
 
-def _get_comment(t: xmlschema.XsdComponent) -> str | None:
+def _get_documentation(t: xmlschema.XsdComponent) -> str | None:
   """Extracts and normalizes documentation from an XSD type annotation."""
   if t.annotation is not None:
-    return text.normalize_whitespace([e.text for e in t.annotation.documentation])
+    return text.normalize_whitespace(
+      [e.text for e in t.annotation.documentation if e.text is not None]
+    )
   return None
 
 
@@ -164,7 +166,7 @@ class XMLElemTextSource(Source): ...
 
 @dataclasses.dataclass(eq=False, kw_only=True)
 class Definition:
-  comment: str | None
+  documentation: str | None
   name: str | None
 
   def get_fields(self) -> Iterator["Field"]:
@@ -450,7 +452,7 @@ def _generate_attributes(
     yield Attr(
       name=text.snake_case(attr.name),
       source=XMLAttrSource(attr=attr.name),
-      comment=_get_comment(attr),
+      documentation=_get_documentation(attr),
       occurs=occurs,
       proto_type=_resolve_proto_type(attr.type, type_defs),
       default=attr.default,
@@ -473,7 +475,7 @@ def _(
   return Elem(
     name=text.snake_case(elem.name),
     source=XMLElemSource(elem=elem.name),
-    comment=_get_comment(elem),
+    documentation=_get_documentation(elem),
     occurs=(elem.min_occurs, elem.max_occurs),
     proto_type=_resolve_proto_type(elem.type, type_defs),
     default=elem.default,
@@ -488,13 +490,13 @@ def _(
   match t.model:
     case "sequence":
       return Seq(
-        comment=_get_comment(t),
+        documentation=_get_documentation(t),
         occurs=(t.min_occurs, t.max_occurs),
         content=tuple(_process_content(elem, type_defs) for elem in t.content),
       )
     case "choice":
       return Choice(
-        comment=_get_comment(t),
+        documentation=_get_documentation(t),
         occurs=(t.min_occurs, t.max_occurs),
         content=tuple(_process_content(elem, type_defs) for elem in t.content),
       )
@@ -509,7 +511,7 @@ def _message_content(
   yield from _generate_attributes(t.attributes, type_defs)
   if isinstance(t.content, simple_types.XsdSimpleType):
     yield ValueElem(
-      comment=_get_comment(t),
+      documentation=_get_documentation(t),
       proto_type=_resolve_proto_type(t.content, type_defs),
     )
   else:
@@ -520,7 +522,7 @@ def _message_content(
     yield from leaves
     if t.mixed:
       yield ValueElem(
-        comment=_get_comment(t),
+        documentation=_get_documentation(t),
         proto_type=AtomicType.STRING,
       )
 
@@ -579,7 +581,7 @@ def _make_message_for(
 ) -> Message:
   content = tuple(_message_content(t, type_defs))
 
-  message = Message(name=_get_type_name(t), comment=_get_comment(t), content=content)
+  message = Message(name=_get_type_name(t), documentation=_get_documentation(t), content=content)
   for i, f_occurs in enumerate(get_fields_occurs(message, occurs=(1, 1)), start=1):
     f, occurs = f_occurs
     f.num = i
@@ -595,7 +597,7 @@ def _make_enum_for(t: simple_types.XsdSimpleType) -> Enumeration:
     raise ValueError(f"expected {t} to be an enumeration.")
   return Enumeration(
     name=_get_type_name(t),
-    comment=_get_comment(t),
+    documentation=_get_documentation(t),
     enum_values=tuple(str(v) for v in t.enumeration),
   )
 
@@ -785,7 +787,7 @@ def process_xsd(
         raise RuntimeError(f"expected map value: {val_field} to have an atomic type")
 
       new_type_def = MapType(
-        comment=map_type.comment,
+        documentation=map_type.documentation,
         name=map_type.name,
         enclosing_type=map_type.enclosing_type,
         key_type=key_field.proto_type,
