@@ -7,20 +7,20 @@ dependencies = [
     "click",
     "jinja2>=3.1.6",
     "lxml",
-    "protobuf>=6.31.1",
+    "protobuf>=6.32.1",
     "pytest>=8.4.1",
     "xmlschema",
-    "xsdata[cli]>=25.4",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[tool.dependency-groups]
+dev = [
     "ruff",
     "grpcio-tools",
+    "jsonschema",
 ]
 
 [project.scripts]
-xsd-to-proto = "xsd_to_proto.tool:main"
+xsd-to-proto = "xsdformer.tool:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -9,8 +9,8 @@ from xsdformer.xsd import xsd
 
 def test_book_role_converter(
   book_converter: types.ModuleType,
-  book_pb2: types.ModuleType,
 ) -> None:
+  book_pb2 = book_converter.book_pb2
   assert hasattr(book_converter, "Role")
   assert book_converter.Role("editor") == book_pb2.Role.ROLE_EDITOR
 
@@ -49,7 +49,6 @@ isbn: "0-07-212679-9"
 
 def test_xml_to_proto(
   book_converter: types.ModuleType,
-  book_pb2: types.ModuleType,
 ) -> None:
   root = etree.XML(_BOOK_XML, parser=None)
   proto_book = book_converter.Book(root)
@@ -57,6 +56,7 @@ def test_xml_to_proto(
   expected_metadata = etree.tostring(root.find("metadata")).decode("utf-8")
   assert proto_book.metadata == expected_metadata
   proto_book.ClearField("metadata")
+  book_pb2 = book_converter.book_pb2
   expected_book = text_format.Parse(_BOOK_PROTO, book_pb2.Book())
 
   assert proto_book == expected_book

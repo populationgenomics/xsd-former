@@ -76,6 +76,8 @@ class ProtobufGenerator:
 
   @message_field.register
   def _(self, field_def: xsd.Field, path: tuple[str, ...]) -> Iterable[str]:
+    if field_def.documentation:
+      yield from text.render_comment(field_def.documentation)
     type_str = field_def.proto_type_str(path)
     yield f"{type_str} {field_def.name} = {field_def.num};"
 

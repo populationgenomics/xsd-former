@@ -22,7 +22,6 @@ class _JsonSchemaFromDesc:
     """
     self._pool = descriptor_pool.DescriptorPool()
     from google.protobuf import timestamp_pb2
-
     timestamp_fdp = descriptor_pb2.FileDescriptorProto()
     timestamp_fdp.ParseFromString(timestamp_pb2.DESCRIPTOR.serialized_pb)
     self._pool.Add(timestamp_fdp)
