@@ -23,6 +23,11 @@ from xsdformer.xsd import xsd
   help="Main message to use as the root for the JSON schema.",
   type=str,
 )
+@click.option(
+  "--proto_package",
+  help="Package name to use in the protobuf file.",
+  type=str,
+)
 def main(
   xsd_file: str,
   proto_out: str,
@@ -30,21 +35,22 @@ def main(
   py_module: str,
   json_schema_out: str,
   main_message: str,
+  proto_package: str,
 ) -> None:
   """Converts an XSD file to a Protobuf definition and/or a Python XML converter."""
 
   type_defs = xsd.process_xsd(xsd_file)
 
   if not proto_out and not py_out and not json_schema_out:
-    namespace = pathlib.Path(xsd_file).stem
-    for line in generator.generate(f"{namespace}.proto", type_defs):
+    namespace = proto_package or pathlib.Path(xsd_file).stem
+    for line in generator.generate(namespace, type_defs):
       print(line, flush=True)
     return
 
   if proto_out:
-    namespace = pathlib.Path(proto_out).stem
+    namespace = proto_package or pathlib.Path(proto_out).stem
     with open(proto_out, "w") as f:
-      for line in generator.generate(f"{namespace}.proto", type_defs):
+      for line in generator.generate(namespace, type_defs):
         f.write(line + "\n")
 
   if py_out:
