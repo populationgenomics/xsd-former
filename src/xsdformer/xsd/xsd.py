@@ -757,7 +757,8 @@ def _find_map_fields(
   return key_field, val_field
 
 
-def process_xsd(
+# TODO: simplify
+def process_xsd(  # noqa: C901
   xsd_file: xmlschema.aliases.SchemaSourceType
   | list[xmlschema.aliases.SchemaSourceType],
   config: Config | None = None,
@@ -768,10 +769,22 @@ def process_xsd(
 
   xsd_type_graph = _gather_xsd_types(schema)
   type_defs: dict[xmlschema.XsdType, TypeDefinition] = {}
-  definition_order = tuple(graphlib.TopologicalSorter(xsd_type_graph).static_order())
-  for t in definition_order:
+
+  sorter = graphlib.TopologicalSorter(xsd_type_graph)
+  definition_order = []
+  sorter.prepare()
+  while sorter.is_active():
+    ready_nodes = sorted(sorter.get_ready(), key=lambda t: t.name or "")
+    definition_order.append(ready_nodes)
+    sorter.done(*ready_nodes)
+
+  for t in itertools.chain.from_iterable(definition_order):
     if type_def := _make_definition_for(t, type_defs):
       type_defs[t] = type_def
+
+  # re-sort within group once type def names are assigned.
+  for defs in definition_order:
+    defs.sort(key=lambda t: type_defs[t].name or "")
 
   rewriter = _TypeRewriter(list(type_defs.values()))
 
@@ -804,4 +817,8 @@ def process_xsd(
       inv_type_defs[new_type_def] = t
       del inv_type_defs[map_type]
 
-  return tuple(type_defs[t] for t in definition_order if t in type_defs)
+  return tuple(
+    type_defs[t]
+    for t in itertools.chain.from_iterable(definition_order)
+    if t in type_defs
+  )
