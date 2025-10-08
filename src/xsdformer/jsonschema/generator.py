@@ -221,7 +221,7 @@ class _JsonSchemaFromDesc:
     return schema
 
   def _convert_field_to_schema(self, field: descriptor.FieldDescriptor) -> dict:
-    if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
+    if field.is_repeated:
       if field.message_type and field.message_type.GetOptions().map_entry:
         value_schema = self._get_field_schema(
           field.message_type.fields_by_name["value"]
