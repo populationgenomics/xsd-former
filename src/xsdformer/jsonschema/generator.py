@@ -60,13 +60,20 @@ def _find_descriptor(
 class _JsonSchemaFromDesc:
   """Generates a JSON schema from a FileDescriptorSet."""
 
-  def __init__(self, descriptor_set: descriptor_pb2.FileDescriptorSet) -> None:
+  def __init__(
+    self,
+    descriptor_set: descriptor_pb2.FileDescriptorSet,
+    preserving_proto_field_name: bool = False,
+  ) -> None:
     """Initializes the generator.
 
     Args:
         descriptor_set: The FileDescriptorSet to generate the schema from.
+        preserving_proto_field_name: If true, use the proto field name for keys
+          instead of the json_name.
     """
     self._pool = descriptor_pool.DescriptorPool()
+    self._preserving_proto_field_name = preserving_proto_field_name
 
     timestamp_fdp = descriptor_pb2.FileDescriptorProto()
     timestamp_fdp.ParseFromString(timestamp_pb2.DESCRIPTOR.serialized_pb)
@@ -324,7 +331,10 @@ class _JsonSchemaFromDesc:
 
     properties = {}
     for field in message_descriptor.fields:
-      properties[field.json_name] = self._convert_field_to_schema(field)
+      property_name = (
+        field.name if self._preserving_proto_field_name else field.json_name
+      )
+      properties[property_name] = self._convert_field_to_schema(field)
 
     schema: dict[str, Any] = {
       "type": "object",
@@ -416,6 +426,7 @@ def generate(
   namespace: str,
   type_defs: tuple[xsd.TypeDefinition, ...],
   main_message: str,
+  preserving_proto_field_name: bool = False,
 ) -> str:
   """Generates a JSON schema from XSD type definitions."""
   proto_def = "\n".join(proto_generator.generate(namespace, type_defs))
@@ -450,7 +461,10 @@ def generate(
     with open(desc_path, "rb") as f:
       descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
 
-  schema_generator = _JsonSchemaFromDesc(descriptor_set)
+  schema_generator = _JsonSchemaFromDesc(
+    descriptor_set,
+    preserving_proto_field_name=preserving_proto_field_name,
+  )
   fully_qualified_main_message = f"{namespace}.{main_message}"
   schema = schema_generator.generate(fully_qualified_main_message)
 

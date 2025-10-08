@@ -50,3 +50,41 @@ def test_generate_schema_from_xsd() -> None:
   }
 
   assert schema == expected_schema
+
+
+_PRESERVING_FIELD_NAME_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="TestMessage">
+    <xs:sequence>
+      <xs:element name="some_field" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="test_message" type="TestMessage" />
+</xs:schema>
+"""
+
+
+def test_generate_schema_with_preserving_proto_field_name() -> None:
+  type_defs = xsd.process_xsd(io.StringIO(_PRESERVING_FIELD_NAME_XSD))
+  schema_str = jsonschema_generator.generate(
+    "test_preserving",
+    type_defs,
+    "TestMessage",
+    preserving_proto_field_name=True,
+  )
+  schema = json.loads(schema_str)
+
+  expected_schema = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/test_preserving.TestMessage",
+    "definitions": {
+      "test_preserving.TestMessage": {
+        "type": "object",
+        "properties": {
+          "some_field": {"type": "string"},
+        },
+      },
+    },
+  }
+
+  assert schema == expected_schema
