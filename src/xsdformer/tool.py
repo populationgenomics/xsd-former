@@ -10,16 +10,16 @@ from xsdformer.xsd import xsd
 
 @click.command()
 @click.argument("xsd_file", type=click.Path(exists=True))
-@click.option("--proto_out", type=click.Path(), help="Output protobuf file.")
-@click.option("--py_out", type=click.Path(), help="Output python converter file.")
+@click.option("--proto-out", type=click.Path(), help="Output protobuf file.")
+@click.option("--py-out", type=click.Path(), help="Output python converter file.")
 @click.option(
-  "--py_module",
+  "--py-module",
   help="Python protobuf module to import in the converter; required for --py_out.",
   type=str,
 )
-@click.option("--json_schema_out", type=click.Path(), help="Output JSON schema file.")
+@click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
 @click.option(
-  "--main_message",
+  "--main-message",
   help="Main message to use as the root for the JSON schema.",
   type=str,
 )
@@ -29,7 +29,7 @@ from xsdformer.xsd import xsd
   help="Use the proto field name in the JSON schema, not the json_name.",
 )
 @click.option(
-  "--proto_package",
+  "--proto-package",
   help="Package name to use in the protobuf file.",
   type=str,
 )
