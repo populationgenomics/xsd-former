@@ -392,19 +392,24 @@ class _JsonSchemaFromDesc:
     return {"$ref": f"#/definitions/{field.message_type.full_name}"}
 
   def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict:
-    one_of = []
-    for value in field.enum_type.values:  # noqa: PD011 (false positive)
-      entry: dict[str, str] = {"const": value.name}
-      if comment := self._get_comment(value):
-        entry["description"] = comment
-      one_of.append(entry)
+    has_value_descriptions = any(self._get_comment(v) for v in field.enum_type.values)
 
-    schema: dict[str, Any] = {"oneOf": one_of}
+    if has_value_descriptions:
+      one_of = []
+      for value in field.enum_type.values:  # noqa: PD011 (false positive)
+        entry: dict[str, str] = {"const": value.name}
+        if comment := self._get_comment(value):
+          entry["description"] = comment
+        one_of.append(entry)
+
+      schema: dict[str, Any] = {"oneOf": one_of}
+    else:
+      schema = {"enum": [v.name for v in field.enum_type.values]}
+
     enum_comment = self._get_comment(field.enum_type)
     if enum_comment:
       schema["description"] = enum_comment
     return schema
-
 
 def generate(
   namespace: str,
