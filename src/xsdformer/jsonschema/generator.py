@@ -242,15 +242,20 @@ class _JsonSchemaFromDesc:
     field_type = field.type
 
     if field_type == descriptor.FieldDescriptor.TYPE_ENUM:
-      one_of = []
-      for value in field.enum_type.values:
-        entry = {"const": value.name}
-        comment = self._get_comment(value)
-        if comment:
-          entry["description"] = comment
-        one_of.append(entry)
+      has_value_descriptions = any(self._get_comment(v) for v in field.enum_type.values)
 
-      schema = {"oneOf": one_of}
+      if has_value_descriptions:
+        one_of = []
+        for value in field.enum_type.values:
+          entry = {"const": value.name}
+          comment = self._get_comment(value)
+          if comment:
+            entry["description"] = comment
+          one_of.append(entry)
+        schema = {"oneOf": one_of}
+      else:
+        schema = {"enum": [v.name for v in field.enum_type.values]}
+
       enum_comment = self._get_comment(field.enum_type)
       if enum_comment:
         schema["description"] = enum_comment
