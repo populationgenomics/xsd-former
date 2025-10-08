@@ -25,36 +25,36 @@ _TEST_XSD = """
 
 
 def test_generate_schema_from_xsd() -> None:
-  type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
-  schema_str = jsonschema_generator.generate("test", type_defs, "Person")
-  schema = json.loads(schema_str)
+    type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
+    schema_str = jsonschema_generator.generate("test", type_defs, "Person")
+    schema = json.loads(schema_str)
 
-  expected_schema = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/definitions/test.Person",
-    "definitions": {
-      "test.Person": {
-        "type": "object",
-        "properties": {
-          "name": {"type": "string"},
-          "address": {"$ref": "#/definitions/test.Address"},
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-          },
+    expected_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$ref": "#/definitions/test.Person",
+        "definitions": {
+            "test.Person": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "address": {"$ref": "#/definitions/test.Address"},
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                    },
+                },
+            },
+            "test.Address": {
+                "type": "object",
+                "properties": {
+                    "street": {"type": "string"},
+                    "city": {"type": "string"},
+                },
+            },
         },
-      },
-      "test.Address": {
-        "type": "object",
-        "properties": {
-          "street": {"type": "string"},
-          "city": {"type": "string"},
-        },
-      },
-    },
-  }
+    }
 
-  assert schema == expected_schema
+    assert schema == expected_schema
 
 
 _PRESERVING_FIELD_NAME_XSD = """
@@ -70,26 +70,26 @@ _PRESERVING_FIELD_NAME_XSD = """
 
 
 def test_generate_schema_with_preserving_proto_field_name() -> None:
-  type_defs = xsd.process_xsd(io.StringIO(_PRESERVING_FIELD_NAME_XSD))
-  schema_str = jsonschema_generator.generate(
-    "test_preserving",
-    type_defs,
-    "TestMessage",
-    preserving_proto_field_name=True,
-  )
-  schema = json.loads(schema_str)
+    type_defs = xsd.process_xsd(io.StringIO(_PRESERVING_FIELD_NAME_XSD))
+    schema_str = jsonschema_generator.generate(
+        "test_preserving",
+        type_defs,
+        "TestMessage",
+        preserving_proto_field_name=True,
+    )
+    schema = json.loads(schema_str)
 
-  expected_schema = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/definitions/test_preserving.TestMessage",
-    "definitions": {
-      "test_preserving.TestMessage": {
-        "type": "object",
-        "properties": {
-          "some_field": {"type": "string"},
+    expected_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$ref": "#/definitions/test_preserving.TestMessage",
+        "definitions": {
+            "test_preserving.TestMessage": {
+                "type": "object",
+                "properties": {
+                    "some_field": {"type": "string"},
+                },
+            },
         },
-      },
-    },
-  }
+    }
 
-  assert schema == expected_schema
+    assert schema == expected_schema

@@ -4,91 +4,91 @@ from collections.abc import Iterable, Iterator, Sequence
 
 
 class _Exact(str):
-  pass
+    pass
 
 
 def keep(text: str) -> str:
-  return _Exact(text)
+    return _Exact(text)
 
 
 def _words(text: str) -> list[str]:
-  """Splits a string into words.
+    """Splits a string into words.
 
-  Handles camelCase and removes non-alphanumeric characters.
+    Handles camelCase and removes non-alphanumeric characters.
 
-  Args:
-    text: The string to split.
+    Args:
+      text: The string to split.
 
-  Returns:
-    A list of words.
-  """
-  text = re.sub(r"([a-z])([A-Z0-9])", r"\1 \2", text)
-  text = re.sub(r"([0-9])([a-zA-Z])", r"\1 \2", text)
-  text = re.sub(r"[^0-9a-zA-Z]", " ", text)
-  return text.strip().split()
+    Returns:
+      A list of words.
+    """
+    text = re.sub(r"([a-z])([A-Z0-9])", r"\1 \2", text)
+    text = re.sub(r"([0-9])([a-zA-Z])", r"\1 \2", text)
+    text = re.sub(r"[^0-9a-zA-Z]", " ", text)
+    return text.strip().split()
 
 
 def normalize_whitespace(text: Sequence[str]) -> str:
-  """Normalizes whitespace in a sequence of strings.
+    """Normalizes whitespace in a sequence of strings.
 
-  Joins the strings with spaces, then collapses consecutive whitespace
-  characters into a single space, and finally strips leading/trailing
-  whitespace.
+    Joins the strings with spaces, then collapses consecutive whitespace
+    characters into a single space, and finally strips leading/trailing
+    whitespace.
 
-  Args:
-    text: A sequence of strings.
+    Args:
+      text: A sequence of strings.
 
-  Returns:
-    A string with normalized whitespace.
-  """
-  return re.sub(r"\s+", " ", " ".join(text)).strip()
+    Returns:
+      A string with normalized whitespace.
+    """
+    return re.sub(r"\s+", " ", " ".join(text)).strip()
 
 
 @functools.singledispatch
 def snake_case(text: str) -> str:
-  """Converts an identifier to snake_case.
+    """Converts an identifier to snake_case.
 
-  Strings wrapped in an _Exact are retained.
+    Strings wrapped in an _Exact are retained.
 
-  Args:
-    text: The string to convert.
+    Args:
+      text: The string to convert.
 
-  Returns:
-    A string in snake_case.
-  """
-  return "_".join([w.lower() for w in _words(text)])
+    Returns:
+      A string in snake_case.
+    """
+    return "_".join([w.lower() for w in _words(text)])
 
 
 @snake_case.register
 def _(text: _Exact) -> str:
-  return text
+    return text
 
 
 @functools.singledispatch
 def pascal_case(text: str) -> str:
-  """Converts an identifiera to PascalCase.
+    """Converts an identifiera to PascalCase.
 
-  Strings wrapped in an _Exact are retained.
+    Strings wrapped in an _Exact are retained.
 
-  Args:
-    text: The string to convert.
+    Args:
+      text: The string to convert.
 
-  Returns:
-    A string in PascalCase.
-  """
-  return "".join([w.capitalize() for w in _words(text)])
+    Returns:
+      A string in PascalCase.
+    """
+    return "".join([w.capitalize() for w in _words(text)])
 
 
 @pascal_case.register
 def _(text: _Exact) -> str:
-  return text
+    return text
 
 
 def indent(text: Iterable[str], *, indent: str = "  ") -> Iterator[str]:
-  for t in text:
-    yield indent + t
+    for t in text:
+        yield indent + t
 
 
 def render_comment(comment: str) -> Iterable[str]:
-  for line in comment.split("\n"):
-    yield f"// {line}"
+    for line in comment.split("\n"):
+        yield f"// {line}"
