@@ -56,7 +56,7 @@ def _get_documentation(t: xmlschema.XsdComponent) -> str | None:
   """Extracts and normalizes documentation from an XSD type annotation."""
   if t.annotation is not None:
     return text.normalize_whitespace(
-      [e.text for e in t.annotation.documentation if e.text is not None]
+      [e.text for e in t.annotation.documentation if e.text is not None],
     )
   return None
 
@@ -581,7 +581,11 @@ def _make_message_for(
 ) -> Message:
   content = tuple(_message_content(t, type_defs))
 
-  message = Message(name=_get_type_name(t), documentation=_get_documentation(t), content=content)
+  message = Message(
+    name=_get_type_name(t),
+    documentation=_get_documentation(t),
+    content=content,
+  )
   for i, f_occurs in enumerate(get_fields_occurs(message, occurs=(1, 1)), start=1):
     f, occurs = f_occurs
     f.num = i

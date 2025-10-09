@@ -18,9 +18,7 @@ def _find_location(
 ) -> descriptor_pb2.SourceCodeInfo.Location:
   path_tuple = tuple(path)
   return next(
-    loc
-    for loc in desc.source_code_info.location
-    if tuple(loc.path) == path_tuple
+    loc for loc in desc.source_code_info.location if tuple(loc.path) == path_tuple
   )
 
 
