@@ -28,7 +28,7 @@ from xsdformer.xsd import xsd
   help="Package name to use in the protobuf file.",
   type=str,
 )
-def main(
+def main(  # noqa: PLR0913
   xsd_file: str,
   proto_out: str,
   py_out: str,
@@ -43,7 +43,7 @@ def main(
 
   if not proto_out and not py_out and not json_schema_out:
     namespace = proto_package or pathlib.Path(xsd_file).stem
-    for line in generator.generate(namespace, type_defs):
+    for line in generator.generate(f"{namespace}.proto", type_defs):
       print(line, flush=True)
     return
 
