@@ -1,5 +1,4 @@
 import contextlib
-import functools
 import importlib.util
 import io
 import pathlib
@@ -126,7 +125,7 @@ class Pb2ModuleFactory(Protocol):
   ) -> tuple[types.ModuleType, pathlib.Path]: ...
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def pb2_module_factory(tmp_path: pathlib.Path) -> Pb2ModuleFactory:
   # The protoc compiler needs to be able to find the google.protobuf.timestamp_pb2
   # module. We can find its parent directory and add it to the search path.
@@ -160,7 +159,7 @@ class PyConverterModuleFactory(Protocol):
   ) -> types.ModuleType: ...
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def py_converter_module_factory(
   pb2_module_factory: Pb2ModuleFactory,
 ) -> PyConverterModuleFactory:
@@ -171,7 +170,11 @@ def py_converter_module_factory(
     proto_namespace: str,
     py_module: str,
   ) -> types.ModuleType:
-    module_pb2, _ = pb2_module_factory(xsd_str, config=config, namespace=proto_namespace)
+    module_pb2, _ = pb2_module_factory(
+      xsd_str,
+      config=config,
+      namespace=proto_namespace,
+    )
     with _insert_module(module_pb2):
       type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
       converter_code = "\n".join(
@@ -185,7 +188,7 @@ def py_converter_module_factory(
   return _factory
 
 
-@pytest.fixture(name="book_pb2", scope="function")
+@pytest.fixture(name="book_pb2")
 def book_pb2_module_fixture(
   pb2_module_factory: Pb2ModuleFactory,
 ) -> Generator[types.ModuleType, None, None]:
@@ -194,7 +197,7 @@ def book_pb2_module_fixture(
     yield module
 
 
-@pytest.fixture(name="book_converter", scope="function")
+@pytest.fixture(name="book_converter")
 def book_converter_module_fixture(
   py_converter_module_factory: PyConverterModuleFactory,
 ) -> Generator[types.ModuleType, None, None]:

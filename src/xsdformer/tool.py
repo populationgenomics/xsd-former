@@ -23,7 +23,7 @@ from xsdformer.xsd import xsd
   help="Main message to use as the root for the JSON schema.",
   type=str,
 )
-def main(
+def main(  # noqa: PLR0913
   xsd_file: str,
   proto_out: str,
   py_out: str,
