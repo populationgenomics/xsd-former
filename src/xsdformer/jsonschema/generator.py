@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import pathlib
 import subprocess
@@ -6,7 +7,7 @@ import tempfile
 from collections.abc import Callable
 from typing import Any, TypeVar
 
-from google.protobuf import descriptor, descriptor_pb2, descriptor_pool
+from google.protobuf import descriptor, descriptor_pb2, descriptor_pool, timestamp_pb2
 
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.xsd import xsd
@@ -66,7 +67,6 @@ class _JsonSchemaFromDesc:
         descriptor_set: The FileDescriptorSet to generate the schema from.
     """
     self._pool = descriptor_pool.DescriptorPool()
-    from google.protobuf import timestamp_pb2
 
     timestamp_fdp = descriptor_pb2.FileDescriptorProto()
     timestamp_fdp.ParseFromString(timestamp_pb2.DESCRIPTOR.serialized_pb)
@@ -358,8 +358,6 @@ def generate(
     proto_path.write_text(proto_def)
 
     desc_path = tmp_path / f"{namespace}.desc"
-
-    import importlib.util
 
     spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
     if not spec or not spec.origin:
