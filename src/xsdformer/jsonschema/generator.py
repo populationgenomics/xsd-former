@@ -3,12 +3,57 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from google.protobuf import descriptor, descriptor_pb2, descriptor_pool
 
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.xsd import xsd
+
+_INTEGER_FIELD_TYPES = frozenset(
+  {
+    descriptor.FieldDescriptor.TYPE_INT64,
+    descriptor.FieldDescriptor.TYPE_UINT64,
+    descriptor.FieldDescriptor.TYPE_INT32,
+    descriptor.FieldDescriptor.TYPE_FIXED64,
+    descriptor.FieldDescriptor.TYPE_FIXED32,
+    descriptor.FieldDescriptor.TYPE_UINT32,
+    descriptor.FieldDescriptor.TYPE_SFIXED32,
+    descriptor.FieldDescriptor.TYPE_SFIXED64,
+    descriptor.FieldDescriptor.TYPE_SINT32,
+    descriptor.FieldDescriptor.TYPE_SINT64,
+  },
+)
+
+_FLOAT_FIELD_TYPES = frozenset(
+  {
+    descriptor.FieldDescriptor.TYPE_FLOAT,
+    descriptor.FieldDescriptor.TYPE_DOUBLE,
+  },
+)
+
+
+DescriptorT = TypeVar(
+  "DescriptorT",
+  bound=descriptor_pb2.DescriptorProto | descriptor_pb2.EnumDescriptorProto,
+)
+
+
+def _find_descriptor(
+  fdp: descriptor_pb2.FileDescriptorProto,
+  name_parts: list[str],
+  find_nested: Callable[
+    [descriptor_pb2.DescriptorProto, list[str]],
+    DescriptorT | None,
+  ],
+) -> DescriptorT | None:
+  for dp in fdp.message_type:
+    if dp.name == name_parts[0]:
+      found = find_nested(dp, name_parts[1:])
+      if found:
+        return found
+  return None
 
 
 class _JsonSchemaFromDesc:
@@ -141,43 +186,32 @@ class _JsonSchemaFromDesc:
           return path
     return []
 
+  def _get_name_parts(
+    self,
+    desc: descriptor.Descriptor | descriptor.EnumDescriptor,
+  ) -> list[str]:
+    """Gets the relative name parts of a descriptor within its file."""
+    fdp = self._fdp_map[desc.file.name]
+    if fdp.package:
+      return desc.full_name.replace(fdp.package + ".", "").split(".")
+    return desc.full_name.split(".")
+
   def _find_descriptor_proto(
     self,
     desc: descriptor.Descriptor,
   ) -> descriptor_pb2.DescriptorProto | None:
     fdp = self._fdp_map[desc.file.name]
 
-    name_parts = desc.full_name.split(".")
-    if fdp.package:
-      name_parts = desc.full_name.replace(fdp.package + ".", "").split(".")
+    name_parts = self._get_name_parts(desc)
 
-    def find_nested(
-      parent_dp: descriptor_pb2.DescriptorProto,
-      parts: list[str],
-    ) -> descriptor_pb2.DescriptorProto | None:
-      if not parts:
-        return parent_dp
-      target_name = parts[0]
-      for nested_dp in parent_dp.nested_type:
-        if nested_dp.name == target_name:
-          return find_nested(nested_dp, parts[1:])
-      return None
-
-    for dp in fdp.message_type:
-      if dp.name == name_parts[0]:
-        found = find_nested(dp, name_parts[1:])
-        if found:
-          return found
-    return None
+    return _find_descriptor(fdp, name_parts, self._find_nested)
 
   def _find_enum_descriptor_proto(
     self,
     desc: descriptor.EnumDescriptor,
   ) -> descriptor_pb2.EnumDescriptorProto | None:
     fdp = self._fdp_map[desc.file.name]
-    name_parts = desc.full_name.split(".")
-    if fdp.package:
-      name_parts = desc.full_name.replace(fdp.package + ".", "").split(".")
+    name_parts = self._get_name_parts(desc)
 
     if not desc.containing_type:
       for edp in fdp.enum_type:
@@ -185,11 +219,19 @@ class _JsonSchemaFromDesc:
           return edp
       return None
 
-    for dp in fdp.message_type:
-      if dp.name == name_parts[0]:
-        found = self._find_enum_in_message(dp, name_parts[1:])
-        if found:
-          return found
+    return _find_descriptor(fdp, name_parts, self._find_enum_in_message)
+
+  def _find_nested(
+    self,
+    parent_dp: descriptor_pb2.DescriptorProto,
+    parts: list[str],
+  ) -> descriptor_pb2.DescriptorProto | None:
+    if not parts:
+      return parent_dp
+    target_name = parts[0]
+    for nested_dp in parent_dp.nested_type:
+      if nested_dp.name == target_name:
+        return self._find_nested(nested_dp, parts[1:])
     return None
 
   def _find_enum_in_message(
@@ -265,35 +307,29 @@ class _JsonSchemaFromDesc:
   def _get_field_schema(self, field: descriptor.FieldDescriptor) -> dict:
     field_type = field.type
 
-    if field_type == descriptor.FieldDescriptor.TYPE_ENUM:
-      return self._get_enum_schema(field)
+    if field_type in _INTEGER_FIELD_TYPES:
+      schema = {"type": "integer"}
+    elif field_type in _FLOAT_FIELD_TYPES:
+      schema = {"type": "number"}
+    elif field_type == descriptor.FieldDescriptor.TYPE_BOOL:
+      schema = {"type": "boolean"}
+    elif field_type == descriptor.FieldDescriptor.TYPE_STRING:
+      schema = {"type": "string"}
+    elif field_type == descriptor.FieldDescriptor.TYPE_BYTES:
+      schema = {"type": "string", "contentEncoding": "base64"}
+    elif field_type == descriptor.FieldDescriptor.TYPE_ENUM:
+      schema = self._get_enum_schema(field)
+    elif field_type == descriptor.FieldDescriptor.TYPE_MESSAGE:
+      schema = self._get_message_schema(field)
+    else:
+      raise NotImplementedError(f"Unhandled field type: {field_type}")
 
-    type_map: dict[int, dict[str, Any]] = {
-      descriptor.FieldDescriptor.TYPE_DOUBLE: {"type": "number"},
-      descriptor.FieldDescriptor.TYPE_FLOAT: {"type": "number"},
-      descriptor.FieldDescriptor.TYPE_INT64: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_UINT64: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_INT32: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_FIXED64: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_FIXED32: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_UINT32: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_SFIXED32: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_SFIXED64: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_SINT32: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_SINT64: {"type": "integer"},
-      descriptor.FieldDescriptor.TYPE_BOOL: {"type": "boolean"},
-      descriptor.FieldDescriptor.TYPE_STRING: {"type": "string"},
-      descriptor.FieldDescriptor.TYPE_BYTES: {
-        "type": "string",
-        "contentEncoding": "base64",
-      },
-      descriptor.FieldDescriptor.TYPE_MESSAGE: {
-        "$ref": f"#/definitions/{field.message_type.full_name}"
-        if field.message_type
-        else {},
-      },
-    }
-    return type_map.get(field_type, {})
+    return schema
+
+  def _get_message_schema(self, field: descriptor.FieldDescriptor) -> dict:
+    if not field.message_type:
+      raise ValueError(f"Field '{field.name}' does not have a message type.")
+    return {"$ref": f"#/definitions/{field.message_type.full_name}"}
 
   def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict:
     one_of = [
