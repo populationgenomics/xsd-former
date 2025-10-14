@@ -111,7 +111,7 @@ class _JsonSchemaFromDesc:
     if containing_type_dp:
       for i, field in enumerate(containing_type_dp.field):
         if field.name == desc.name:
-          path.extend([2, i])  # 2 = field
+          path.extend([descriptor_pb2.DescriptorProto.FIELD_FIELD_NUMBER, i])
           return path
     return []
 
