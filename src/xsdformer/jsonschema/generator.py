@@ -391,9 +391,9 @@ class _JsonSchemaFromDesc:
       raise ValueError(f"Field '{field.name}' does not have a message type.")
     return {"$ref": f"#/definitions/{field.message_type.full_name}"}
 
-  def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict:
+  def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict[str, Any]:
+    schema: dict[str, Any] = {}
     has_value_descriptions = any(self._get_comment(v) for v in field.enum_type.values)
-
     if has_value_descriptions:
       one_of = []
       for value in field.enum_type.values:  # noqa: PD011 (false positive)
@@ -404,12 +404,13 @@ class _JsonSchemaFromDesc:
 
       schema: dict[str, Any] = {"oneOf": one_of}
     else:
-      schema = {"enum": [v.name for v in field.enum_type.values]}
+      schema["enum"] = [v.name for v in field.enum_type.values]
 
     enum_comment = self._get_comment(field.enum_type)
     if enum_comment:
       schema["description"] = enum_comment
     return schema
+
 
 def generate(
   namespace: str,
