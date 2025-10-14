@@ -137,7 +137,7 @@ class _JsonSchemaFromDesc:
     if edp:
       for i, value in enumerate(edp.value):
         if value.name == desc.name:
-          path.extend([2, i])  # 2 = value in EnumDescriptorProto
+          path.extend([descriptor_pb2.EnumDescriptorProto.VALUE_FIELD_NUMBER, i])
           return path
     return []
 
