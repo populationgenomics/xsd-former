@@ -122,13 +122,13 @@ class _JsonSchemaFromDesc:
       if containing_type_dp:
         for i, enum_type in enumerate(containing_type_dp.enum_type):
           if enum_type.name == desc.name:
-            path.extend([4, i])  # 4 = enum_type in DescriptorProto
+            path.extend([descriptor_pb2.DescriptorProto.ENUM_TYPE_FIELD_NUMBER, i])
             return path
     else:
       fdp = self._fdp_map[desc.file.name]
       for i, enum_type in enumerate(fdp.enum_type):
         if enum_type.name == desc.name:
-          return [5, i]  # 5 = enum_type in FileDescriptorProto
+          return [descriptor_pb2.FileDescriptorProto.ENUM_TYPE_FIELD_NUMBER, i]
     return []
 
   def _get_enum_value_path(self, desc: descriptor.EnumValueDescriptor) -> list[int]:
