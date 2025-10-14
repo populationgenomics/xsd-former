@@ -96,13 +96,13 @@ class _JsonSchemaFromDesc:
       if containing_type_dp:
         for i, nested_type in enumerate(containing_type_dp.nested_type):
           if nested_type.name == desc.name:
-            path.extend([3, i])  # 3 = nested_type
+            path.extend([descriptor_pb2.DescriptorProto.NESTED_TYPE_FIELD_NUMBER, i])
             return path
     else:
       fdp = self._fdp_map[desc.file.name]
       for i, message_type in enumerate(fdp.message_type):
         if message_type.name == desc.name:
-          return [4, i]  # 4 = message_type
+          return [descriptor_pb2.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER, i]
     return []
 
   def _get_field_path(self, desc: descriptor.FieldDescriptor) -> list[int]:
