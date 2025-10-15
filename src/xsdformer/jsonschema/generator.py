@@ -394,10 +394,10 @@ class _JsonSchemaFromDesc:
   def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict:
     one_of = []
     for value in field.enum_type.values:  # noqa: PD011 (false positive)
-        entry: dict[str, str] = {"const": value.name}
-        if comment := self._get_comment(value):
-            entry["description"] = comment
-        one_of.append(entry)
+      entry: dict[str, str] = {"const": value.name}
+      if comment := self._get_comment(value):
+        entry["description"] = comment
+      one_of.append(entry)
 
     schema: dict[str, Any] = {"oneOf": one_of}
     enum_comment = self._get_comment(field.enum_type)
