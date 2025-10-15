@@ -95,12 +95,18 @@ def xsd_command(  # noqa: PLR0913
     is_flag=True,
     help="Use the proto field name in the JSON schema, not the json_name.",
 )
+@click.option(
+    "--include-all",
+    is_flag=True,
+    help="Include all messages from the proto file, not just those reachable from the main message.",
+)
 def proto(
     proto_file: str,
     namespace: str,
     main_message: str,
     json_schema_out: str | None,
     preserving_proto_field_name: bool,
+    include_all: bool,
 ) -> None:
     """Converts a .proto file to a JSON schema."""
     schema = jsonschema_generator.generate_from_proto(
@@ -108,6 +114,7 @@ def proto(
         namespace,
         main_message,
         preserving_proto_field_name=preserving_proto_field_name,
+        include_all=include_all,
     )
     if json_schema_out:
         with open(json_schema_out, "w") as f:

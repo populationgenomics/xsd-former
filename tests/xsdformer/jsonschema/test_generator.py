@@ -152,6 +152,51 @@ def test_generate_from_proto() -> None:
         jsonschema.validate(instance=person_instance_invalid, schema=schema)
 
 
+def test_generate_from_proto_include_all():
+    """Tests the --include-all flag to include all messages from a proto file."""
+    proto_content = '''
+        syntax = "proto3";
+
+        package testall;
+
+        message MessageA {
+            string field_a = 1;
+        }
+
+        message MessageB {
+            string field_b = 1;
+        }
+    '''
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(proto_content)
+
+        # Test default behavior (include_all=False)
+        json_schema_str_default = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="testall",
+            main_message="MessageA",
+            include_all=False,
+        )
+        schema_default = json.loads(json_schema_str_default)
+
+        assert "testall.MessageA" in schema_default["definitions"]
+        assert "testall.MessageB" not in schema_default["definitions"]
+
+        # Test with include_all=True
+        json_schema_str_all = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="testall",
+            main_message="MessageA",
+            include_all=True,
+        )
+        schema_all = json.loads(json_schema_str_all)
+
+        assert "testall.MessageA" in schema_all["definitions"]
+        assert "testall.MessageB" in schema_all["definitions"]
+
+
 @pytest.mark.parametrize("preserving_proto_field_name", [True, False])
 def test_xsd_to_json_schema_e2e(book_xsd: str, book_pb2: types.ModuleType, preserving_proto_field_name: bool) -> None:
     """An end-to-end test verifying a protobuf's JSON output against the JSON schema."""
