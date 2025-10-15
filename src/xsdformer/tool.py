@@ -1,4 +1,5 @@
 import pathlib
+import sys
 
 import click
 
@@ -8,7 +9,12 @@ from xsdformer.py import xml_converter
 from xsdformer.xsd import xsd
 
 
-@click.command()
+@click.group()
+def cli():
+    """A tool to convert XSD and Protobuf to other formats."""
+
+
+@cli.command()
 @click.argument("xsd_file", type=click.Path(exists=True))
 @click.option("--proto-out", type=click.Path(), help="Output protobuf file.")
 @click.option("--py-out", type=click.Path(), help="Output python converter file.")
@@ -33,7 +39,7 @@ from xsdformer.xsd import xsd
     help="Package name to use in the protobuf file.",
     type=str,
 )
-def main(  # noqa: PLR0913
+def xsd(  # noqa: PLR0913
     xsd_file: str,
     proto_out: str,
     py_out: str,
@@ -81,5 +87,36 @@ def main(  # noqa: PLR0913
             f.write(schema)
 
 
+@cli.command()
+@click.argument("proto_file", type=click.Path(exists=True))
+@click.argument("namespace", type=str)
+@click.argument("main_message", type=str)
+@click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
+@click.option(
+    "--preserving-proto-field-name",
+    is_flag=True,
+    help="Use the proto field name in the JSON schema, not the json_name.",
+)
+def proto(
+    proto_file: str,
+    namespace: str,
+    main_message: str,
+    json_schema_out: str | None,
+    preserving_proto_field_name: bool,
+) -> None:
+    """Converts a .proto file to a JSON schema."""
+    schema = jsonschema_generator.generate_from_proto(
+        pathlib.Path(proto_file),
+        namespace,
+        main_message,
+        preserving_proto_field_name=preserving_proto_field_name,
+    )
+    if json_schema_out:
+        with open(json_schema_out, "w") as f:
+            f.write(schema)
+    else:
+        print(schema, flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    cli()

@@ -421,6 +421,23 @@ class _JsonSchemaFromDesc:
         return schema
 
 
+def _generate_schema_from_descriptor_set(
+    descriptor_set: descriptor_pb2.FileDescriptorSet,
+    namespace: str,
+    main_message: str,
+    preserving_proto_field_name: bool = False,
+) -> str:
+    """Generates a JSON schema from a FileDescriptorSet."""
+    schema_generator = _JsonSchemaFromDesc(
+        descriptor_set,
+        preserving_proto_field_name=preserving_proto_field_name,
+    )
+    fully_qualified_main_message = f"{namespace}.{main_message}"
+    schema = schema_generator.generate(fully_qualified_main_message)
+
+    return json.dumps(schema, indent=2)
+
+
 def generate(
     namespace: str,
     type_defs: tuple[xsd.TypeDefinition, ...],
@@ -460,11 +477,51 @@ def generate(
         with open(desc_path, "rb") as f:
             descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
 
-    schema_generator = _JsonSchemaFromDesc(
+    return _generate_schema_from_descriptor_set(
         descriptor_set,
-        preserving_proto_field_name=preserving_proto_field_name,
+        namespace,
+        main_message,
+        preserving_proto_field_name,
     )
-    fully_qualified_main_message = f"{namespace}.{main_message}"
-    schema = schema_generator.generate(fully_qualified_main_message)
 
-    return json.dumps(schema, indent=2)
+
+def generate_from_proto(
+    proto_path: pathlib.Path,
+    namespace: str,
+    main_message: str,
+    preserving_proto_field_name: bool = False,
+) -> str:
+    """Generates a JSON schema from a .proto file."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        desc_path = tmp_path / f"{proto_path.stem}.desc"
+
+        spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+        if not spec or not spec.origin:
+            raise ImportError("google.protobuf.timestamp_pb2 not found")
+
+        proto_include_path = pathlib.Path(spec.origin).parent.parent
+
+        subprocess.run(  # noqa: S603
+            [
+                sys.executable,
+                "-m",
+                "grpc_tools.protoc",
+                f"--proto_path={proto_path.parent}",
+                f"--proto_path={proto_include_path}",
+                f"--descriptor_set_out={desc_path}",
+                "--include_source_info",
+                str(proto_path),
+            ],
+            check=True,
+        )
+
+        with open(desc_path, "rb") as f:
+            descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
+
+    return _generate_schema_from_descriptor_set(
+        descriptor_set,
+        namespace,
+        main_message,
+        preserving_proto_field_name,
+    )

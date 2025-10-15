@@ -20,7 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-xsd-to-proto = "xsdformer.tool:main"
+xsdformer = "xsdformer.tool:cli"
 
 [build-system]
 requires = ["hatchling"]
