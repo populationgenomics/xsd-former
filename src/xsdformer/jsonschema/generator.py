@@ -114,20 +114,23 @@ class _JsonSchemaFromDesc:
   ) -> str | None:
     path: list[int] = []
     file_name = ""
-    if isinstance(desc, descriptor.FieldDescriptor):
-      if desc.containing_type.GetOptions().map_entry:
-        return None  # No comments for map entry fields
-      path = self._get_field_path(desc)
-      file_name = desc.containing_type.file.name
-    elif isinstance(desc, descriptor.Descriptor):
-      path = self._get_message_path(desc)
-      file_name = desc.file.name
-    elif isinstance(desc, descriptor.EnumDescriptor):
-      path = self._get_enum_path(desc)
-      file_name = desc.file.name
-    elif isinstance(desc, descriptor.EnumValueDescriptor):
-      path = self._get_enum_value_path(desc)
-      file_name = desc.type.file.name
+    try:
+      if isinstance(desc, descriptor.FieldDescriptor):
+        if desc.containing_type.GetOptions().map_entry:
+          return None  # No comments for map entry fields
+        path = self._get_field_path(desc)
+        file_name = desc.containing_type.file.name
+      elif isinstance(desc, descriptor.Descriptor):
+        path = self._get_message_path(desc)
+        file_name = desc.file.name
+      elif isinstance(desc, descriptor.EnumDescriptor):
+        path = self._get_enum_path(desc)
+        file_name = desc.file.name
+      elif isinstance(desc, descriptor.EnumValueDescriptor):
+        path = self._get_enum_value_path(desc)
+        file_name = desc.type.file.name
+    except ValueError:
+      return None
 
     if file_name in self._source_info and tuple(path) in self._source_info[file_name]:
       loc = self._source_info[file_name][tuple(path)]
@@ -135,6 +138,22 @@ class _JsonSchemaFromDesc:
     return None
 
   def _get_message_path(self, desc: descriptor.Descriptor) -> list[int]:
+    """Gets the source code path for a message descriptor.
+
+    The path is a list of integers that identifies a specific element within
+    the FileDescriptorProto structure. It's used to look up comments from
+    the source_code_info. See `SourceCodeInfo.Location.path` in
+    `google/protobuf/descriptor.proto` for more details on the format.
+
+    Args:
+      desc: The message descriptor to find the path for.
+
+    Returns:
+      A list of integers representing the path.
+
+    Raises:
+      ValueError: If the path for the descriptor cannot be found.
+    """
     if desc.containing_type:
       path = self._get_message_path(desc.containing_type)
       containing_type_dp = self._find_descriptor_proto(desc.containing_type)
@@ -148,9 +167,22 @@ class _JsonSchemaFromDesc:
       for i, message_type in enumerate(fdp.message_type):
         if message_type.name == desc.name:
           return [descriptor_pb2.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER, i]
-    return []
+    raise ValueError(f"Could not find source code path for message {desc.full_name}")
 
   def _get_field_path(self, desc: descriptor.FieldDescriptor) -> list[int]:
+    """Gets the source code path for a field descriptor.
+
+    See `_get_message_path` for details on the path format and usage.
+
+    Args:
+      desc: The field descriptor to find the path for.
+
+    Returns:
+      A list of integers representing the path.
+
+    Raises:
+      ValueError: If the path for the descriptor cannot be found.
+    """
     path = self._get_message_path(desc.containing_type)
     containing_type_dp = self._find_descriptor_proto(desc.containing_type)
     if containing_type_dp:
@@ -158,9 +190,22 @@ class _JsonSchemaFromDesc:
         if field.name == desc.name:
           path.extend([descriptor_pb2.DescriptorProto.FIELD_FIELD_NUMBER, i])
           return path
-    return []
+    raise ValueError(f"Could not find source code path for field {desc.full_name}")
 
   def _get_enum_path(self, desc: descriptor.EnumDescriptor) -> list[int]:
+    """Gets the source code path for an enum descriptor.
+
+    See `_get_message_path` for details on the path format and usage.
+
+    Args:
+      desc: The enum descriptor to find the path for.
+
+    Returns:
+      A list of integers representing the path.
+
+    Raises:
+      ValueError: If the path for the descriptor cannot be found.
+    """
     if desc.containing_type:
       path = self._get_message_path(desc.containing_type)
       containing_type_dp = self._find_descriptor_proto(desc.containing_type)
@@ -174,9 +219,22 @@ class _JsonSchemaFromDesc:
       for i, enum_type in enumerate(fdp.enum_type):
         if enum_type.name == desc.name:
           return [descriptor_pb2.FileDescriptorProto.ENUM_TYPE_FIELD_NUMBER, i]
-    return []
+    raise ValueError(f"Could not find source code path for enum {desc.full_name}")
 
   def _get_enum_value_path(self, desc: descriptor.EnumValueDescriptor) -> list[int]:
+    """Gets the source code path for an enum value descriptor.
+
+    See `_get_message_path` for details on the path format and usage.
+
+    Args:
+      desc: The enum value descriptor to find the path for.
+
+    Returns:
+      A list of integers representing the path.
+
+    Raises:
+      ValueError: If the path for the descriptor cannot be found.
+    """
     path = self._get_enum_path(desc.type)
     edp = self._find_enum_descriptor_proto(desc.type)
     if edp:
@@ -184,7 +242,9 @@ class _JsonSchemaFromDesc:
         if value.name == desc.name:
           path.extend([descriptor_pb2.EnumDescriptorProto.VALUE_FIELD_NUMBER, i])
           return path
-    return []
+    raise ValueError(
+      f"Could not find source code path for enum value {desc.full_name}"
+    )
 
   def _get_name_parts(
     self,
