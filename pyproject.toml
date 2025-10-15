@@ -10,13 +10,13 @@ dependencies = [
     "protobuf>=6.32.1",
     "pytest>=8.4.1",
     "xmlschema",
+    "jsonschema",
 ]
 
 [tool.dependency-groups]
 dev = [
     "ruff",
     "grpcio-tools",
-    "jsonschema",
 ]
 
 [project.scripts]
