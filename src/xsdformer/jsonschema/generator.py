@@ -396,13 +396,13 @@ class _JsonSchemaFromDesc:
     has_value_descriptions = any(self._get_comment(v) for v in field.enum_type.values)
     if has_value_descriptions:
       one_of = []
-      for value in field.enum_type.values:  # noqa: PD011 (false positive)
+      for value in field.enum_type.values:  # (false positive)
         entry: dict[str, str] = {"const": value.name}
         if comment := self._get_comment(value):
           entry["description"] = comment
         one_of.append(entry)
 
-      schema: dict[str, Any] = {"oneOf": one_of}
+      schema["oneOf"] = one_of
     else:
       schema["enum"] = [v.name for v in field.enum_type.values]
 
