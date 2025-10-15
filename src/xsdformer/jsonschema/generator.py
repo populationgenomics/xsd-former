@@ -243,7 +243,7 @@ class _JsonSchemaFromDesc:
           path.extend([descriptor_pb2.EnumDescriptorProto.VALUE_FIELD_NUMBER, i])
           return path
     raise ValueError(
-      f"Could not find source code path for enum value {desc.full_name}"
+      f"Could not find source code path for enum value {desc.name}",
     )
 
   def _get_name_parts(
