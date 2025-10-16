@@ -2,6 +2,7 @@ import pathlib
 
 import click
 
+from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
 from xsdformer.xsd import xsd
@@ -16,17 +17,25 @@ from xsdformer.xsd import xsd
   help="Python protobuf module to import in the converter; required for --py_out.",
   type=str,
 )
-def main(
+@click.option("--json_schema_out", type=click.Path(), help="Output JSON schema file.")
+@click.option(
+  "--main_message",
+  help="Main message to use as the root for the JSON schema.",
+  type=str,
+)
+def main(  # noqa: PLR0913
   xsd_file: str,
   proto_out: str,
   py_out: str,
   py_module: str,
+  json_schema_out: str,
+  main_message: str,
 ) -> None:
   """Converts an XSD file to a Protobuf definition and/or a Python XML converter."""
 
   type_defs = xsd.process_xsd(xsd_file)
 
-  if not proto_out and not py_out:
+  if not proto_out and not py_out and not json_schema_out:
     namespace = pathlib.Path(xsd_file).stem
     for line in generator.generate(f"{namespace}.proto", type_defs):
       print(line, flush=True)
@@ -45,6 +54,14 @@ def main(
     with open(py_out, "w") as f:
       for line in xml_converter.generate(namespace, type_defs, py_module):
         f.write(line + "\n")
+
+  if json_schema_out:
+    if not main_message:
+      raise click.UsageError("--main_message is required when using --json_schema_out")
+    namespace = pathlib.Path(json_schema_out).stem
+    schema = jsonschema_generator.generate(namespace, type_defs, main_message)
+    with open(json_schema_out, "w") as f:
+      f.write(schema)
 
 
 if __name__ == "__main__":

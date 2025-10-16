@@ -1,11 +1,11 @@
 import contextlib
-import functools
 import importlib.util
 import io
 import pathlib
 import subprocess
 import sys
 import types
+import uuid
 from collections.abc import Generator
 from typing import Protocol
 
@@ -81,16 +81,16 @@ def _print_code(code: str) -> None:
     print(f"{i:5d}: {line}")
 
 
-@functools.cache
 def _compile_proto(
   proto_def: str,
   namespace: str,
   tmp_path: pathlib.Path,
   proto_include_path: pathlib.Path,
-) -> types.ModuleType:
+) -> tuple[types.ModuleType, pathlib.Path]:
   proto_path = tmp_path / (namespace.replace(".", "_") + ".proto")
+  desc_path = tmp_path / (namespace.replace(".", "_") + ".desc.proto")
   python_file = proto_path.name.replace(".proto", "_pb2.py")
-  python_module = namespace + "_pb2"
+  python_module = namespace.replace(".", "_") + "_pb2"
   proto_path.write_text(proto_def)
   subprocess.run(  # noqa: S603
     [
@@ -100,6 +100,8 @@ def _compile_proto(
       f"--proto_path={tmp_path}",
       f"--proto_path={proto_include_path}",
       f"--python_out={tmp_path}",
+      f"--descriptor_set_out={desc_path}",
+      "--include_source_info",
       str(proto_path.relative_to(tmp_path)),
     ],
     check=True,
@@ -110,7 +112,7 @@ def _compile_proto(
   assert spec.loader is not None
   module_pb2 = importlib.util.module_from_spec(spec)
   spec.loader.exec_module(module_pb2)
-  return module_pb2
+  return module_pb2, desc_path
 
 
 class Pb2ModuleFactory(Protocol):
@@ -120,17 +122,16 @@ class Pb2ModuleFactory(Protocol):
     *,
     config: xsd.Config | None = None,
     namespace: str,
-  ) -> types.ModuleType: ...
+  ) -> tuple[types.ModuleType, pathlib.Path]: ...
 
 
-@pytest.fixture(scope="session")
-def pb2_module_factory(tmp_path_factory: pytest.TempPathFactory) -> Pb2ModuleFactory:
+@pytest.fixture
+def pb2_module_factory(tmp_path: pathlib.Path) -> Pb2ModuleFactory:
   # The protoc compiler needs to be able to find the google.protobuf.timestamp_pb2
   # module. We can find its parent directory and add it to the search path.
   spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
   assert spec is not None
   assert spec.origin is not None
-  tmp_path = tmp_path_factory.mktemp("data")
   proto_include_path = pathlib.Path(spec.origin).parent.parent
 
   def _factory(
@@ -138,11 +139,11 @@ def pb2_module_factory(tmp_path_factory: pytest.TempPathFactory) -> Pb2ModuleFac
     *,
     config: xsd.Config | None = None,
     namespace: str,
-  ) -> types.ModuleType:
+  ) -> tuple[types.ModuleType, pathlib.Path]:
+    unique_namespace = f"{namespace}_{uuid.uuid4().hex}"
     type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
-    proto_def = "\n".join(generator.generate(namespace, type_defs))
-    _print_code(proto_def)
-    return _compile_proto(proto_def, namespace, tmp_path, proto_include_path)
+    proto_def = "\n".join(generator.generate(unique_namespace, type_defs))
+    return _compile_proto(proto_def, unique_namespace, tmp_path, proto_include_path)
 
   return _factory
 
@@ -158,7 +159,7 @@ class PyConverterModuleFactory(Protocol):
   ) -> types.ModuleType: ...
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def py_converter_module_factory(
   pb2_module_factory: Pb2ModuleFactory,
 ) -> PyConverterModuleFactory:
@@ -169,30 +170,34 @@ def py_converter_module_factory(
     proto_namespace: str,
     py_module: str,
   ) -> types.ModuleType:
-    module_pb2 = pb2_module_factory(xsd_str, config=config, namespace=proto_namespace)
+    module_pb2, _ = pb2_module_factory(
+      xsd_str,
+      config=config,
+      namespace=proto_namespace,
+    )
     with _insert_module(module_pb2):
       type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
       converter_code = "\n".join(
         xml_converter.generate(py_module, type_defs, module_pb2.__name__),
       )
-      _print_code(converter_code)
       module = types.ModuleType(py_module)
+      setattr(module, proto_namespace + "_pb2", module_pb2)
       exec(converter_code, module.__dict__)
     return module
 
   return _factory
 
 
-@pytest.fixture(name="book_pb2", scope="session")
+@pytest.fixture(name="book_pb2")
 def book_pb2_module_fixture(
   pb2_module_factory: Pb2ModuleFactory,
 ) -> Generator[types.ModuleType, None, None]:
-  module = pb2_module_factory(_BOOK_XSD, namespace="book")
+  module, _ = pb2_module_factory(_BOOK_XSD, namespace="book")
   with _insert_module(module):
     yield module
 
 
-@pytest.fixture(name="book_converter", scope="session")
+@pytest.fixture(name="book_converter")
 def book_converter_module_fixture(
   py_converter_module_factory: PyConverterModuleFactory,
 ) -> Generator[types.ModuleType, None, None]:

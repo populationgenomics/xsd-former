@@ -87,3 +87,8 @@ def _(text: _Exact) -> str:
 def indent(text: Iterable[str], *, indent: str = "  ") -> Iterator[str]:
   for t in text:
     yield indent + t
+
+
+def render_comment(comment: str) -> Iterable[str]:
+  for line in comment.split("\n"):
+    yield f"// {line}"

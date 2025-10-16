@@ -410,3 +410,33 @@ def test_user_defined_simple_types() -> None:
   assert "union_field" in fields
   union_field = fields["union_field"]
   assert union_field.proto_type is xsd.AtomicType.STRING
+
+
+_DOCUMENTATION_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="DocumentedType">
+    <xs:sequence>
+      <xs:element name="documented_field">
+        <xs:annotation>
+          <xs:documentation>This is a documented field.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string" />
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="root" type="DocumentedType" />
+</xs:schema>
+"""
+
+
+def test_documentation() -> None:
+  type_defs = xsd.process_xsd(io.StringIO(_DOCUMENTATION_XSD))
+  type_defs_by_name = {t.name: t for t in type_defs if t.name}
+
+  documented_type = type_defs_by_name["DocumentedType"]
+  fields = {f.name: f for f in documented_type.get_fields()}
+  assert "documented_field" in fields
+  documented_field = fields["documented_field"]
+  assert documented_field.documentation == "This is a documented field."
