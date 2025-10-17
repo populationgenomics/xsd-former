@@ -16,6 +16,7 @@ _TEST_XSD = """
     <xs:sequence>
       <xs:element name="name" type="xs:string" />
       <xs:element name="address" type="Address" />
+      <xs:element name="timestamp" type="xs:dateTime" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="person" type="Person" />
@@ -37,6 +38,10 @@ def test_generate_schema_from_xsd() -> None:
         "properties": {
           "name": {"type": "string"},
           "address": {"$ref": "#/definitions/test.Address"},
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+          },
         },
       },
       "test.Address": {

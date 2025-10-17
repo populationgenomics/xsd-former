@@ -326,9 +326,10 @@ class _JsonSchemaFromDesc:
     message_descriptor: descriptor.Descriptor,
   ) -> dict:
     message_name = message_descriptor.full_name
+    if message_name == "google.protobuf.Timestamp":
+      return {}
     if message_name in self._definitions:
       return {"$ref": f"#/definitions/{message_name}"}
-
     properties = {}
     for field in message_descriptor.fields:
       property_name = (
@@ -375,6 +376,10 @@ class _JsonSchemaFromDesc:
     return schema
 
   def _get_field_schema(self, field: descriptor.FieldDescriptor) -> dict:
+    if (
+      field.message_type and field.message_type.full_name == "google.protobuf.Timestamp"
+    ):
+      return {"type": "string", "format": "date-time"}
     field_type = field.type
 
     if field_type in _INTEGER_FIELD_TYPES:

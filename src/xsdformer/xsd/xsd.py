@@ -129,6 +129,7 @@ _PROTO_ATOMIC_TYPE = {
   elementpath.datatypes.numeric.NonNegativeInteger: AtomicType.UINT64,
   elementpath.datatypes.numeric.Integer: AtomicType.INT64,
   elementpath.datatypes.datetime.Date10: AtomicType.DATE,
+  elementpath.datatypes.datetime.DateTime10: AtomicType.DATE,
   elementpath.datatypes.proxies.BooleanProxy: AtomicType.BOOL,
   elementpath.datatypes.proxies.DoubleProxy10: AtomicType.DOUBLE,
   elementpath.datatypes.proxies.DecimalProxy: AtomicType.DOUBLE,
