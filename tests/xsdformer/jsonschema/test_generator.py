@@ -5,8 +5,8 @@ import tempfile
 from xsdformer.jsonschema import generator
 
 
-def test_generate_from_proto():
-    proto_content = '''
+def test_generate_from_proto() -> None:
+    proto_content = """
         syntax = "proto3";
 
         package testpkg;
@@ -16,7 +16,7 @@ def test_generate_from_proto():
             int32 id = 2;
             string email = 3;
         }
-    '''
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = pathlib.Path(tmpdir)
         proto_path = tmp_path / "test.proto"

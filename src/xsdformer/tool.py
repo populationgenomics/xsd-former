@@ -1,5 +1,4 @@
 import pathlib
-import sys
 
 import click
 
@@ -10,12 +9,11 @@ from xsdformer.xsd import xsd
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """A tool to convert XSD and Protobuf to other formats."""
 
 
-@cli.command()
-@click.argument("xsd_file", type=click.Path(exists=True))
+@cli.command("xsd")
 @click.option("--proto-out", type=click.Path(), help="Output protobuf file.")
 @click.option("--py-out", type=click.Path(), help="Output python converter file.")
 @click.option(
@@ -39,7 +37,7 @@ def cli():
     help="Package name to use in the protobuf file.",
     type=str,
 )
-def xsd(  # noqa: PLR0913
+def xsd_command(  # noqa: PLR0913
     xsd_file: str,
     proto_out: str,
     py_out: str,
