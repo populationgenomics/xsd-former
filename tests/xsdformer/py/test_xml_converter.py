@@ -8,11 +8,11 @@ from xsdformer.xsd import xsd
 
 
 def test_book_role_converter(
-  book_converter: types.ModuleType,
+    book_converter: types.ModuleType,
 ) -> None:
-  book_pb2 = book_converter.book_pb2
-  assert hasattr(book_converter, "Role")
-  assert book_converter.Role("editor") == book_pb2.Role.ROLE_EDITOR
+    book_pb2 = book_converter.book_pb2
+    assert hasattr(book_converter, "Role")
+    assert book_converter.Role("editor") == book_pb2.Role.ROLE_EDITOR
 
 
 _BOOK_XML = """
@@ -48,18 +48,18 @@ isbn: "0-07-212679-9"
 
 
 def test_xml_to_proto(
-  book_converter: types.ModuleType,
+    book_converter: types.ModuleType,
 ) -> None:
-  root = etree.XML(_BOOK_XML, parser=None)
-  proto_book = book_converter.Book(root)
+    root = etree.XML(_BOOK_XML, parser=None)
+    proto_book = book_converter.Book(root)
 
-  expected_metadata = etree.tostring(root.find("metadata")).decode("utf-8")
-  assert proto_book.metadata == expected_metadata
-  proto_book.ClearField("metadata")
-  book_pb2 = book_converter.book_pb2
-  expected_book = text_format.Parse(_BOOK_PROTO, book_pb2.Book())
+    expected_metadata = etree.tostring(root.find("metadata")).decode("utf-8")
+    assert proto_book.metadata == expected_metadata
+    proto_book.ClearField("metadata")
+    book_pb2 = book_converter.book_pb2
+    expected_book = text_format.Parse(_BOOK_PROTO, book_pb2.Book())
 
-  assert proto_book == expected_book
+    assert proto_book == expected_book
 
 
 _UNION_XSD = """
@@ -82,36 +82,36 @@ _UNION_XSD = """
 
 
 def test_xsd_union(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  # TODO: should unions of different atomic types be represented as protobuf oneof?
-  #   pro:
-  #     * more accurately reflects the original data.
-  #     * more compact representation.
-  #     * better typesafety.
-  #   con:
-  #     * more awkward to access. value_int / value_string - need to know which
-  #       one.
-  #     * have to synthesize field name suffixes.
-  union_module = py_converter_module_factory(
-    _UNION_XSD,
-    proto_namespace="union",
-    py_module="union",
-  )
-  union_pb2 = union_module.union_pb2
-  # Test with an integer value
-  xml_int = "<root><value>123</value></root>"
-  root_int = etree.XML(xml_int, parser=None)
-  proto_int = union_module.Root(root_int)
-  expected_proto_int = text_format.Parse('value: "123"', union_pb2.Root())
-  assert proto_int == expected_proto_int
+    # TODO: should unions of different atomic types be represented as protobuf oneof?
+    #   pro:
+    #     * more accurately reflects the original data.
+    #     * more compact representation.
+    #     * better typesafety.
+    #   con:
+    #     * more awkward to access. value_int / value_string - need to know which
+    #       one.
+    #     * have to synthesize field name suffixes.
+    union_module = py_converter_module_factory(
+        _UNION_XSD,
+        proto_namespace="union",
+        py_module="union",
+    )
+    union_pb2 = union_module.union_pb2
+    # Test with an integer value
+    xml_int = "<root><value>123</value></root>"
+    root_int = etree.XML(xml_int, parser=None)
+    proto_int = union_module.Root(root_int)
+    expected_proto_int = text_format.Parse('value: "123"', union_pb2.Root())
+    assert proto_int == expected_proto_int
 
-  # Test with a string value
-  xml_string = "<root><value>hello</value></root>"
-  root_string = etree.XML(xml_string, parser=None)
-  proto_string = union_module.Root(root_string)
-  expected_proto_string = text_format.Parse('value: "hello"', union_pb2.Root())
-  assert proto_string == expected_proto_string
+    # Test with a string value
+    xml_string = "<root><value>hello</value></root>"
+    root_string = etree.XML(xml_string, parser=None)
+    proto_string = union_module.Root(root_string)
+    expected_proto_string = text_format.Parse('value: "hello"', union_pb2.Root())
+    assert proto_string == expected_proto_string
 
 
 _CHOICE_XSD = """
@@ -177,32 +177,32 @@ bank_account {
 
 
 def test_xsd_choice(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  choice_module = py_converter_module_factory(
-    _CHOICE_XSD,
-    proto_namespace="choice",
-    py_module="choice",
-  )
-  choice_pb2 = choice_module.choice_pb2
+    choice_module = py_converter_module_factory(
+        _CHOICE_XSD,
+        proto_namespace="choice",
+        py_module="choice",
+    )
+    choice_pb2 = choice_module.choice_pb2
 
-  # Test with credit card
-  root_cc = etree.XML(_CHOICE_XML_CREDIT_CARD, parser=None)
-  proto_cc = choice_module.PaymentMethod(root_cc)
-  expected_proto_cc = text_format.Parse(
-    _CHOICE_PROTO_CREDIT_CARD,
-    choice_pb2.PaymentMethod(),
-  )
-  assert proto_cc == expected_proto_cc
+    # Test with credit card
+    root_cc = etree.XML(_CHOICE_XML_CREDIT_CARD, parser=None)
+    proto_cc = choice_module.PaymentMethod(root_cc)
+    expected_proto_cc = text_format.Parse(
+        _CHOICE_PROTO_CREDIT_CARD,
+        choice_pb2.PaymentMethod(),
+    )
+    assert proto_cc == expected_proto_cc
 
-  # Test with bank account
-  root_ba = etree.XML(_CHOICE_XML_BANK_ACCOUNT, parser=None)
-  proto_ba = choice_module.PaymentMethod(root_ba)
-  expected_proto_ba = text_format.Parse(
-    _CHOICE_PROTO_BANK_ACCOUNT,
-    choice_pb2.PaymentMethod(),
-  )
-  assert proto_ba == expected_proto_ba
+    # Test with bank account
+    root_ba = etree.XML(_CHOICE_XML_BANK_ACCOUNT, parser=None)
+    proto_ba = choice_module.PaymentMethod(root_ba)
+    expected_proto_ba = text_format.Parse(
+        _CHOICE_PROTO_BANK_ACCOUNT,
+        choice_pb2.PaymentMethod(),
+    )
+    assert proto_ba == expected_proto_ba
 
 
 _CHOICE_OCCURS_XSD = """
@@ -283,41 +283,41 @@ bank_account {
 
 
 def test_xsd_choice_occurs(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  choice_module = py_converter_module_factory(
-    _CHOICE_OCCURS_XSD,
-    proto_namespace="choice_occurs",
-    py_module="choice_occurs",
-  )
-  choice_pb2 = choice_module.choice_occurs_pb2
+    choice_module = py_converter_module_factory(
+        _CHOICE_OCCURS_XSD,
+        proto_namespace="choice_occurs",
+        py_module="choice_occurs",
+    )
+    choice_pb2 = choice_module.choice_occurs_pb2
 
-  # Test with empty
-  root_empty = etree.XML(_CHOICE_OCCURS_XML_EMPTY, parser=None)
-  proto_empty = choice_module.PaymentMethod(root_empty)
-  expected_proto_empty = text_format.Parse(
-    _CHOICE_OCCURS_PROTO_EMPTY,
-    choice_pb2.PaymentMethod(),
-  )
-  assert proto_empty == expected_proto_empty
+    # Test with empty
+    root_empty = etree.XML(_CHOICE_OCCURS_XML_EMPTY, parser=None)
+    proto_empty = choice_module.PaymentMethod(root_empty)
+    expected_proto_empty = text_format.Parse(
+        _CHOICE_OCCURS_PROTO_EMPTY,
+        choice_pb2.PaymentMethod(),
+    )
+    assert proto_empty == expected_proto_empty
 
-  # Test with one
-  root_one = etree.XML(_CHOICE_OCCURS_XML_ONE, parser=None)
-  proto_one = choice_module.PaymentMethod(root_one)
-  expected_proto_one = text_format.Parse(
-    _CHOICE_OCCURS_PROTO_ONE,
-    choice_pb2.PaymentMethod(),
-  )
-  assert proto_one == expected_proto_one
+    # Test with one
+    root_one = etree.XML(_CHOICE_OCCURS_XML_ONE, parser=None)
+    proto_one = choice_module.PaymentMethod(root_one)
+    expected_proto_one = text_format.Parse(
+        _CHOICE_OCCURS_PROTO_ONE,
+        choice_pb2.PaymentMethod(),
+    )
+    assert proto_one == expected_proto_one
 
-  # Test with two
-  root_two = etree.XML(_CHOICE_OCCURS_XML_TWO, parser=None)
-  proto_two = choice_module.PaymentMethod(root_two)
-  expected_proto_two = text_format.Parse(
-    _CHOICE_OCCURS_PROTO_TWO,
-    choice_pb2.PaymentMethod(),
-  )
-  assert proto_two == expected_proto_two
+    # Test with two
+    root_two = etree.XML(_CHOICE_OCCURS_XML_TWO, parser=None)
+    proto_two = choice_module.PaymentMethod(root_two)
+    expected_proto_two = text_format.Parse(
+        _CHOICE_OCCURS_PROTO_TWO,
+        choice_pb2.PaymentMethod(),
+    )
+    assert proto_two == expected_proto_two
 
 
 _DATE_XSD = """
@@ -346,19 +346,19 @@ date {
 
 
 def test_xsd_date(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  date_module = py_converter_module_factory(
-    _DATE_XSD,
-    proto_namespace="date",
-    py_module="date",
-  )
-  date_pb2 = date_module.date_pb2
+    date_module = py_converter_module_factory(
+        _DATE_XSD,
+        proto_namespace="date",
+        py_module="date",
+    )
+    date_pb2 = date_module.date_pb2
 
-  root = etree.XML(_DATE_XML, parser=None)
-  proto = date_module.Root(root)
-  expected_proto = text_format.Parse(_DATE_PROTO, date_pb2.Root())
-  assert proto == expected_proto
+    root = etree.XML(_DATE_XML, parser=None)
+    proto = date_module.Root(root)
+    expected_proto = text_format.Parse(_DATE_PROTO, date_pb2.Root())
+    assert proto == expected_proto
 
 
 _MIXED_XSD = """
@@ -382,19 +382,19 @@ value: "\n  some text\n"
 
 
 def test_mixed_content(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  mixed_module = py_converter_module_factory(
-    _MIXED_XSD,
-    proto_namespace="mixed",
-    py_module="mixed",
-  )
-  mixed_pb2 = mixed_module.mixed_pb2
+    mixed_module = py_converter_module_factory(
+        _MIXED_XSD,
+        proto_namespace="mixed",
+        py_module="mixed",
+    )
+    mixed_pb2 = mixed_module.mixed_pb2
 
-  root = etree.XML(_MIXED_XML, parser=None)
-  proto = mixed_module.Root(root)
-  expected_proto = text_format.Parse(_MIXED_PROTO, mixed_pb2.Root())
-  assert proto == expected_proto
+    root = etree.XML(_MIXED_XML, parser=None)
+    proto = mixed_module.Root(root)
+    expected_proto = text_format.Parse(_MIXED_PROTO, mixed_pb2.Root())
+    assert proto == expected_proto
 
 
 _COMPLEX_ENUM_XSD = """
@@ -429,19 +429,19 @@ code: 1
 
 
 def test_complex_enum(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  module = py_converter_module_factory(
-    _COMPLEX_ENUM_XSD,
-    proto_namespace="complex_enum",
-    py_module="complex_enum",
-  )
-  pb2_module = module.complex_enum_pb2
+    module = py_converter_module_factory(
+        _COMPLEX_ENUM_XSD,
+        proto_namespace="complex_enum",
+        py_module="complex_enum",
+    )
+    pb2_module = module.complex_enum_pb2
 
-  root = etree.XML(_COMPLEX_ENUM_XML, parser=None)
-  proto = module.Status(root)
-  expected_proto = text_format.Parse(_COMPLEX_ENUM_PROTO, pb2_module.Status())
-  assert proto == expected_proto
+    root = etree.XML(_COMPLEX_ENUM_XML, parser=None)
+    proto = module.Status(root)
+    expected_proto = text_format.Parse(_COMPLEX_ENUM_PROTO, pb2_module.Status())
+    assert proto == expected_proto
 
 
 _MAP_TYPE_XSD = """
@@ -478,27 +478,27 @@ infon { key: "baz" value: "qux" }
 
 
 def test_map_type(
-  py_converter_module_factory: conftest.PyConverterModuleFactory,
+    py_converter_module_factory: conftest.PyConverterModuleFactory,
 ) -> None:
-  module = py_converter_module_factory(
-    _MAP_TYPE_XSD,
-    proto_namespace="map_type",
-    py_module="map_type",
-    config=xsd.Config(
-      map_overrides=(
-        xsd.MapOverrideConfig(
-          map_type=("Infon",),
-          key_field="key",
-          value_field="value",
+    module = py_converter_module_factory(
+        _MAP_TYPE_XSD,
+        proto_namespace="map_type",
+        py_module="map_type",
+        config=xsd.Config(
+            map_overrides=(
+                xsd.MapOverrideConfig(
+                    map_type=("Infon",),
+                    key_field="key",
+                    value_field="value",
+                ),
+            ),
         ),
-      ),
-    ),
-  )
-  pb2_module = module.map_type_pb2
-  assert hasattr(pb2_module, "Document")
-  assert not hasattr(pb2_module, "Infon")
+    )
+    pb2_module = module.map_type_pb2
+    assert hasattr(pb2_module, "Document")
+    assert not hasattr(pb2_module, "Infon")
 
-  root = etree.XML(_MAP_TYPE_XML, parser=None)
-  proto = module.Document(root)
-  expected_proto = text_format.Parse(_MAP_TYPE_PROTO, pb2_module.Document())
-  assert proto == expected_proto
+    root = etree.XML(_MAP_TYPE_XML, parser=None)
+    proto = module.Document(root)
+    expected_proto = text_format.Parse(_MAP_TYPE_PROTO, pb2_module.Document())
+    assert proto == expected_proto
