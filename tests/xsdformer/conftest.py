@@ -193,6 +193,12 @@ def book_xsd() -> str:
     return _BOOK_XSD
 
 
+@pytest.fixture
+def book_type_defs(book_xsd: str) -> tuple[xsd.TypeDefinition, ...]:
+    """Provides processed XSD type definitions for the book schema."""
+    return xsd.process_xsd(io.StringIO(book_xsd))
+
+
 @pytest.fixture(name="book_pb2")
 def book_pb2_module_fixture(
     pb2_module_factory: Pb2ModuleFactory,
