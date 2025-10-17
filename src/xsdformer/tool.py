@@ -24,6 +24,11 @@ from xsdformer.xsd import xsd
   type=str,
 )
 @click.option(
+  "--preserving-proto-field-name",
+  is_flag=True,
+  help="Use the proto field name in the JSON schema, not the json_name.",
+)
+@click.option(
   "--proto_package",
   help="Package name to use in the protobuf file.",
   type=str,
@@ -35,6 +40,7 @@ def main(  # noqa: PLR0913
   py_module: str,
   json_schema_out: str,
   main_message: str,
+  preserving_proto_field_name: bool,
   proto_package: str,
 ) -> None:
   """Converts an XSD file to a Protobuf definition and/or a Python XML converter."""
@@ -65,7 +71,12 @@ def main(  # noqa: PLR0913
     if not main_message:
       raise click.UsageError("--main_message is required when using --json_schema_out")
     namespace = pathlib.Path(json_schema_out).stem
-    schema = jsonschema_generator.generate(namespace, type_defs, main_message)
+    schema = jsonschema_generator.generate(
+      namespace,
+      type_defs,
+      main_message,
+      preserving_proto_field_name=preserving_proto_field_name,
+    )
     with open(json_schema_out, "w") as f:
       f.write(schema)
 
