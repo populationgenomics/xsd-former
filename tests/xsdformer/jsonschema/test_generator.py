@@ -103,10 +103,13 @@ def test_generate_from_proto() -> None:
 
         package testpkg;
 
+        import "google/protobuf/timestamp.proto";
+
         message Person {
             string name = 1;
             int32 id = 2;
             string email = 3;
+            google.protobuf.Timestamp created_at = 4;
         }
     """
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -128,3 +131,7 @@ def test_generate_from_proto() -> None:
     assert person_def["properties"]["name"] == {"type": "string"}
     assert person_def["properties"]["id"] == {"type": "integer"}
     assert person_def["properties"]["email"] == {"type": "string"}
+    assert person_def["properties"]["createdAt"] == {
+        "type": "string",
+        "format": "date-time",
+    }
