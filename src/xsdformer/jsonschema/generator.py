@@ -1,11 +1,10 @@
-import importlib.util
 import json
 import pathlib
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable
-from typing import Any, Sequence, TypeVar
+from collections.abc import Callable, Sequence
+from typing import Any, TypeVar
 
 from google.protobuf import descriptor, descriptor_pb2, descriptor_pool, timestamp_pb2
 
@@ -472,8 +471,9 @@ def _compile_proto_to_descriptor_set(
         with open(desc_path, "rb") as f:
             descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
 
-
     return descriptor_set
+
+
 def generate(
     namespace: str,
     type_defs: tuple[xsd.TypeDefinition, ...],
