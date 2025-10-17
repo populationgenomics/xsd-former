@@ -2,6 +2,7 @@ import io
 import json
 import pathlib
 import tempfile
+import types
 
 import jsonschema
 import pytest
@@ -100,54 +101,6 @@ def test_generate_schema_with_preserving_proto_field_name() -> None:
 
     assert schema == expected_schema
 
-# This XSD is a copy of _BOOK_XSD in conftest.py
-_BOOK_XSD = """
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <xs:complexType name="author">
-    <xs:sequence>
-      <xs:element name="name" type="xs:string" />
-      <xs:element name="role" type="role" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="authorList">
-    <xs:sequence>
-      <xs:element name="author" type="author" maxOccurs="unbounded" />
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="book">
-    <xs:sequence>
-      <xs:element name="authors" type="authorList" />
-      <xs:element name="title" type="xs:string" />
-      <xs:element name="isbn" type="xs:string" />
-      <xs:element name="comment" type="xs:string" minOccurs="0" />
-      <xs:element name="metadata" type="xs:anyType" minOccurs="0" />
-    </xs:sequence>
-    <xs:attribute name="id" type="xs:ID" use="required" />
-    <xs:attribute name="status" type="status" use="optional" />
-  </xs:complexType>
-
-  <xs:simpleType name="role">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="author" />
-      <xs:enumeration value="editor" />
-      <xs:enumeration value="reviewer" />
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:simpleType name="status">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="new" />
-      <xs:enumeration value="used" />
-      <xs:enumeration value="out-of-print" />
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:element name="book" type="book" />
-</xs:schema>
-"""
-
 
 def test_generate_from_proto() -> None:
     proto_content = """
@@ -200,10 +153,10 @@ def test_generate_from_proto() -> None:
 
 
 @pytest.mark.parametrize("preserving_proto_field_name", [True, False])
-def test_xsd_to_json_schema_e2e(book_pb2, preserving_proto_field_name) -> None:
+def test_xsd_to_json_schema_e2e(book_xsd: str, book_pb2: types.ModuleType, preserving_proto_field_name: bool) -> None:
     """An end-to-end test verifying a protobuf's JSON output against the JSON schema."""
     # 1. Get the type definitions from the book XSD
-    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    type_defs = xsd.process_xsd(io.StringIO(book_xsd))
     namespace = "book"
     main_message = "Book"
 
@@ -225,8 +178,8 @@ def test_xsd_to_json_schema_e2e(book_pb2, preserving_proto_field_name) -> None:
                 book_pb2.Author(
                     name="Gambardella, Matthew",
                     role=[book_pb2.Role.ROLE_AUTHOR, book_pb2.Role.ROLE_EDITOR],
-                )
-            ]
+                ),
+            ],
         ),
         title="XML Developer's Guide",
         isbn="1-861003-11-4",
@@ -234,7 +187,7 @@ def test_xsd_to_json_schema_e2e(book_pb2, preserving_proto_field_name) -> None:
 
     # 4. Convert the protobuf instance to a JSON dictionary, using the parameter
     json_dict = json.loads(
-        json_format.MessageToJson(book_instance, preserving_proto_field_name=preserving_proto_field_name)
+        json_format.MessageToJson(book_instance, preserving_proto_field_name=preserving_proto_field_name),
     )
 
     # 5. Validate the JSON against the JSON Schema
