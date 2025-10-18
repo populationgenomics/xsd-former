@@ -5,9 +5,10 @@ import enum
 import functools
 import graphlib
 import itertools
+import pathlib
 import re
 from collections.abc import Iterator, Sequence
-from typing import Protocol, TypeAlias
+from typing import IO, Protocol, TypeAlias
 
 import elementpath
 import xmlschema
@@ -748,7 +749,7 @@ def _find_map_fields(
 
 # TODO: simplify
 def process_xsd(  # noqa: C901
-    xsd_file: xmlschema.aliases.SchemaSourceType | list[xmlschema.aliases.SchemaSourceType],
+    xsd_file: str | bytes | pathlib.Path | IO[str] | IO[bytes],
     config: Config | None = None,
 ) -> tuple[TypeDefinition, ...]:
     schema = xmlschema.XMLSchema(xsd_file)
