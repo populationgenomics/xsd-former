@@ -241,3 +241,137 @@ def test_xsd_to_json_schema_e2e(
 
     # 5. Validate the JSON against the JSON Schema
     jsonschema.validate(instance=json_dict, schema=schema)
+
+
+_TRAILING_COMMENT_PROTO = """
+    syntax = "proto3";
+
+    package test;
+
+    message TestMessage {
+      string a_field = 1; // This is a trailing comment.
+    }
+"""
+
+
+def test_trailing_comment_from_proto() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(_TRAILING_COMMENT_PROTO)
+
+        schema_str = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="test",
+            main_message="TestMessage",
+            preserving_proto_field_name=True,
+        )
+
+    schema = json.loads(schema_str)
+    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    assert field_schema["description"] == "This is a trailing comment."
+
+
+_MIXED_COMMENTS_PROTO = """
+    syntax = "proto3";
+
+    package test;
+
+    message TestMessage {
+      string a_field = 1; // This is a trailing comment for a_field.
+      // This is a leading comment for b_field.
+      string b_field = 2;
+    }
+"""
+
+
+def test_mixed_comments_from_proto() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(_MIXED_COMMENTS_PROTO)
+
+        schema_str = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="test",
+            main_message="TestMessage",
+            preserving_proto_field_name=True,
+        )
+
+    schema = json.loads(schema_str)
+    a_field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    b_field_schema = schema["definitions"]["test.TestMessage"]["properties"]["b_field"]
+    assert a_field_schema["description"] == "This is a trailing comment for a_field."
+    assert b_field_schema["description"] == "This is a leading comment for b_field."
+
+
+_FIELD_COMMENT_PREFERRED_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="DescribedType">
+    <xs:annotation>
+      <xs:documentation>This is a comment on the type.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="foo" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="TestMessage">
+    <xs:sequence>
+      <xs:element name="a_field" type="DescribedType">
+        <xs:annotation>
+          <xs:documentation>This is a comment on the field.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="test_message" type="TestMessage" />
+</xs:schema>
+"""
+
+
+def test_field_comment_preferred_over_type_comment() -> None:
+    type_defs = xsd.process_xsd(io.StringIO(_FIELD_COMMENT_PREFERRED_XSD))
+    schema_str = generator.generate(
+        "test",
+        type_defs,
+        "TestMessage",
+        preserving_proto_field_name=True,
+    )
+    schema = json.loads(schema_str)
+    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    assert field_schema["description"] == "This is a comment on the field."
+
+
+_FIELD_COMMENT_PREFERRED_PROTO = """
+    syntax = "proto3";
+
+    package test;
+
+    // This is a comment on the type.
+    message DescribedType {
+      string foo = 1;
+    }
+
+    message TestMessage {
+      // This is a comment on the field.
+      DescribedType a_field = 1;
+    }
+"""
+
+
+def test_field_comment_preferred_over_type_comment_from_proto() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(_FIELD_COMMENT_PREFERRED_PROTO)
+
+        schema_str = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="test",
+            main_message="TestMessage",
+            preserving_proto_field_name=True,
+        )
+
+    schema = json.loads(schema_str)
+    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    assert field_schema["description"] == "This is a comment on the field."
