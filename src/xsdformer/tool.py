@@ -88,7 +88,7 @@ def xsd_command(  # noqa: PLR0913
 @cli.command()
 @click.argument("proto_file", type=click.Path(exists=True))
 @click.argument("namespace", type=str)
-@click.argument("main_message", type=str)
+@click.option("--main-message", help="Main message to use as the root for the JSON schema.", type=str)
 @click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
 @click.option(
     "--preserving-proto-field-name",
@@ -100,21 +100,33 @@ def xsd_command(  # noqa: PLR0913
     is_flag=True,
     help="Include all messages from the proto file, not just those reachable from the main message.",
 )
+@click.option(
+    "--definitions-only",
+    is_flag=True,
+    help="Generate a schema with only definitions, implies --include-all.",
+)
 def proto(  # noqa: PLR0913
     proto_file: str,
     namespace: str,
-    main_message: str,
+    main_message: str | None,
     json_schema_out: str | None,
     preserving_proto_field_name: bool,
     include_all: bool,
+    definitions_only: bool,
 ) -> None:
     """Converts a .proto file to a JSON schema."""
+    if definitions_only:
+        include_all = True
+    elif not main_message:
+        raise click.UsageError("`--main-message` is required unless using `--definitions-only`")
+
     schema = jsonschema_generator.generate_from_proto(
         pathlib.Path(proto_file),
         namespace,
         main_message,
         preserving_proto_field_name=preserving_proto_field_name,
         include_all=include_all,
+        definitions_only=definitions_only,
     )
     if json_schema_out:
         with open(json_schema_out, "w") as f:

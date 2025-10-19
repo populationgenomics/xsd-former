@@ -65,6 +65,38 @@ def test_generate_schema_from_xsd() -> None:
     assert schema == expected_schema
 
 
+def test_generate_schema_definitions_only() -> None:
+    type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
+    schema_str = generator.generate("test", type_defs, "Person", definitions_only=True)
+    schema = json.loads(schema_str)
+
+    expected_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+            "test.Person": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "address": {"$ref": "#/definitions/test.Address"},
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                    },
+                },
+            },
+            "test.Address": {
+                "type": "object",
+                "properties": {
+                    "street": {"type": "string"},
+                    "city": {"type": "string"},
+                },
+            },
+        },
+    }
+
+    assert schema == expected_schema
+
+
 _PRESERVING_FIELD_NAME_XSD = """
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:complexType name="TestMessage">
@@ -375,3 +407,36 @@ def test_field_comment_preferred_over_type_comment_from_proto() -> None:
     schema = json.loads(schema_str)
     field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
     assert field_schema["description"] == "This is a comment on the field."
+
+
+def test_generate_from_proto_definitions_only() -> None:
+    """Tests the --definitions-only flag to generate a schema with only definitions."""
+    proto_content = """
+        syntax = "proto3";
+
+        package testall;
+
+        message MessageA {
+            string field_a = 1;
+        }
+
+        message MessageB {
+            string field_b = 1;
+        }
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(proto_content)
+
+        json_schema_str = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="testall",
+            main_message=None,
+            definitions_only=True,
+        )
+        schema = json.loads(json_schema_str)
+
+        assert "$ref" not in schema
+        assert "testall.MessageA" in schema["definitions"]
+        assert "testall.MessageB" in schema["definitions"]

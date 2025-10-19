@@ -64,6 +64,7 @@ class _JsonSchemaFromDesc:
         descriptor_set: descriptor_pb2.FileDescriptorSet,
         preserving_proto_field_name: bool = False,
         include_all: bool = False,
+        definitions_only: bool = False,
     ) -> None:
         """Initializes the generator.
 
@@ -73,10 +74,12 @@ class _JsonSchemaFromDesc:
               instead of the json_name.
             include_all: If true, include all messages from the descriptor set, not
                 just those reachable from the main message.
+            definitions_only: If true, generate a schema with only definitions.
         """
         self._pool = descriptor_pool.DescriptorPool()
         self._preserving_proto_field_name = preserving_proto_field_name
-        self._include_all = include_all
+        self._include_all = include_all or definitions_only
+        self._definitions_only = definitions_only
 
         timestamp_fdp = descriptor_pb2.FileDescriptorProto()
         timestamp_fdp.ParseFromString(timestamp_pb2.DESCRIPTOR.serialized_pb)
@@ -90,7 +93,7 @@ class _JsonSchemaFromDesc:
 
         self._definitions: dict[str, dict[str, Any]] = {}
 
-    def generate(self, message_name: str) -> dict:
+    def generate(self, message_name: str | None) -> dict:
         """Generates the JSON schema for a given message.
 
         Args:
@@ -100,9 +103,11 @@ class _JsonSchemaFromDesc:
         Returns:
             A dictionary representing the JSON schema.
         """
-        main_message_descriptor = self._pool.FindMessageTypeByName(message_name)
-        if not main_message_descriptor:
-            raise ValueError(f"Message '{message_name}' not found in descriptor set.")
+        main_message_descriptor = None
+        if message_name:
+            main_message_descriptor = self._pool.FindMessageTypeByName(message_name)
+            if not main_message_descriptor:
+                raise ValueError(f"Message '{message_name}' not found in descriptor set.")
 
         if self._include_all:
             for fdp in self._fdp_map.values():
@@ -111,14 +116,19 @@ class _JsonSchemaFromDesc:
                     msg_descriptor = self._pool.FindMessageTypeByName(full_name)
                     if msg_descriptor:
                         self._convert_message_to_schema(msg_descriptor)
-        else:
+        elif main_message_descriptor:
             self._convert_message_to_schema(main_message_descriptor)
+        elif not self._definitions_only:
+            raise ValueError("A main message is required when not including all messages.")
 
-        return {
+        schema = {
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "$ref": f"#/definitions/{main_message_descriptor.full_name}",
             "definitions": self._definitions,
         }
+        if not self._definitions_only and main_message_descriptor:
+            schema["$ref"] = f"#/definitions/{main_message_descriptor.full_name}"
+
+        return schema
 
     def _get_comment(
         self,
@@ -437,17 +447,19 @@ class _JsonSchemaFromDesc:
 def _generate_schema_from_descriptor_set(
     descriptor_set: descriptor_pb2.FileDescriptorSet,
     namespace: str,
-    main_message: str,
+    main_message: str | None,
     preserving_proto_field_name: bool = False,
     include_all: bool = False,
+    definitions_only: bool = False,
 ) -> str:
     """Generates a JSON schema from a FileDescriptorSet."""
     schema_generator = _JsonSchemaFromDesc(
         descriptor_set,
         preserving_proto_field_name=preserving_proto_field_name,
         include_all=include_all,
+        definitions_only=definitions_only,
     )
-    fully_qualified_main_message = f"{namespace}.{main_message}"
+    fully_qualified_main_message = f"{namespace}.{main_message}" if main_message else None
     schema = schema_generator.generate(fully_qualified_main_message)
 
     return json.dumps(schema, indent=2)
@@ -495,6 +507,7 @@ def generate(
     type_defs: tuple[xsd.TypeDefinition, ...],
     main_message: str,
     preserving_proto_field_name: bool = False,
+    definitions_only: bool = False,
 ) -> str:
     """Generates a JSON schema from XSD type definitions."""
     proto_def = "\n".join(proto_generator.generate(namespace, type_defs))
@@ -508,15 +521,17 @@ def generate(
         namespace,
         main_message,
         preserving_proto_field_name,
+        definitions_only=definitions_only,
     )
 
 
 def generate_from_proto(
     proto_path: pathlib.Path,
     namespace: str,
-    main_message: str,
+    main_message: str | None,
     preserving_proto_field_name: bool = False,
     include_all: bool = False,
+    definitions_only: bool = False,
 ) -> str:
     """Generates a JSON schema from a .proto file."""
     descriptor_set = _compile_proto_to_descriptor_set(proto_path)
@@ -526,4 +541,5 @@ def generate_from_proto(
         main_message,
         preserving_proto_field_name,
         include_all=include_all,
+        definitions_only=definitions_only,
     )
