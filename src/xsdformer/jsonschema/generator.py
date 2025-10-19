@@ -116,6 +116,11 @@ class _JsonSchemaFromDesc:
                     msg_descriptor = self._pool.FindMessageTypeByName(full_name)
                     if msg_descriptor:
                         self._convert_message_to_schema(msg_descriptor)
+                for enum_proto in fdp.enum_type:
+                    full_name = f"{fdp.package}.{enum_proto.name}" if fdp.package else enum_proto.name
+                    enum_descriptor = self._pool.FindEnumTypeByName(full_name)
+                    if enum_descriptor:
+                        self._convert_enum_to_schema(enum_descriptor)
         elif main_message_descriptor:
             self._convert_message_to_schema(main_message_descriptor)
         elif not self._definitions_only:
@@ -371,6 +376,8 @@ class _JsonSchemaFromDesc:
         for field in message_descriptor.fields:
             if field.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
                 self._convert_message_to_schema(field.message_type)
+            elif field.type == descriptor.FieldDescriptor.TYPE_ENUM:
+                self._convert_enum_to_schema(field.enum_type)
 
         return schema
 
@@ -423,25 +430,32 @@ class _JsonSchemaFromDesc:
             raise ValueError(f"Field '{field.name}' does not have a message type.")
         return {"$ref": f"#/definitions/{field.message_type.full_name}"}
 
-    def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict[str, Any]:
+    def _convert_enum_to_schema(self, enum_descriptor: descriptor.EnumDescriptor) -> None:
+        enum_name = enum_descriptor.full_name
+        if enum_name in self._definitions:
+            return
+
         schema: dict[str, Any] = {}
-        has_value_descriptions = any(self._get_comment(v) for v in field.enum_type.values)
+        has_value_descriptions = any(self._get_comment(v) for v in enum_descriptor.values)
         if has_value_descriptions:
             one_of = []
-            for value in field.enum_type.values:  # (false positive)
+            for value in enum_descriptor.values:
                 entry: dict[str, str] = {"const": value.name}
                 if comment := self._get_comment(value):
                     entry["description"] = comment
                 one_of.append(entry)
-
             schema["oneOf"] = one_of
         else:
-            schema["enum"] = [v.name for v in field.enum_type.values]
+            schema["enum"] = [v.name for v in enum_descriptor.values]
 
-        enum_comment = self._get_comment(field.enum_type)
+        enum_comment = self._get_comment(enum_descriptor)
         if enum_comment:
             schema["description"] = enum_comment
-        return schema
+
+        self._definitions[enum_name] = schema
+
+    def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict[str, Any]:
+        return {"$ref": f"#/definitions/{field.enum_type.full_name}"}
 
 
 def _generate_schema_from_descriptor_set(
