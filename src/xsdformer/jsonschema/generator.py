@@ -63,8 +63,6 @@ class _JsonSchemaFromDesc:
         self,
         descriptor_set: descriptor_pb2.FileDescriptorSet,
         preserving_proto_field_name: bool = False,
-        include_all: bool = False,
-        definitions_only: bool = False,
     ) -> None:
         """Initializes the generator.
 
@@ -72,14 +70,9 @@ class _JsonSchemaFromDesc:
             descriptor_set: The FileDescriptorSet to generate the schema from.
             preserving_proto_field_name: If true, use the proto field name for keys
               instead of the json_name.
-            include_all: If true, include all messages from the descriptor set, not
-                just those reachable from the main message.
-            definitions_only: If true, generate a schema with only definitions.
         """
         self._pool = descriptor_pool.DescriptorPool()
         self._preserving_proto_field_name = preserving_proto_field_name
-        self._include_all = include_all or definitions_only
-        self._definitions_only = definitions_only
 
         timestamp_fdp = descriptor_pb2.FileDescriptorProto()
         timestamp_fdp.ParseFromString(timestamp_pb2.DESCRIPTOR.serialized_pb)
@@ -93,7 +86,33 @@ class _JsonSchemaFromDesc:
 
         self._definitions: dict[str, dict[str, Any]] = {}
 
-    def generate(self, message_name: str | None) -> dict:
+    def generate_all(self, message_name: str | None) -> dict[str, Any]:
+        main_message_descriptor: descriptor.Descriptor | None = None
+        for fdp in self._fdp_map.values():
+            for msg_proto in fdp.message_type:
+                full_name = f"{fdp.package}.{msg_proto.name}" if fdp.package else msg_proto.name
+                msg_descriptor = self._pool.FindMessageTypeByName(full_name)
+                if full_name == message_name:
+                    main_message_descriptor = msg_descriptor
+                if msg_descriptor:
+                    self._convert_message_to_schema(msg_descriptor)
+            for enum_proto in fdp.enum_type:
+                full_name = f"{fdp.package}.{enum_proto.name}" if fdp.package else enum_proto.name
+                enum_descriptor = self._pool.FindEnumTypeByName(full_name)
+                if enum_descriptor:
+                    self._convert_enum_to_schema(enum_descriptor)
+
+        schema = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": self._definitions,
+        }
+        if main_message_descriptor:
+            schema["$ref"] = f"#/definitions/{main_message_descriptor.full_name}"
+        elif message_name:
+            raise ValueError(f"Message '{message_name}' not found in descriptor set.")
+        return schema
+
+    def generate(self, message_name: str) -> dict:
         """Generates the JSON schema for a given message.
 
         Args:
@@ -103,32 +122,17 @@ class _JsonSchemaFromDesc:
         Returns:
             A dictionary representing the JSON schema.
         """
-        main_message_descriptor = None
-        if message_name:
-            main_message_descriptor = self._pool.FindMessageTypeByName(message_name)
-            if not main_message_descriptor:
-                raise ValueError(f"Message '{message_name}' not found in descriptor set.")
+        main_message_descriptor = self._pool.FindMessageTypeByName(message_name)
+        if not main_message_descriptor:
+            raise ValueError(f"Message '{message_name}' not found in descriptor set.")
 
-        if self._include_all:
-            for fdp in self._fdp_map.values():
-                for msg_proto in fdp.message_type:
-                    full_name = f"{fdp.package}.{msg_proto.name}" if fdp.package else msg_proto.name
-                    msg_descriptor = self._pool.FindMessageTypeByName(full_name)
-                    if msg_descriptor:
-                        self._convert_message_to_schema(msg_descriptor)
-        elif main_message_descriptor:
-            self._convert_message_to_schema(main_message_descriptor)
-        elif not self._definitions_only:
-            raise ValueError("A main message is required when not including all messages.")
+        self._convert_message_to_schema(main_message_descriptor)
 
-        schema = {
+        return {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "definitions": self._definitions,
+            "$ref": f"#/definitions/{main_message_descriptor.full_name}",
         }
-        if not self._definitions_only and main_message_descriptor:
-            schema["$ref"] = f"#/definitions/{main_message_descriptor.full_name}"
-
-        return schema
 
     def _get_comment(
         self,
@@ -455,11 +459,18 @@ def _generate_schema_from_descriptor_set(  # noqa: PLR0913
     schema_generator = _JsonSchemaFromDesc(
         descriptor_set,
         preserving_proto_field_name=preserving_proto_field_name,
-        include_all=include_all,
-        definitions_only=definitions_only,
     )
     fully_qualified_main_message = f"{namespace}.{main_message}" if main_message else None
-    schema = schema_generator.generate(fully_qualified_main_message)
+    if include_all:
+        schema = schema_generator.generate_all(fully_qualified_main_message)
+    else:
+        if not fully_qualified_main_message:
+            raise ValueError(
+                "`main_message` is required when `include_all` is False",
+            )
+        schema = schema_generator.generate(fully_qualified_main_message)
+        if definitions_only:
+            del schema["$ref"]
 
     return json.dumps(schema, indent=2)
 

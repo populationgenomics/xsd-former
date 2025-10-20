@@ -22,6 +22,7 @@ class _SchemaGenerator(Protocol):
         namespace: str = "test",
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
+        definitions_only: bool = False,
     ) -> dict[str, Any]: ...
 
 
@@ -33,6 +34,7 @@ def generate_schema_from_proto_content() -> _SchemaGenerator:
         namespace: str = "test",
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
+        definitions_only: bool = False,
     ) -> dict[str, Any]:
         with tempfile.TemporaryDirectory() as tmpdir:
             proto_path = pathlib.Path(tmpdir) / "test.proto"
@@ -44,6 +46,7 @@ def generate_schema_from_proto_content() -> _SchemaGenerator:
                 main_message=main_message,
                 preserving_proto_field_name=preserving_proto_field_name,
                 include_all=include_all,
+                definitions_only=definitions_only,
             )
         return json.loads(schema_str)
 
@@ -418,7 +421,9 @@ def test_field_comment_preferred_over_type_comment_from_proto(
     assert field_schema["description"] == "This is a comment on the field."
 
 
-def test_generate_from_proto_definitions_only() -> None:
+def test_generate_from_proto_definitions_only(
+    generate_schema_from_proto_content: _SchemaGenerator,
+) -> None:
     """Tests the --definitions-only flag to generate a schema with only definitions."""
     proto_content = """
         syntax = "proto3";
@@ -433,19 +438,54 @@ def test_generate_from_proto_definitions_only() -> None:
             string field_b = 1;
         }
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_path = pathlib.Path(tmpdir)
-        proto_path = tmp_path / "test.proto"
-        proto_path.write_text(proto_content)
+    schema = generate_schema_from_proto_content(
+        proto_content,
+        namespace="testall",
+        main_message=None,
+        include_all=True,
+        definitions_only=True,
+    )
 
-        json_schema_str = generator.generate_from_proto(
-            proto_path=proto_path,
-            namespace="testall",
-            main_message=None,
-            definitions_only=True,
-        )
-        schema = json.loads(json_schema_str)
+    assert "$ref" not in schema
+    assert "testall.MessageA" in schema["definitions"]
+    assert "testall.MessageB" in schema["definitions"]
 
-        assert "$ref" not in schema
-        assert "testall.MessageA" in schema["definitions"]
-        assert "testall.MessageB" in schema["definitions"]
+
+def test_generate_from_proto_with_enum(generate_schema_from_proto_content: _SchemaGenerator) -> None:
+    """Tests that enums are created as definitions and referenced."""
+    proto_content = """
+        syntax = "proto3";
+
+        package testenum;
+
+        enum MyEnum {
+          UNKNOWN = 0;
+          VALUE1 = 1;
+          VALUE2 = 2;
+        }
+
+        message MyMessage {
+          MyEnum my_enum = 1;
+        }
+    """
+    schema = generate_schema_from_proto_content(
+        proto_content,
+        namespace="testenum",
+        main_message="MyMessage",
+        preserving_proto_field_name=False,
+    )
+
+    assert "testenum.MyEnum" in schema["definitions"]
+    assert schema["definitions"]["testenum.MyEnum"] == {"enum": ["UNKNOWN", "VALUE1", "VALUE2"]}
+
+    message_def = schema["definitions"]["testenum.MyMessage"]
+    assert message_def["properties"]["myEnum"] == {"$ref": "#/definitions/testenum.MyEnum"}
+
+    # Validate a correct payload against the schema
+    instance = {"myEnum": "VALUE1"}
+    jsonschema.validate(instance=instance, schema=schema)
+
+    # Assert that an incorrect payload fails validation
+    invalid_instance = {"myEnum": "INVALID_VALUE"}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(instance=invalid_instance, schema=schema)
