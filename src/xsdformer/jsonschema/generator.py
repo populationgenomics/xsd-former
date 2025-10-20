@@ -96,11 +96,6 @@ class _JsonSchemaFromDesc:
                     main_message_descriptor = msg_descriptor
                 if msg_descriptor:
                     self._convert_message_to_schema(msg_descriptor)
-            for enum_proto in fdp.enum_type:
-                full_name = f"{fdp.package}.{enum_proto.name}" if fdp.package else enum_proto.name
-                enum_descriptor = self._pool.FindEnumTypeByName(full_name)
-                if enum_descriptor:
-                    self._convert_enum_to_schema(enum_descriptor)
 
         schema = {
             "$schema": "http://json-schema.org/draft-07/schema#",
