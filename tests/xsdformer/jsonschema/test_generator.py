@@ -15,9 +15,10 @@ from xsdformer.xsd import xsd
 
 
 class _SchemaGenerator(Protocol):
-    def __call__(
+    def __call__(  # noqa: PLR0913
         self,
         proto_content: str,
+        *,
         main_message: str = "TestMessage",
         namespace: str = "test",
         preserving_proto_field_name: bool = True,
@@ -28,8 +29,9 @@ class _SchemaGenerator(Protocol):
 
 @pytest.fixture
 def generate_schema_from_proto_content() -> _SchemaGenerator:
-    def _generate(
+    def _generate(  # noqa: PLR0913
         proto_content: str,
+        *,
         main_message: str = "TestMessage",
         namespace: str = "test",
         preserving_proto_field_name: bool = True,
