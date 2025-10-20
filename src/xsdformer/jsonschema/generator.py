@@ -443,7 +443,7 @@ class _JsonSchemaFromDesc:
         return schema
 
 
-def _generate_schema_from_descriptor_set(
+def _generate_schema_from_descriptor_set(  # noqa: PLR0913
     descriptor_set: descriptor_pb2.FileDescriptorSet,
     namespace: str,
     main_message: str | None,
@@ -524,7 +524,7 @@ def generate(
     )
 
 
-def generate_from_proto(
+def generate_from_proto(  # noqa: PLR0913
     proto_path: pathlib.Path,
     namespace: str,
     main_message: str | None,
