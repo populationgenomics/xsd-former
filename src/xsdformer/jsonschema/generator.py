@@ -149,10 +149,9 @@ class _JsonSchemaFromDesc:
 
         if file_name in self._source_info and tuple(path) in self._source_info[file_name]:
             loc = self._source_info[file_name][tuple(path)]
-            if loc.leading_comments:
-                return loc.leading_comments.strip()
-            if loc.trailing_comments:
-                return loc.trailing_comments.strip()
+            comment = loc.leading_comments or loc.trailing_comments
+            if comment:
+                return comment.strip()
         return None
 
     def _get_message_path(self, desc: descriptor.Descriptor) -> list[int]:
