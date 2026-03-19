@@ -7,9 +7,7 @@ medline_citation {
     value: "33073003"
   }
   date_revised {
-    year: "2023"
-    month: "09"
-    day: "13"
+    seconds: 1694563200
   }
   article {
     pub_model: PUB_MODEL_ELECTRONIC_E_COLLECTION
@@ -23,7 +21,7 @@ medline_citation {
         volume: "6"
         issue: "1"
         pub_date {
-          month: "Mar"
+          seconds: 1583020800
         }
       }
       title: "International journal of neonatal screening"
@@ -37,12 +35,12 @@ medline_citation {
     }
     elocation_id {
       eid_type: EID_TYPE_PII
-      valid_yn: VALID_YN_Y
+      valid_yn: true
       value: "4"
     }
     elocation_id {
       eid_type: EID_TYPE_DOI
-      valid_yn: VALID_YN_Y
+      valid_yn: true
       value: "10.3390/ijns6010004"
     }
     abstract {
@@ -52,9 +50,9 @@ medline_citation {
       copyright_information: "© 2020 by the authors."
     }
     author_list {
-      complete_yn: VALID_YN_Y
+      complete_yn: true
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "BK"
         affiliation_info {
           affiliation {
@@ -68,7 +66,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "J"
         affiliation_info {
           affiliation {
@@ -82,7 +80,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "GE"
         affiliation_info {
           affiliation {
@@ -91,7 +89,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "J"
         affiliation_info {
           affiliation {
@@ -100,7 +98,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "DK"
         affiliation_info {
           affiliation {
@@ -109,7 +107,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "SR"
         affiliation_info {
           affiliation {
@@ -118,7 +116,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "L"
         affiliation_info {
           affiliation {
@@ -127,7 +125,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "R"
         affiliation_info {
           affiliation {
@@ -136,7 +134,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "KM"
         affiliation_info {
           affiliation {
@@ -145,7 +143,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "D"
         affiliation_info {
           affiliation {
@@ -154,7 +152,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "H"
         affiliation_info {
           affiliation {
@@ -163,7 +161,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "P"
         affiliation_info {
           affiliation {
@@ -172,7 +170,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "R"
         affiliation_info {
           affiliation {
@@ -181,7 +179,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "K"
         affiliation_info {
           affiliation {
@@ -196,10 +194,7 @@ medline_citation {
       value: "Journal Article"
     }
     article_date {
-      date_type: "Electronic"
-      year: "2020"
-      month: "01"
-      day: "21"
+      seconds: 1579564800
     }
   }
   medline_journal_info {
@@ -211,11 +206,9 @@ medline_citation {
   keyword_list {
     owner: OWNER_NOTNLM
     keyword {
-      major_topic_yn: VALID_YN_N
       value: "Pompe disease"
     }
     keyword {
-      major_topic_yn: VALID_YN_N
       value: "newborn screening"
     }
   }
@@ -225,46 +218,7 @@ medline_citation {
 }
 pubmed_data {
   history {
-    pub_status: PUB_STATUS_RECEIVED
-    year: "2019"
-    month: "12"
-    day: "11"
-  }
-  history {
-    pub_status: PUB_STATUS_ACCEPTED
-    year: "2020"
-    month: "1"
-    day: "18"
-  }
-  history {
-    pub_status: PUB_STATUS_ENTREZ
-    year: "2020"
-    month: "10"
-    day: "19"
-    hour: "6"
-    minute: "0"
-  }
-  history {
-    pub_status: PUB_STATUS_PUBMED
-    year: "2020"
-    month: "10"
-    day: "20"
-    hour: "6"
-    minute: "0"
-  }
-  history {
-    pub_status: PUB_STATUS_MEDLINE
-    year: "2020"
-    month: "10"
-    day: "20"
-    hour: "6"
-    minute: "1"
-  }
-  history {
-    pub_status: PUB_STATUS_PMC_RELEASE
-    year: "2020"
-    month: "1"
-    day: "21"
+    seconds: -62135596800
   }
   publication_status: "epublish"
   article_id_list {

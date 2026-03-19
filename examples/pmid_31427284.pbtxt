@@ -7,14 +7,10 @@ medline_citation {
     value: "31427284"
   }
   date_completed {
-    year: "2020"
-    month: "09"
-    day: "30"
+    seconds: 1601424000
   }
   date_revised {
-    year: "2021"
-    month: "11"
-    day: "02"
+    seconds: 1635811200
   }
   article {
     pub_model: PUB_MODEL_ELECTRONIC
@@ -28,7 +24,7 @@ medline_citation {
         volume: "9"
         issue: "11"
         pub_date {
-          day: "01"
+          seconds: 1572566400
         }
       }
       title: "Cold Spring Harbor perspectives in medicine"
@@ -39,12 +35,12 @@ medline_citation {
     }
     elocation_id {
       eid_type: EID_TYPE_PII
-      valid_yn: VALID_YN_Y
+      valid_yn: true
       value: "a036780"
     }
     elocation_id {
       eid_type: EID_TYPE_DOI
-      valid_yn: VALID_YN_Y
+      valid_yn: true
       value: "10.1101/cshperspect.a036780"
     }
     abstract {
@@ -54,9 +50,9 @@ medline_citation {
       copyright_information: "Copyright © 2019 Cold Spring Harbor Laboratory Press;\nall rights reserved."
     }
     author_list {
-      complete_yn: VALID_YN_Y
+      complete_yn: true
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "S"
         affiliation_info {
           affiliation {
@@ -65,7 +61,7 @@ medline_citation {
         }
       }
       author {
-        valid_yn: VALID_YN_Y
+        valid_yn: true
         initials: "BJ"
         affiliation_info {
           affiliation {
@@ -84,10 +80,7 @@ medline_citation {
       value: "Review"
     }
     article_date {
-      date_type: "Electronic"
-      year: "2019"
-      month: "11"
-      day: "01"
+      seconds: 1572566400
     }
   }
   medline_journal_info {
@@ -120,95 +113,82 @@ medline_citation {
   citation_subset: "IM"
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D000818"
       value: "Animals"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D000067877"
       value: "Autism Spectrum Disorder"
     }
     qualifier_name {
       ui: "Q000235"
-      major_topic_yn: VALID_YN_N
       value: "genetics"
     }
     qualifier_name {
       ui: "Q000378"
-      major_topic_yn: VALID_YN_Y
+      major_topic_yn: true
       value: "metabolism"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D004195"
       value: "Disease Models, Animal"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D006801"
       value: "Humans"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D051379"
       value: "Mice"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D018345"
       value: "Mice, Knockout"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D065886"
       value: "Neurodevelopmental Disorders"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D051059"
       value: "PTEN Phosphohydrolase"
     }
     qualifier_name {
       ui: "Q000235"
-      major_topic_yn: VALID_YN_N
       value: "genetics"
     }
     qualifier_name {
       ui: "Q000378"
-      major_topic_yn: VALID_YN_Y
+      major_topic_yn: true
       value: "metabolism"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D019869"
       value: "Phosphatidylinositol 3-Kinases"
     }
     qualifier_name {
       ui: "Q000235"
-      major_topic_yn: VALID_YN_N
       value: "genetics"
     }
   }
   mesh_heading_list {
     descriptor_name {
-      major_topic_yn: VALID_YN_N
       ui: "D015398"
       value: "Signal Transduction"
     }
@@ -216,28 +196,7 @@ medline_citation {
 }
 pubmed_data {
   history {
-    pub_status: PUB_STATUS_PUBMED
-    year: "2019"
-    month: "8"
-    day: "21"
-    hour: "6"
-    minute: "0"
-  }
-  history {
-    pub_status: PUB_STATUS_MEDLINE
-    year: "2020"
-    month: "10"
-    day: "2"
-    hour: "6"
-    minute: "0"
-  }
-  history {
-    pub_status: PUB_STATUS_ENTREZ
-    year: "2019"
-    month: "8"
-    day: "21"
-    hour: "6"
-    minute: "0"
+    seconds: -62135596800
   }
   publication_status: "epublish"
   article_id_list {

@@ -1,5 +1,15 @@
 inline_wrappers: true
 flatten_list_wrappers: true
+coerce_to_bool: true
+coerce_to_timestamp:
+  - DateCompleted
+  - DateRevised
+  - ArticleDate
+  - PubDate
+  - PubMedPubDate
+  - BeginningDate
+  - EndingDate
+  - ContributionDate
 collapse_to_string:
   - B
   - I

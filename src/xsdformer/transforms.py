@@ -37,6 +37,11 @@ class SerializeContentInfo:
     serializer: str  # e.g. "markdown"
 
 
+@dataclasses.dataclass(frozen=True)
+class CoercedToTimestampInfo:
+    """Hint that this field was a date message coerced to google.protobuf.Timestamp."""
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class TransformConfig:
     drop_types: frozenset[str] = frozenset()
@@ -47,6 +52,8 @@ class TransformConfig:
     rename_types: dict[str, str] = dataclasses.field(default_factory=dict)
     rename_fields: dict[str, dict[str, str]] = dataclasses.field(default_factory=dict)
     serialize_content: dict[str, str] = dataclasses.field(default_factory=dict)
+    coerce_to_bool: bool = False
+    coerce_to_timestamp: frozenset[str] = frozenset()
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> TransformConfig:
@@ -65,6 +72,8 @@ class TransformConfig:
             rename_types=dict(data.get("rename_types", {})),
             rename_fields=rename_fields,
             serialize_content=dict(data.get("serialize_content", {})),
+            coerce_to_bool=data.get("coerce_to_bool", False),
+            coerce_to_timestamp=frozenset(data.get("coerce_to_timestamp", [])),
         )
 
 
@@ -202,6 +211,41 @@ def _collapse_to_string(
     return [d for d in defs if id(d) not in to_remove]
 
 
+def _coerce_to_bool(
+    defs: list[xsd.TypeDefinition],
+    field_index: dict[int, list[xsd.Field]],
+) -> list[xsd.TypeDefinition]:
+    """Auto-detect Y/N enums and coerce referencing fields to bool."""
+    to_remove: set[int] = set()
+    for type_def in defs:
+        if not isinstance(type_def, xsd.Enumeration):
+            continue
+        if set(type_def.enum_values) != {"Y", "N"}:
+            continue
+        for ref_field in field_index.get(id(type_def), []):
+            ref_field.proto_type = xsd.AtomicType.BOOL
+        to_remove.add(id(type_def))
+    return [d for d in defs if id(d) not in to_remove]
+
+
+def _coerce_to_timestamp(
+    defs: list[xsd.TypeDefinition],
+    coerce_to_timestamp: frozenset[str],
+    field_index: dict[int, list[xsd.Field]],
+) -> list[xsd.TypeDefinition]:
+    """Replace date message types with google.protobuf.Timestamp fields."""
+    to_remove: set[int] = set()
+    info = CoercedToTimestampInfo()
+    for type_def in defs:
+        if type_def.name not in coerce_to_timestamp:
+            continue
+        for ref_field in field_index.get(id(type_def), []):
+            ref_field.proto_type = xsd.AtomicType.DATE
+            ref_field.transform_hint = info
+        to_remove.add(id(type_def))
+    return [d for d in defs if id(d) not in to_remove]
+
+
 def _serialize_content(
     defs: list[xsd.TypeDefinition],
     serialize_content: dict[str, str],
@@ -255,6 +299,11 @@ def apply_transforms(
     # Rebuild index after drops.
     field_index = _build_field_index(result)
 
+    # 2b. Coerce Y/N enums to bool (before auto-detect; enums aren't affected by inline/flatten).
+    if config.coerce_to_bool:
+        result = _coerce_to_bool(result, field_index)
+        field_index = _build_field_index(result)
+
     # 3. Auto-detect transforms (loop to handle cascading).
     changed = True
     while changed:
@@ -266,6 +315,11 @@ def apply_transforms(
             result = _flatten_list_wrappers(result, field_index)
             field_index = _build_field_index(result)
         changed = len(result) < prev_len
+
+    # 3b. Coerce date messages to Timestamp (after flatten so wrappers like History are gone).
+    if config.coerce_to_timestamp:
+        result = _coerce_to_timestamp(result, config.coerce_to_timestamp, field_index)
+        field_index = _build_field_index(result)
 
     # 4. Explicit collapse.
     result = _collapse_to_string(result, config.collapse_to_string, field_index)
