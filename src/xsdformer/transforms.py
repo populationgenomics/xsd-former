@@ -227,14 +227,17 @@ def apply_transforms(
     # Rebuild index after drops.
     field_index = _build_field_index(result)
 
-    # 3. Auto-detect transforms.
-    if config.inline_wrappers:
-        result = _inline_wrappers(result, field_index)
-        field_index = _build_field_index(result)
-
-    if config.flatten_list_wrappers:
-        result = _flatten_list_wrappers(result, field_index)
-        field_index = _build_field_index(result)
+    # 3. Auto-detect transforms (loop to handle cascading).
+    changed = True
+    while changed:
+        prev_len = len(result)
+        if config.inline_wrappers:
+            result = _inline_wrappers(result, field_index)
+            field_index = _build_field_index(result)
+        if config.flatten_list_wrappers:
+            result = _flatten_list_wrappers(result, field_index)
+            field_index = _build_field_index(result)
+        changed = len(result) < prev_len
 
     # 4. Explicit collapse.
     result = _collapse_to_string(result, config.collapse_to_string, field_index)

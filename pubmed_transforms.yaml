@@ -1,0 +1,8 @@
+inline_wrappers: true
+flatten_list_wrappers: true
+collapse_to_string:
+  - B
+  - I
+  - Sub
+  - Sup
+  - U
