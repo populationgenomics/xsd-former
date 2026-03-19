@@ -100,6 +100,7 @@ class ProtobufGenerator:
         yield f"{type_str} {field_def.name} = {field_def.num};"
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
+        saved = getattr(self, "_emitted_fields", None)
         self._emitted_fields: set[str] = set()
         yield f"message {msg_def.name} {{"
         for inner in msg_def.inner_types():
@@ -107,6 +108,7 @@ class ProtobufGenerator:
         for field_def in msg_def.content:
             yield from text.indent(self.message_field(field_def, msg_def.path))
         yield "}"
+        self._emitted_fields = saved or set()
 
 
 def generate(

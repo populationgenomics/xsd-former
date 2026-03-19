@@ -186,6 +186,14 @@ def _flatten_list_wrappers(
             continue
         if not field.is_repeated:
             continue
+        # Skip wrappers whose inner type is nested inside them — reparenting
+        # can cause name collisions.
+        if (
+            isinstance(field.proto_type, xsd.TypeDefinition)
+            and field.proto_type.enclosing_type
+            and field.proto_type.enclosing_type[0] is type_def
+        ):
+            continue
         # Single repeated field wrapper. Flatten it.
         for ref_field in field_index.get(id(type_def), []):
             ref_field.proto_type = field.proto_type
