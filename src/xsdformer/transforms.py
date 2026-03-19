@@ -54,6 +54,7 @@ class TransformConfig:
     serialize_content: dict[str, str] = dataclasses.field(default_factory=dict)
     coerce_to_bool: bool = False
     coerce_to_timestamp: frozenset[str] = frozenset()
+    comments: dict[str, str] = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> TransformConfig:
@@ -74,6 +75,7 @@ class TransformConfig:
             serialize_content=dict(data.get("serialize_content", {})),
             coerce_to_bool=data.get("coerce_to_bool", False),
             coerce_to_timestamp=frozenset(data.get("coerce_to_timestamp", [])),
+            comments=dict(data.get("comments", {})),
         )
 
 
@@ -273,6 +275,20 @@ def _serialize_content(
                 field.transform_hint = TransformHint.DROPPED
 
 
+def _add_comments(
+    defs: list[xsd.TypeDefinition],
+    comments: dict[str, str],
+) -> None:
+    """Set or append documentation on types and fields from config."""
+    for type_def in defs:
+        if type_def.name in comments:
+            type_def.documentation = comments[type_def.name]
+        for field in type_def.get_fields():
+            key = f"{type_def.name}.{field.name}"
+            if key in comments:
+                field.documentation = comments[key]
+
+
 def _renumber_fields(defs: list[xsd.TypeDefinition]) -> None:
     for type_def in defs:
         if not isinstance(type_def, xsd.Message):
@@ -292,6 +308,9 @@ def apply_transforms(
 ) -> tuple[xsd.TypeDefinition, ...]:
     """Applies transforms to the IR in-place and returns the filtered defs."""
     result = list(defs)
+
+    # 0. Comments (before renames so config uses original type/field names).
+    _add_comments(result, config.comments)
 
     # 1. Renames first (before any removals).
     _rename_types(result, config.rename_types)

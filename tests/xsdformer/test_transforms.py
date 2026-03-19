@@ -305,6 +305,36 @@ class TestCombined:
         assert "Book" in names
 
 
+class TestComments:
+    def test_adds_type_comment(self) -> None:
+        defs = _parse()
+        config = TransformConfig(comments={"Book": "A book record."})
+        result = apply_transforms(defs, config)
+        book = next(d for d in result if d.name == "Book")
+        assert book.documentation == "A book record."
+
+    def test_adds_field_comment(self) -> None:
+        defs = _parse()
+        config = TransformConfig(comments={"Book.title": "The book title."})
+        result = apply_transforms(defs, config)
+        book = next(d for d in result if d.name == "Book")
+        title_field = next(f for f in book.get_fields() if f.name == "title")
+        assert title_field.documentation == "The book title."
+
+    def test_comment_appears_in_proto(self) -> None:
+        defs = _parse()
+        config = TransformConfig(
+            comments={
+                "Book": "A book record.",
+                "Book.title": "The book title.",
+            }
+        )
+        result = apply_transforms(defs, config)
+        proto = "\n".join(proto_gen.generate("test", result))
+        assert "// A book record." in proto
+        assert "// The book title." in proto
+
+
 _MIXED_DTD = """
     <!ELEMENT article (title, abstract?)>
     <!ATTLIST article id ID #REQUIRED>

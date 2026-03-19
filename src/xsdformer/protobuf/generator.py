@@ -23,6 +23,8 @@ class ProtobufGenerator:
         return []
 
     def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
+        if enum_def.documentation:
+            yield from text.render_comment(enum_def.documentation)
         yield f"enum {enum_def.name} {{"
         for field in enum_def.field_iter():
             yield f"  {field.name} = {field.num};"
@@ -102,6 +104,8 @@ class ProtobufGenerator:
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
         saved = getattr(self, "_emitted_fields", None)
         self._emitted_fields: set[str] = set()
+        if msg_def.documentation:
+            yield from text.render_comment(msg_def.documentation)
         yield f"message {msg_def.name} {{"
         for inner in msg_def.inner_types():
             yield from text.indent(self.definition(inner))
