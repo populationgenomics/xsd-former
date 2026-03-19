@@ -26,6 +26,7 @@ def cli() -> None:
 
 
 @cli.command("xsd")
+@click.argument("xsd_file", type=click.Path(exists=True))
 @click.option("--proto-out", type=click.Path(), help="Output protobuf file.")
 @click.option("--py-out", type=click.Path(), help="Output python converter file.")
 @click.option(
