@@ -1,12 +1,22 @@
 """Tests for IR transforms."""
 
+import importlib.util
 import io
+import pathlib
+import subprocess
+import sys
+import types
 
 from lxml import etree
 
 from tests.xsdformer.conftest import PyConverterModuleFactory
+from xsdformer.dtd import dtd
+from xsdformer.protobuf import generator as proto_gen
+from xsdformer.py import xml_converter
+from xsdformer.py.xml_converter import _serialize_markdown
 from xsdformer.transforms import (
     InlinedWrapperInfo,
+    SerializeContentInfo,
     TransformConfig,
     TransformHint,
     apply_transforms,
@@ -292,3 +302,163 @@ class TestCombined:
         assert "NameWrapper" not in names
         assert "AuthorList" not in names
         assert "Book" in names
+
+
+_MIXED_DTD = """
+    <!ELEMENT article (title, abstract?)>
+    <!ATTLIST article id ID #REQUIRED>
+    <!ELEMENT title (#PCDATA | b | i | sup)*>
+    <!ATTLIST title lang CDATA #IMPLIED>
+    <!ELEMENT abstract (#PCDATA | b | i)*>
+    <!ELEMENT b (#PCDATA | b | i | sup)*>
+    <!ELEMENT i (#PCDATA | b | i | sup)*>
+    <!ELEMENT sup (#PCDATA | b | i)*>
+"""
+
+
+def _parse_dtd(dtd_str: str = _MIXED_DTD) -> tuple[xsd.TypeDefinition, ...]:
+    return dtd.process_dtd(io.StringIO(dtd_str))
+
+
+class TestSerializeContent:
+    def test_marks_value_elem_and_drops_elem_fields(self) -> None:
+        defs = _parse_dtd()
+        config = TransformConfig(serialize_content={"Title": "markdown"})
+        result = apply_transforms(defs, config)
+        title = next(d for d in result if d.name == "Title")
+        fields = list(title.get_fields())
+        value_fields = [f for f in fields if isinstance(f, xsd.ValueElem)]
+        assert len(value_fields) == 1
+        assert isinstance(value_fields[0].transform_hint, SerializeContentInfo)
+        assert value_fields[0].transform_hint.serializer == "markdown"
+        elem_fields = [f for f in fields if isinstance(f, xsd.Elem)]
+        assert all(f.transform_hint is TransformHint.DROPPED for f in elem_fields)
+
+    def test_preserves_attributes(self) -> None:
+        defs = _parse_dtd()
+        config = TransformConfig(serialize_content={"Title": "markdown"})
+        result = apply_transforms(defs, config)
+        title = next(d for d in result if d.name == "Title")
+        attr_fields = [f for f in title.get_fields() if isinstance(f, xsd.Attr)]
+        assert any(f.name == "lang" for f in attr_fields)
+        assert all(f.transform_hint is None for f in attr_fields)
+
+    def test_does_not_remove_type_from_defs(self) -> None:
+        defs = _parse_dtd()
+        config = TransformConfig(serialize_content={"Title": "markdown"})
+        result = apply_transforms(defs, config)
+        assert any(d.name == "Title" for d in result)
+
+    def test_end_to_end(self, tmp_path: pathlib.Path) -> None:
+        type_defs = _parse_dtd()
+        config = TransformConfig(serialize_content={"Title": "markdown"})
+        type_defs = apply_transforms(type_defs, config)
+
+        namespace = "serialize_test"
+        proto_def = "\n".join(proto_gen.generate(namespace, type_defs))
+        proto_path = tmp_path / f"{namespace}.proto"
+        proto_path.write_text(proto_def)
+
+        spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+        assert spec is not None
+        assert spec.origin is not None
+        proto_include = pathlib.Path(spec.origin).parent.parent
+        subprocess.run(  # noqa: S603
+            [
+                sys.executable,
+                "-m",
+                "grpc_tools.protoc",
+                f"--proto_path={tmp_path}",
+                f"--proto_path={proto_include}",
+                f"--python_out={tmp_path}",
+                str(proto_path.relative_to(tmp_path)),
+            ],
+            check=True,
+        )
+
+        pb2_spec = importlib.util.spec_from_file_location(
+            f"{namespace}_pb2",
+            tmp_path / f"{namespace}_pb2.py",
+        )
+        assert pb2_spec is not None
+        assert pb2_spec.loader is not None
+        module_pb2 = importlib.util.module_from_spec(pb2_spec)
+        pb2_spec.loader.exec_module(module_pb2)
+
+        converter_code = "\n".join(
+            xml_converter.generate(namespace, type_defs, module_pb2.__name__),
+        )
+        converter = types.ModuleType("serialize_converter")
+        old = sys.modules.get(module_pb2.__name__)
+        sys.modules[module_pb2.__name__] = module_pb2
+        try:
+            exec(converter_code, converter.__dict__)
+        finally:
+            if old is None:
+                del sys.modules[module_pb2.__name__]
+            else:
+                sys.modules[module_pb2.__name__] = old
+
+        # Simple text
+        xml1 = b'<article id="a1"><title>Hello world</title></article>'
+        result1 = converter.Article(etree.fromstring(xml1))
+        assert result1.title.value == "Hello world"
+
+        # With inline markup
+        xml2 = b'<article id="a2"><title>Effect of <i>E. coli</i> on growth</title></article>'
+        result2 = converter.Article(etree.fromstring(xml2))
+        assert result2.title.value == "Effect of *E. coli* on growth"
+
+        # Nested markup
+        xml3 = b'<article id="a3"><title><b>Bold <i>and italic</i></b> text</title></article>'
+        result3 = converter.Article(etree.fromstring(xml3))
+        assert result3.title.value == "**Bold *and italic*** text"
+
+        # Attribute preserved
+        assert result1.id == "a1"
+
+        # Superscript
+        xml4 = b'<article id="a4"><title>x<sup>2</sup> + y</title></article>'
+        result4 = converter.Article(etree.fromstring(xml4))
+        assert result4.title.value == "x^(2) + y"
+
+        # Unknown tags: text extracted
+        xml5 = b'<article id="a5"><title>See <unknown>content</unknown> here</title></article>'
+        result5 = converter.Article(etree.fromstring(xml5))
+        assert result5.title.value == "See content here"
+
+
+class TestSerializeMarkdownDirect:
+    """Direct tests of _serialize_markdown without going through the full pipeline."""
+
+    def test_plain_text(self) -> None:
+        el = etree.fromstring(b"<t>Hello world</t>")
+        assert _serialize_markdown(el) == "Hello world"
+
+    def test_bold(self) -> None:
+        el = etree.fromstring(b"<t>Hello <b>world</b></t>")
+        assert _serialize_markdown(el) == "Hello **world**"
+
+    def test_italic(self) -> None:
+        el = etree.fromstring(b"<t>Hello <i>world</i></t>")
+        assert _serialize_markdown(el) == "Hello *world*"
+
+    def test_nested(self) -> None:
+        el = etree.fromstring(b"<t><b>Bold <i>and italic</i></b> text</t>")
+        assert _serialize_markdown(el) == "**Bold *and italic*** text"
+
+    def test_tail_text(self) -> None:
+        el = etree.fromstring(b"<t>a <b>b</b> c <i>d</i> e</t>")
+        assert _serialize_markdown(el) == "a **b** c *d* e"
+
+    def test_superscript(self) -> None:
+        el = etree.fromstring(b"<t>x<sup>2</sup></t>")
+        assert _serialize_markdown(el) == "x^(2)"
+
+    def test_subscript(self) -> None:
+        el = etree.fromstring(b"<t>H<sub>2</sub>O</t>")
+        assert _serialize_markdown(el) == "H~(2)O"
+
+    def test_unknown_tag_extracts_text(self) -> None:
+        el = etree.fromstring(b"<t>See <math>x=1</math> here</t>")
+        assert _serialize_markdown(el) == "See x=1 here"

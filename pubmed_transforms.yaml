@@ -6,3 +6,19 @@ collapse_to_string:
   - Sub
   - Sup
   - U
+serialize_content:
+  AbstractText: markdown
+  Affiliation: markdown
+  ArticleTitle: markdown
+  BookTitle: markdown
+  Citation: markdown
+  CoiStatement: markdown
+  CollectionTitle: markdown
+  CollectiveName: markdown
+  Keyword: markdown
+  Param: markdown
+  PublisherName: markdown
+  SectionTitle: markdown
+  Suffix: markdown
+  VernacularTitle: markdown
+  VolumeTitle: markdown
