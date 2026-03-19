@@ -9,6 +9,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "lxml",
     "protobuf>=6.32.1",
+    "pyyaml>=6.0.3",
     "xmlschema",
 ]
 

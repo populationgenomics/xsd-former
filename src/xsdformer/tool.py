@@ -6,7 +6,18 @@ from xsdformer.dtd import dtd
 from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
+from xsdformer.transforms import TransformConfig, apply_transforms
 from xsdformer.xsd import xsd
+
+
+def _maybe_transform(
+    type_defs: tuple[xsd.TypeDefinition, ...],
+    transforms: str | None,
+) -> tuple[xsd.TypeDefinition, ...]:
+    if transforms:
+        config = TransformConfig.from_yaml(pathlib.Path(transforms))
+        return apply_transforms(type_defs, config)
+    return type_defs
 
 
 @click.group()
@@ -38,6 +49,11 @@ def cli() -> None:
     help="Package name to use in the protobuf file.",
     type=str,
 )
+@click.option(
+    "--transforms",
+    type=click.Path(exists=True),
+    help="YAML file specifying IR transforms to apply.",
+)
 def xsd_command(  # noqa: PLR0913
     xsd_file: str,
     proto_out: str,
@@ -47,10 +63,11 @@ def xsd_command(  # noqa: PLR0913
     main_message: str,
     preserving_proto_field_name: bool,
     proto_package: str,
+    transforms: str | None,
 ) -> None:
     """Converts an XSD file to a Protobuf definition and/or a Python XML converter."""
 
-    type_defs = xsd.process_xsd(xsd_file)
+    type_defs = _maybe_transform(xsd.process_xsd(xsd_file), transforms)
 
     if not proto_out and not py_out and not json_schema_out:
         namespace = proto_package or pathlib.Path(xsd_file).stem
@@ -161,6 +178,11 @@ def proto(  # noqa: PLR0913
     help="Package name to use in the protobuf file.",
     type=str,
 )
+@click.option(
+    "--transforms",
+    type=click.Path(exists=True),
+    help="YAML file specifying IR transforms to apply.",
+)
 def dtd_command(  # noqa: PLR0913
     dtd_file: str,
     proto_out: str,
@@ -170,10 +192,11 @@ def dtd_command(  # noqa: PLR0913
     main_message: str,
     preserving_proto_field_name: bool,
     proto_package: str,
+    transforms: str | None,
 ) -> None:
     """Converts a DTD file to a Protobuf definition and/or a Python XML converter."""
 
-    type_defs = dtd.process_dtd(dtd_file)
+    type_defs = _maybe_transform(dtd.process_dtd(dtd_file), transforms)
 
     if not proto_out and not py_out and not json_schema_out:
         namespace = proto_package or pathlib.Path(dtd_file).stem
