@@ -112,6 +112,18 @@ def _collect_mixed_elements(node: _ContentNode | None) -> list[_ContentNode]:
     return result
 
 
+def _collect_referenced_names(node: _ContentNode | None) -> set[str]:
+    """Collects all element names referenced in a content model tree."""
+    if node is None:
+        return set()
+    names: set[str] = set()
+    if node.type == "element" and node.name:
+        names.add(node.name)
+    names.update(_collect_referenced_names(node.left))
+    names.update(_collect_referenced_names(node.right))
+    return names
+
+
 def _attr_type_from_dtd(
     attr: _AttributeDecl,
     message: xsd.Message,
@@ -234,11 +246,33 @@ def _build_message_content(
     return tuple(fields)
 
 
+def _merge_occurs(a: xsd.Occurs, b: xsd.Occurs) -> xsd.Occurs:
+    """Merges two occurrence tuples by taking the widest range."""
+    min_o = min(a[0], b[0])
+    max_o = None if a[1] is None or b[1] is None else max(a[1], b[1])
+    return (min_o, max_o)
+
+
 def _number_fields(message: xsd.Message) -> None:
-    """Assigns field numbers and computed occurs to a Message's fields."""
-    for i, (f, occurs) in enumerate(xsd.get_fields_occurs(message, occurs=(1, 1)), start=1):
-        f.num = i
-        f.computed_occurs = occurs
+    """Assigns field numbers and computed occurs to a Message's fields.
+
+    Handles duplicate field names (from DTD choice branches with overlapping
+    elements) by assigning the same field number and merging occurs.
+    """
+    seen: dict[str, xsd.Field] = {}
+    next_num = 1
+    for f, occurs in xsd.get_fields_occurs(message, occurs=(1, 1)):
+        if f.name in seen:
+            # Duplicate field: reuse number and widen occurs.
+            first = seen[f.name]
+            f.num = first.num
+            f.computed_occurs = occurs
+            first.computed_occurs = _merge_occurs(first.computed_occurs, occurs)
+        else:
+            f.num = next_num
+            f.computed_occurs = occurs
+            seen[f.name] = f
+            next_num += 1
 
 
 def _apply_map_overrides(
@@ -313,6 +347,19 @@ def process_dtd(
             documentation=None,
             content=(),
         )
+
+    # Create stub Messages for elements referenced in content models but not
+    # declared (e.g. MathML elements when the MathML DTD wasn't resolved).
+    for element in elements:
+        for name in _collect_referenced_names(element.content):
+            if name not in element_messages:
+                stub = xsd.Message(
+                    name=text.pascal_case(name),
+                    documentation=None,
+                    content=(xsd.ValueElem(documentation=None, proto_type=xsd.AtomicType.COMPLEXANY),),
+                )
+                _number_fields(stub)
+                element_messages[name] = stub
 
     # Pass 2: fill in content.
     enum_registry: dict[frozenset[str], xsd.Enumeration] = {}

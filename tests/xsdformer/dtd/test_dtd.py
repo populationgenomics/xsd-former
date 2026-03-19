@@ -1,6 +1,15 @@
+import importlib.util
 import io
+import pathlib
+import subprocess
+import sys
+import types
+
+from lxml import etree
 
 from xsdformer.dtd import dtd
+from xsdformer.protobuf import generator as proto_gen
+from xsdformer.py import xml_converter
 from xsdformer.xsd import xsd
 
 
@@ -198,6 +207,111 @@ def test_shared_enum() -> None:
     a_flag = _fields_by_name(types["A"])["flag"]
     b_flag = _fields_by_name(types["B"])["flag"]
     assert a_flag.proto_type is b_flag.proto_type
+
+
+def test_duplicate_fields_in_choice() -> None:
+    """Same element in multiple choice branches gets deduplicated for proto numbering."""
+    type_defs = _process("""
+        <!ELEMENT article ((pagination, elocation_id*) | elocation_id+)>
+        <!ELEMENT pagination (#PCDATA)>
+        <!ELEMENT elocation_id (#PCDATA)>
+    """)
+    msg = _by_name(type_defs)["Article"]
+    # Both elocation_id fields should have the same field number.
+    all_fields = list(msg.get_fields())
+    eid_fields = [f for f in all_fields if f.name == "elocation_id"]
+    assert len(eid_fields) == 2
+    assert eid_fields[0].num == eid_fields[1].num
+
+
+def test_duplicate_fields_proto_generation() -> None:
+    """Proto generation emits duplicate field name only once."""
+    type_defs = _process("""
+        <!ELEMENT article ((pagination, elocation_id*) | elocation_id+)>
+        <!ELEMENT pagination (#PCDATA)>
+        <!ELEMENT elocation_id (#PCDATA)>
+    """)
+    proto_lines = list(proto_gen.generate("test", type_defs))
+    # elocation_id should appear exactly once as a field definition.
+    field_lines = [line.strip() for line in proto_lines if "elocation_id" in line and "=" in line]
+    assert len(field_lines) == 1
+    assert "repeated" in field_lines[0]
+
+
+def test_undefined_element_stub() -> None:
+    """Elements referenced in content but not declared get stub Messages."""
+    type_defs = _process("""
+        <!ELEMENT container (known, unknown_elem)>
+        <!ELEMENT known (#PCDATA)>
+    """)
+    types = _by_name(type_defs)
+    assert "UnknownElem" in types
+    stub_fields = _fields_by_name(types["UnknownElem"])
+    assert "value" in stub_fields
+    assert stub_fields["value"].proto_type is xsd.AtomicType.COMPLEXANY
+
+
+def test_converter_with_choice_duplicates(tmp_path: pathlib.Path) -> None:
+    """XML converter correctly handles choice branches with overlapping elements."""
+    dtd_str = """
+        <!ELEMENT root ((pagination, eid*) | eid+)>
+        <!ELEMENT pagination (#PCDATA)>
+        <!ELEMENT eid (#PCDATA)>
+    """
+
+    type_defs = _process(dtd_str)
+    namespace = "testdup"
+    proto_def = "\n".join(proto_gen.generate(namespace, type_defs))
+    proto_path = tmp_path / f"{namespace}.proto"
+    proto_path.write_text(proto_def)
+
+    # Compile proto
+    spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+    proto_include = pathlib.Path(spec.origin).parent.parent
+    subprocess.run(  # noqa: S603
+        [
+            sys.executable,
+            "-m",
+            "grpc_tools.protoc",
+            f"--proto_path={tmp_path}",
+            f"--proto_path={proto_include}",
+            f"--python_out={tmp_path}",
+            str(proto_path.relative_to(tmp_path)),
+        ],
+        check=True,
+    )
+
+    # Load compiled module
+    pb2_spec = importlib.util.spec_from_file_location(
+        f"{namespace}_pb2",
+        tmp_path / f"{namespace}_pb2.py",
+    )
+    module_pb2 = importlib.util.module_from_spec(pb2_spec)
+    pb2_spec.loader.exec_module(module_pb2)
+
+    # Generate and load converter
+    converter_code = "\n".join(xml_converter.generate(namespace, type_defs, module_pb2.__name__))
+    converter = types.ModuleType("testdup_converter")
+    old = sys.modules.get(module_pb2.__name__)
+    sys.modules[module_pb2.__name__] = module_pb2
+    try:
+        exec(converter_code, converter.__dict__)
+    finally:
+        if old is None:
+            del sys.modules[module_pb2.__name__]
+        else:
+            sys.modules[module_pb2.__name__] = old
+
+    # Test branch 1: pagination + eid
+    xml1 = b"<root><pagination>p1</pagination><eid>e1</eid><eid>e2</eid></root>"
+    proto1 = converter.Root(etree.fromstring(xml1))
+    assert proto1.pagination.value == "p1"
+    assert len(proto1.eid) == 2
+
+    # Test branch 2: eid only
+    xml2 = b"<root><eid>e1</eid></root>"
+    proto2 = converter.Root(etree.fromstring(xml2))
+    assert len(proto2.eid) == 1
 
 
 def test_output_ordering_alphabetical() -> None:

@@ -44,6 +44,9 @@ def _remove_common_prefix(
 
 def _relative_path(path: tuple[str, ...], relative_to: tuple[str, ...]) -> str:
     a, b = _remove_common_prefix(relative_to, path)
+    if not b:
+        # Self-reference or identical path: use the last name component.
+        return path[-1]
     if b[0] in a:
         return "." + ".".join(path)
     return ".".join(b)
@@ -346,12 +349,15 @@ class Message(TypeDefinition):
     content: tuple[FieldDefinition, ...]
 
     def inner_types(self) -> Iterator[TypeDefinition]:
+        seen: set[int] = set()
         for field in self.get_fields():
             if (
                 isinstance(field.proto_type, TypeDefinition)
                 and field.proto_type.enclosing_type
                 and field.proto_type.enclosing_type[0] is self
+                and id(field.proto_type) not in seen
             ):
+                seen.add(id(field.proto_type))
                 yield field.proto_type
 
     def __repr__(self) -> str:
@@ -378,9 +384,17 @@ class Enumeration(TypeDefinition):
 
         base = text.snake_case(self.name).upper()
 
-        yield EnumField(0, base + "_UNSPECIFIED", None)
+        seen: set[str] = set()
+        unspecified = base + "_UNSPECIFIED"
+        seen.add(unspecified)
+        yield EnumField(0, unspecified, None)
         for i, xml_value in enumerate(self.enum_values, start=1):
-            yield EnumField(i, base + "_" + text.snake_case(xml_value).upper(), xml_value)
+            name = base + "_" + text.snake_case(xml_value).upper()
+            if name in seen:
+                # Deduplicate by appending the field number.
+                name = f"{name}_{i}"
+            seen.add(name)
+            yield EnumField(i, name, xml_value)
 
 
 @dataclasses.dataclass(eq=False, kw_only=True)

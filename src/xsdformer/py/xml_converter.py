@@ -84,6 +84,7 @@ def _make_atom_caster(atom_type: xsd.AtomicType, var: str) -> str:
         xsd.AtomicType.DATE: "_xml_date({0})",
         xsd.AtomicType.BYTES: "({0}).encode('utf-8')",
         xsd.AtomicType.SIMPLEANY: "{0}",
+        xsd.AtomicType.COMPLEXANY: "{0}",
     }
     try:
         return caster_map[atom_type].format(var)
