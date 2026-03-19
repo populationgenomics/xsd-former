@@ -1,0 +1,2302 @@
+# PMID: 31427284
+medline_citation {
+  owner: OWNER_NLM
+  status: STATUS_MEDLINE
+  pmid {
+    version: "1"
+    value: "31427284"
+  }
+  date_completed {
+    year: "2020"
+    month: "09"
+    day: "30"
+  }
+  date_revised {
+    year: "2021"
+    month: "11"
+    day: "02"
+  }
+  article {
+    pub_model: PUB_MODEL_ELECTRONIC
+    journal {
+      issn {
+        issn_type: ISSN_TYPE_ELECTRONIC
+        value: "2157-1422"
+      }
+      journal_issue {
+        cited_medium: CITED_MEDIUM_INTERNET
+        volume: "9"
+        issue: "11"
+        pub_date {
+          day: "01"
+        }
+      }
+      title: "Cold Spring Harbor perspectives in medicine"
+      isoabbreviation: "Cold Spring Harb Perspect Med"
+    }
+    article_title {
+      value: "PTEN in Autism and Neurodevelopmental Disorders."
+    }
+    elocation_id {
+      eid_type: EID_TYPE_PII
+      valid_yn: VALID_YN_Y
+      value: "a036780"
+    }
+    elocation_id {
+      eid_type: EID_TYPE_DOI
+      valid_yn: VALID_YN_Y
+      value: "10.1101/cshperspect.a036780"
+    }
+    abstract {
+      abstract_text {
+        value: "Phosphatase and tensin homolog (PTEN) is a classical tumor\nsuppressor that antagonizes phosphatidylinositol 3-phosphate kinase (PI3K)/AKT signaling.\nAlthough there is a strong association of *PTEN* germline mutations with cancer syndromes,\nthey have also been described in a subset of patients with autism spectrum disorders with\nmacrocephaly characterized by impairments in social interactions and communication, repetitive\nbehavior and, occasionally, epilepsy. To investigate PTEN\\\'s role during neurodevelopment and\nits implication for autism, several conditional *Pten* knockout mouse models have been\ngenerated. These models are valuable tools to understand PTEN\\\'s spatiotemporal roles during\nneurodevelopment. In this review, we will highlight the anatomical and phenotypic results from\nanimal studies and link them to cellular and molecular findings."
+      }
+      copyright_information: "Copyright © 2019 Cold Spring Harbor Laboratory Press;\nall rights reserved."
+    }
+    author_list {
+      complete_yn: VALID_YN_Y
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "S"
+        affiliation_info {
+          affiliation {
+            value: "Institute of Biochemistry, Charité -\nUniversitätsmedizin Berlin, 10117 Berlin, Germany."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "BJ"
+        affiliation_info {
+          affiliation {
+            value: "Institute of Biochemistry, Charité -\nUniversitätsmedizin Berlin, 10117 Berlin, Germany."
+          }
+        }
+      }
+    }
+    language: "eng"
+    publication_type_list {
+      ui: "D016428"
+      value: "Journal Article"
+    }
+    publication_type_list {
+      ui: "D016454"
+      value: "Review"
+    }
+    article_date {
+      date_type: "Electronic"
+      year: "2019"
+      month: "11"
+      day: "01"
+    }
+  }
+  medline_journal_info {
+    country: "United States"
+    medline_ta: "Cold Spring Harb Perspect Med"
+    nlm_unique_id: "101571139"
+    issnlinking: "2157-1422"
+  }
+  chemical_list {
+    registry_number: "EC 3.1.3.67"
+    name_of_substance {
+      ui: "D051059"
+      value: "PTEN Phosphohydrolase"
+    }
+  }
+  chemical_list {
+    registry_number: "EC 3.1.3.67"
+    name_of_substance {
+      ui: "C494929"
+      value: "PTEN protein, human"
+    }
+  }
+  chemical_list {
+    registry_number: "EC 3.1.3.67"
+    name_of_substance {
+      ui: "C487757"
+      value: "Pten protein, mouse"
+    }
+  }
+  citation_subset: "IM"
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D000818"
+      value: "Animals"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D000067877"
+      value: "Autism Spectrum Disorder"
+    }
+    qualifier_name {
+      ui: "Q000235"
+      major_topic_yn: VALID_YN_N
+      value: "genetics"
+    }
+    qualifier_name {
+      ui: "Q000378"
+      major_topic_yn: VALID_YN_Y
+      value: "metabolism"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D004195"
+      value: "Disease Models, Animal"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D006801"
+      value: "Humans"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D051379"
+      value: "Mice"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D018345"
+      value: "Mice, Knockout"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D065886"
+      value: "Neurodevelopmental Disorders"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D051059"
+      value: "PTEN Phosphohydrolase"
+    }
+    qualifier_name {
+      ui: "Q000235"
+      major_topic_yn: VALID_YN_N
+      value: "genetics"
+    }
+    qualifier_name {
+      ui: "Q000378"
+      major_topic_yn: VALID_YN_Y
+      value: "metabolism"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D019869"
+      value: "Phosphatidylinositol 3-Kinases"
+    }
+    qualifier_name {
+      ui: "Q000235"
+      major_topic_yn: VALID_YN_N
+      value: "genetics"
+    }
+  }
+  mesh_heading_list {
+    descriptor_name {
+      major_topic_yn: VALID_YN_N
+      ui: "D015398"
+      value: "Signal Transduction"
+    }
+  }
+}
+pubmed_data {
+  history {
+    pub_status: PUB_STATUS_PUBMED
+    year: "2019"
+    month: "8"
+    day: "21"
+    hour: "6"
+    minute: "0"
+  }
+  history {
+    pub_status: PUB_STATUS_MEDLINE
+    year: "2020"
+    month: "10"
+    day: "2"
+    hour: "6"
+    minute: "0"
+  }
+  history {
+    pub_status: PUB_STATUS_ENTREZ
+    year: "2019"
+    month: "8"
+    day: "21"
+    hour: "6"
+    minute: "0"
+  }
+  publication_status: "epublish"
+  article_id_list {
+    id_type: ID_TYPE_PUBMED
+    value: "31427284"
+  }
+  article_id_list {
+    id_type: ID_TYPE_PMC
+    value: "PMC6824399"
+  }
+  article_id_list {
+    id_type: ID_TYPE_DOI
+    value: "10.1101/cshperspect.a036780"
+  }
+  article_id_list {
+    id_type: ID_TYPE_PII
+    value: "cshperspect.a036780"
+  }
+  reference_list {
+    reference {
+      citation {
+        value: "Ahmed G, Shinmyo Y, Ohta K, Islam SM, Hossain M, Naser IB, Riyadh MA,\nSu Y, Zhang S, Tessier-Lavigne M, et al. 2011. Draxin inhibits axonal outgrowth through the\nnetrin receptor DCC. J Neurosci 31: 14018–14023. 10.1523/jneurosci.0943-11.2011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.0943-11.2011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6633171"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "21957262"
+      }
+    }
+    reference {
+      citation {
+        value: "Arafa SR, LaSarge CL, Pun RYK, Khademi S, Danzer SC. 2019.\nSelf-reinforcing effects of mTOR hyperactive neurons on dendritic growth. Exp Neurol 311:\n125–134. 10.1016/j.expneurol.2018.09.019"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.expneurol.2018.09.019"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6263818"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30268766"
+      }
+    }
+    reference {
+      citation {
+        value: "Arendt KL, Benoist M, Lario A, Draffin JE, Munoz M, Esteban JA. 2014.\nPTEN counteracts PIP3 upregulation in spines during NMDA-receptor-dependent long-term\n                    depression. J Cell Sci 127: 5253–5260. 10.1242/jcs.156554"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1242/jcs.156554"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25335889"
+      }
+    }
+    reference {
+      citation {
+        value: "Backman SA, Stambolic V, Suzuki A, Haight J, Elia A, Pretorius J, Tsao\nMS, Shannon P, Bolon B, Ivy GO, et al. 2001. Deletion of Pten in mouse brain causes seizures,\nataxia and defects in soma size resembling Lhermitte–Duclos disease. Nat Genet 29:\n396–403. 10.1038/ng782"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/ng782"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "11726926"
+      }
+    }
+    reference {
+      citation {
+        value: "Barros CS, Nguyen T, Spencer KS, Nishiyama A, Colognato H, Muller U.\n2009. β1 Integrins are required for normal CNS myelination and promote AKT-dependent\n                    myelin outgrowth. Development 136: 2717–2724. 10.1242/dev.038679"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1242/dev.038679"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2730401"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19633169"
+      }
+    }
+    reference {
+      citation {
+        value: "Brinkmann BG, Agarwal A, Sereda MW, Garratt AN, Muller T, Wende H,\nStassart RM, Nawaz S, Humml C, Velanac V, et al. 2008. Neuregulin-1/ErbB signaling serves\ndistinct functions in myelination of the peripheral and central nervous system. Neuron 59:\n581–595. 10.1016/j.neuron.2008.06.028"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2008.06.028"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2628490"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "18760695"
+      }
+    }
+    reference {
+      citation {
+        value: "Bu Q, Wang A, Hamzah H, Waldman A, Jiang K, Dong Q, Li R, Kim J,\n                    Turner D, Chang Q. 2017. CREB signaling is involved in Rett syndrome\npathogenesis. J Neurosci\n                    37: 3671–3685. 10.1523/jneurosci.3735-16.2017"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.3735-16.2017"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5373141"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28270572"
+      }
+    }
+    reference {
+      citation {
+        value: "Bultje RS, Castaneda-Castellanos DR, Jan LY, Jan YN, Kriegstein AR,\n                    Shi SH. 2009. Mammalian Par3 regulates progenitor cell asymmetric division\nvia notch signaling\n                    in the developing neocortex. Neuron 63: 189–202.\n10.1016/j.neuron.2009.07.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2009.07.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2736606"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19640478"
+      }
+    }
+    reference {
+      citation {
+        value: "Butler MG, Dasouki MJ, Zhou XP, Talebizadeh Z, Brown M, Takahashi TN,\nMiles JH, Wang CH, Stratton R, Pilarski R, et al. 2005. Subset of individuals with autism\nspectrum disorders and extreme macrocephaly associated with germline PTEN tumour suppressor gene\nmutations. J Med Genet 42: 318–321. 10.1136/jmg.2004.024646"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1136/jmg.2004.024646"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC1736032"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15805158"
+      }
+    }
+    reference {
+      citation {
+        value: "Chadborn NH, Ahmed AI, Holt MR, Prinjha R, Dunn GA, Jones GE, Eickholt\nBJ. 2006. PTEN couples Sema3A signaling to growth cone collapse. J Cell Sci 119: 951–957.\n10.1242/jcs.02801"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1242/jcs.02801"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16495486"
+      }
+    }
+    reference {
+      citation {
+        value: "Chen Y, Huang WC, Sejourne J, Clipperton-Allen AE, Page DT. 2015. Pten\nmutations alter brain growth trajectory and allocation of cell types through elevated\nβ-catenin signaling. J Neurosci 35: 10252–10267. 10.1523/jneurosci.5272-14.2015"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.5272-14.2015"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6605343"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26180201"
+      }
+    }
+    reference {
+      citation {
+        value: "Chenn A, Walsh CA. 2002. Regulation of cerebral cortical size by\ncontrol of cell cycle exit in neural precursors. Science 297: 365–369.\n10.1126/science.1074192"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1126/science.1074192"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "12130776"
+      }
+    }
+    reference {
+      citation {
+        value: "Christie KJ, Martinez JA, Zochodne DW. 2012. Disruption of E3 ligase\nNEDD4 in peripheral neurons interrupts axon outgrowth: Linkage to PTEN. Mol Cell Neurosci 50:\n179–192. 10.1016/j.mcn.2012.04.006"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.mcn.2012.04.006"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22561198"
+      }
+    }
+    reference {
+      citation {
+        value: "Cotter L, Ozcelik M, Jacob C, Pereira JA, Locher V, Baumann R, Relvas\nJB, Suter U, Tricaud N. 2010. Dlg1-PTEN interaction regulates myelin thickness to prevent\ndamaging peripheral nerve overmyelination. Science 328: 1415–1418.\n                    10.1126/science.1187735"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1126/science.1187735"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20448149"
+      }
+    }
+    reference {
+      citation {
+        value: "Courchesne E, Carper R, Akshoomoff N. 2003. Evidence of brain\novergrowth in the first year of life in autism. JAMA 290: 337–344. 10.1001/jama.290.3.337"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1001/jama.290.3.337"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "12865374"
+      }
+    }
+    reference {
+      citation {
+        value: "Courchesne E, Pierce K, Schumann CM, Redcay E, Buckwalter JA, Kennedy\nDP, Morgan J. 2007. Mapping early brain development in autism. Neuron 56: 399–413.\n10.1016/j.neuron.2007.10.016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2007.10.016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "17964254"
+      }
+    }
+    reference {
+      citation {
+        value: "Cox RL, Calderon de Anda F, Mangoubi T, Yoshii A. 2018. Multiple\ncritical periods for rapamycin treatment to correct structural defects in Tsc-1-suppressed\n                    brain. Front Mol Neurosci 11: 409 10.3389/fnmol.2018.00409"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.3389/fnmol.2018.00409"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6237075"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30467464"
+      }
+    }
+    reference {
+      citation {
+        value: "de Graaf-Peters VB, Hadders-Algra M. 2006. Ontogeny of the human\ncentral nervous system: What is happening when? Early Hum Dev 82: 257–266.\n10.1016/j.earlhumdev.2005.10.013"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.earlhumdev.2005.10.013"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16360292"
+      }
+    }
+    reference {
+      citation {
+        value: "De Paula ML, Cui QL, Hossain S, Antel J, Almazan G. 2014. The PTEN\ninhibitor bisperoxovanadium enhances myelination by amplifying IGF-1 signaling in rat and human\noligodendrocyte progenitors. Glia 62: 64–77. 10.1002/glia.22584"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/glia.22584"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24166839"
+      }
+    }
+    reference {
+      citation {
+        value: "Di Cristofano A, Pesce B, Cordon-Cardo C, Pandolfi PP. 1998. Pten is\nessential for embryonic development and tumor suppression. Nat Genet 19: 348–355.\n10.1038/1235"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/1235"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "9697695"
+      }
+    }
+    reference {
+      citation {
+        value: "Dong Z, Yang N, Yeo SY, Chitnis A, Guo S. 2012. Intralineage\ndirectional Notch signaling regulates self-renewal and differentiation of asymmetrically\n                    dividing radial glia. Neuron 74: 65–78. 10.1016/j.neuron.2012.01.031"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2012.01.031"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3466114"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22500631"
+      }
+    }
+    reference {
+      citation {
+        value: "Donovan AP, Basson MA. 2017. The neuroanatomy of autism—A\ndevelopmental perspective. J Anat 230: 4–15. 10.1111/joa.12542"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1111/joa.12542"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5192959"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "27620360"
+      }
+    }
+    reference {
+      citation {
+        value: "Drinjakovic J, Jung H, Campbell DS, Strochlic L, Dwivedy A, Holt CE.\n2010. E3 ligase Nedd4 promotes axon branching by downregulating PTEN. Neuron 65: 341–357.\n10.1016/j.neuron.2010.01.017"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2010.01.017"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2862300"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20159448"
+      }
+    }
+    reference {
+      citation {
+        value: "Duan S, Yuan G, Liu X, Ren R, Li J, Zhang W, Wu J, Xu X, Fu L, Li Y,\n                    et al. 2015. PTEN deficiency reprogrammes human neural stem cells towards a\nglioblastoma stem\n                    cell-like phenotype. Nat Commun 6: 10068 10.1038/ncomms10068"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/ncomms10068"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4686761"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26632666"
+      }
+    }
+    reference {
+      citation {
+        value: "Dubruc E, Putoux A, Labalme A, Rougeot C, Sanlaville D, Edery P. 2014.\nA new intellectual disability syndrome caused by CTNNB1 haploinsufficiency. Am J Med Genet A\n                    164: 1571–1575. 10.1002/ajmg.a.36484"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/ajmg.a.36484"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24668549"
+      }
+    }
+    reference {
+      citation {
+        value: "Eickholt BJ, Walsh FS, Doherty P. 2002. An inactive pool of GSK-3 at\nthe leading edge of growth cones is implicated in Semaphorin 3A signaling. J Cell Biol 157:\n211–217. 10.1083/jcb.200201098"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1083/jcb.200201098"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2199247"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "11956225"
+      }
+    }
+    reference {
+      citation {
+        value: "Fang D, Hawke D, Zheng Y, Xia Y, Meisenhelder J, Nika H, Mills GB,\nKobayashi R, Hunter T, Lu Z. 2007. Phosphorylation of β-catenin by AKT promotes\nβ-catenin transcriptional activity. J Biol Chem 282: 11221–11229.\n10.1074/jbc.M611871200"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1074/jbc.M611871200"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC1850976"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "17287208"
+      }
+    }
+    reference {
+      citation {
+        value: "Feng J, Liang J, Li J, Li Y, Liang H, Zhao X, McNutt MA, Yin Y. 2015.\nPTEN controls the DNA replication process through MCM2 in response to replicative stress. Cell\nRep 13: 1295–1303. 10.1016/j.celrep.2015.10.016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.celrep.2015.10.016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26549452"
+      }
+    }
+    reference {
+      citation {
+        value: "Figlia G, Norrmén C, Pereira JA, Gerber D, Suter U. 2017. Dual\nfunction of the PI3K-Akt-mTORC1 axis in myelination of the peripheral nervous system. eLife 6:\ne29241 10.7554/eLife.29241"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.7554/eLife.29241"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5589416"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28880149"
+      }
+    }
+    reference {
+      citation {
+        value: "Fraser MM, Bayazitov IT, Zakharenko SS, Baker SJ. 2008. Phosphatase\n                    and tensin homolog, deleted on chromosome 10 deficiency in brain causes\ndefects in synaptic\n                    structure, transmission and plasticity, and myelination abnormalities.\nNeuroscience 151:\n                    476–488. 10.1016/j.neuroscience.2007.10.048"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuroscience.2007.10.048"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2278004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "18082964"
+      }
+    }
+    reference {
+      citation {
+        value: "Frazier TW, Embacher R, Tilot AK, Koenig K, Mester J, Eng C. 2015.\nMolecular and phenotypic abnormalities in individuals with germline heterozygous PTEN mutations\nand autism. Mol Psychiatry 20: 1132–1138. 10.1038/mp.2014.125"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/mp.2014.125"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4388743"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25288137"
+      }
+    }
+    reference {
+      citation {
+        value: "Fricano-Kugler CJ, Getz SA, Williams MR, Zurawel AA, DeSpenza T Jr,\nFrazel PW, Li M, O\\\'Malley AJ, Moen EL, Luikart BW. 2018. Nuclear excluded autism-associated\nphosphatase and tensin homolog mutations dysregulate neuronal growth. Biol Psychiatry 84:\n265–277. 10.1016/j.biopsych.2017.11.025"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.biopsych.2017.11.025"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5984669"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29373119"
+      }
+    }
+    reference {
+      citation {
+        value: "Gaesser JM, Fyffe-Maricich SL. 2016. Intracellular signaling pathway\nregulation of myelination and remyelination in the CNS. Exp Neurol 283: 501–511.\n10.1016/j.expneurol.2016.03.008"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.expneurol.2016.03.008"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5010983"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26957369"
+      }
+    }
+    reference {
+      citation {
+        value: "Gallent EA, Steward O. 2018. Neuronal PTEN deletion in adult cortical\nneurons triggers progressive growth of cell bodies, dendrites, and axons. Exp Neurol 303:\n12–28. 10.1016/j.expneurol.2018.01.005"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.expneurol.2018.01.005"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5864555"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29337147"
+      }
+    }
+    reference {
+      citation {
+        value: "Gao X, Neufeld TP, Pan D. 2000. Drosophila PTEN regulates cell growth\nand proliferation through PI3K-dependent and -independent pathways. Dev Biol 221:\n                    404–418. 10.1006/dbio.2000.9680"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1006/dbio.2000.9680"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "10790335"
+      }
+    }
+    reference {
+      citation {
+        value: "Ginn-Pease ME, Eng C. 2003. Increased nuclear phosphatase and tensin\nhomologue deleted on chromosome 10 is associated with G0-G1 in MCF-7 cells. Cancer Res 63:\n282–286."
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "12543774"
+      }
+    }
+    reference {
+      citation {
+        value: "Goebbels S, Oltrogge JH, Kemper R, Heilmann I, Bormuth I, Wolfer S,\nWichert SP, Mobius W, Liu X, Lappe-Siefke C, et al. 2010. Elevated phosphatidylinositol\n3,4,5-trisphosphate in glia triggers cell-autonomous membrane wrapping and myelination. J\nNeurosci 30: 8953–8964. 10.1523/jneurosci.0219-10.2010"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.0219-10.2010"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6632897"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20592216"
+      }
+    }
+    reference {
+      citation {
+        value: "Goebbels S, Wieser GL, Pieper A, Spitzer S, Weege B, Yan K, Edgar JM,\nYagensky O, Wichert SP, Agarwal A, et al. 2017. A neuronal PI(3,4,5)P3-dependent program of\noligodendrocyte precursor recruitment and myelination. Nat Neurosci 20: 10–15.\n10.1038/nn.4425"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/nn.4425"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "27775720"
+      }
+    }
+    reference {
+      citation {
+        value: "Goffin A, Hoefsloot LH, Bosgoed E, Swillen A, Fryns JP. 2001. PTEN\nmutation in a family with Cowden syndrome and autism. Am J Med Genet 105: 521–524.\n10.1002/ajmg.1477"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/ajmg.1477"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "11496368"
+      }
+    }
+    reference {
+      citation {
+        value: "González-Fernández E, Jeong HK, Fukaya M, Kim H, Khawaja RR,\nSrivastava IN, Waisman A, Son YJ, Kang SH. 2018. PTEN negatively regulates the cell lineage\nprogression from NG2+ glial progenitor to oligodendrocyte via mTOR-independent signaling. eLife\n7: e32021 10.7554/eLife.32021"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.7554/eLife.32021"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5839742"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29461205"
+      }
+    }
+    reference {
+      citation {
+        value: "Groszer M, Erickson R, Scripture-Adams DD, Lesche R, Trumpp A, Zack\n                    JA, Kornblum HI, Liu X, Wu H. 2001. Negative regulation of neural\nstem/progenitor cell\n                    proliferation by the Pten tumor suppressor gene in vivo. Science 294:\n2186–2189.\n                    10.1126/science.1065518"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1126/science.1065518"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "11691952"
+      }
+    }
+    reference {
+      citation {
+        value: "Groszer M, Erickson R, Scripture-Adams DD, Dougherty JD, Le Belle J,\nZack JA, Geschwind DH, Liu X, Kornblum HI, Wu H. 2006. PTEN negatively regulates neural stem\n                    cell self-renewal by modulating G0-G1 cell cycle entry. Proc Natl Acad Sci\n103: 111–116.\n                    10.1073/pnas.0509939103"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1073/pnas.0509939103"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC1325011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16373498"
+      }
+    }
+    reference {
+      citation {
+        value: "Gu T, Zhang Z, Wang J, Guo J, Shen WH, Yin Y. 2011. CREB is a novel\nnuclear target of PTEN phosphatase. Cancer Res 71: 2821–2825.\n10.1158/0008-5472.CAN-10-3399"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1158/0008-5472.CAN-10-3399"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3105967"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "21385900"
+      }
+    }
+    reference {
+      citation {
+        value: "Gutilla EA, Buyukozturk MM, Steward O. 2016. Long-term consequences of\nconditional genetic deletion of PTEN in the sensorimotor cortex of neonatal mice. Exp Neurol\n                    279: 27–39. 10.1016/j.expneurol.2016.02.013"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.expneurol.2016.02.013"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4957975"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26896833"
+      }
+    }
+    reference {
+      citation {
+        value: "Harrington EP, Zhao C, Fancy SP, Kaing S, Franklin RJ, Rowitch DH.\n2010. Oligodendrocyte PTEN is required for myelin and axonal integrity, not remyelination. Ann\nNeurol 68: 703–716. 10.1002/ana.22090"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/ana.22090"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2966537"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20853437"
+      }
+    }
+    reference {
+      citation {
+        value: "Haws ME, Jaramillo TC, Espinosa F, Widman AJ, Stuber GD, Sparta DR,\n                    Tye KM, Russo SJ, Parada LF, Stavarache M, et al. 2014. PTEN knockdown\nalters dendritic\n                    spine/protrusion morphology, not density. J Comp Neurol 522:\n1171–1190. 10.1002/cne.23488"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/cne.23488"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3945606"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24264880"
+      }
+    }
+    reference {
+      citation {
+        value: "Hayashi K, Shirao T. 1999. Change in the shape of dendritic spines\ncaused by overexpression of drebrin in cultured cortical neurons. J Neurosci 19:\n3918–3925. 10.1523/jneurosci.19-10-03918.1999"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.19-10-03918.1999"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6782714"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "10234022"
+      }
+    }
+    reference {
+      citation {
+        value: "Henle SJ, Carlstrom LP, Cheever TR, Henley JR. 2013. Differential role\nof PTEN phosphatase in chemotactic growth cone guidance. J Biol Chem 288: 20837–20842.\n10.1074/jbc.C113.487066"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1074/jbc.C113.487066"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3774355"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "23775074"
+      }
+    }
+    reference {
+      citation {
+        value: "Hirota Y, Nakajima K. 2017. Control of neuronal migration and\naggregation by reelin signaling in the developing cerebral cortex. Front Cell Dev Biol 5: 40\n10.3389/fcell.2017.00040"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.3389/fcell.2017.00040"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5410752"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28507985"
+      }
+    }
+    reference {
+      citation {
+        value: "Hodges SL, Reynolds CD, Smith GD, Jefferson TS, Gao N, Morrison JB,\nWhite J, Nolan SO, Lugo JN. 2018. Neuronal subset-specific deletion of Pten results in aberrant\nWnt signaling and memory impairments. Brain Res 1699: 100–106.\n10.1016/j.brainres.2018.08.007"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.brainres.2018.08.007"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30086265"
+      }
+    }
+    reference {
+      citation {
+        value: "Hopkins BD, Hodakoski C, Barrows D, Mense SM, Parsons RE. 2014. PTEN\nfunction: The long and the short of it. Trends Biochem Sci 39: 183–190.\n10.1016/j.tibs.2014.02.006"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.tibs.2014.02.006"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4043120"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24656806"
+      }
+    }
+    reference {
+      citation {
+        value: "Hsia HE, Kumar R, Luca R, Takeda M, Courchet J, Nakashima J, Wu S,\nGoebbels S, An W, Eickholt BJ, et al. 2014. Ubiquitin E3 ligase Nedd4-1 acts as a downstream\ntarget of PI3K/PTEN-mTORC1 signaling to promote neurite growth. Proc Natl Acad Sci 111:\n13205–13210. 10.1073/pnas.1400737111"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1073/pnas.1400737111"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4246980"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25157163"
+      }
+    }
+    reference {
+      citation {
+        value: "Igarashi A, Itoh K, Yamada T, Adachi Y, Kato T, Murata D, Sesaki H,\nIijima M. 2018. Nuclear PTEN deficiency causes microcephaly with decreased neuronal soma size\n                    and increased seizure susceptibility. J Biol Chem 293: 9292–9300.\n10.1074/jbc.RA118.002356"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1074/jbc.RA118.002356"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6005449"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29735527"
+      }
+    }
+    reference {
+      citation {
+        value: "Ivanov A, Esclapez M, Pellegrino C, Shirao T, Ferhat L. 2009. Drebrin\n                    A regulates dendritic spine plasticity and synaptic function in mature\ncultured hippocampal\n                    neurons. J Cell Sci 122: 524–534. 10.1242/jcs.033464"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1242/jcs.033464"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19174472"
+      }
+    }
+    reference {
+      citation {
+        value: "Jacinto E, Loewith R, Schmidt A, Lin S, Rüegg MA, Hall A, Hall\n                    MN. 2004. Mammalian TOR complex 2 controls the actin cytoskeleton and is\nrapamycin insensitive.\n                    Nat Cell Biol 6: 1122–1128. 10.1038/ncb1183"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/ncb1183"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15467718"
+      }
+    }
+    reference {
+      citation {
+        value: "Jaworski J, Spangler S, Seeburg DP, Hoogenraad CC, Sheng M. 2005.\nControl of dendritic arborization by the phosphoinositide-3′-kinase-Akt-mammalian target\nof rapamycin pathway. J Neurosci 25: 11300–11312. 10.1523/jneurosci.2270-05.2005"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.2270-05.2005"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6725892"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16339025"
+      }
+    }
+    reference {
+      citation {
+        value: "Jiang H, Guo W, Liang X, Rao Y. 2005. Both the establishment and the\nmaintenance of neuronal polarity require active mechanisms: critical roles of GSK-3β and\nits upstream regulators. Cell 120: 123–135. 10.1016/j.cell.2004.12.033"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.cell.2004.12.033"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15652487"
+      }
+    }
+    reference {
+      citation {
+        value: "Jo HS, Kang KH, Joe CO, Kim JW. 2012. Pten coordinates retinal\nneurogenesis by regulating Notch signaling. EMBO J 31: 817–828. 10.1038/emboj.2011.443"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/emboj.2011.443"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3280546"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22258620"
+      }
+    }
+    reference {
+      citation {
+        value: "Jurado S, Benoist M, Lario A, Knafo S, Petrok CN, Esteban JA. 2010.\nPTEN is recruited to the postsynaptic terminal for NMDA receptor-dependent long-term depression.\nEMBO J 29: 2827–2840. 10.1038/emboj.2010.160"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/emboj.2010.160"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2924645"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20628354"
+      }
+    }
+    reference {
+      citation {
+        value: "Kath C, Goni-Oliver P, Müller R, Schultz C, Haucke V, Eickholt B,\nSchmoranzer J. 2018. PTEN suppresses axon outgrowth by down-regulating the level of\n                    detyrosinated microtubules. PLoS ONE 13: e0193257\n10.1371/journal.pone.0193257"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1371/journal.pone.0193257"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5884485"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29617365"
+      }
+    }
+    reference {
+      citation {
+        value: "Kennedy DP, Courchesne E. 2008. The intrinsic functional organization\nof the brain is altered in autism. Neuroimage 39: 1877–1885.\n10.1016/j.neuroimage.2007.10.052"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuroimage.2007.10.052"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "18083565"
+      }
+    }
+    reference {
+      citation {
+        value: "Koganezawa N, Hanamura K, Sekino Y, Shirao T. 2017. The role of\n                    drebrin in dendritic spines. Mol Cell Neurosci 84: 85–92.\n10.1016/j.mcn.2017.01.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.mcn.2017.01.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28161364"
+      }
+    }
+    reference {
+      citation {
+        value: "Kojima N, Hanamura K, Yamazaki H, Ikeda T, Itohara S, Shirao T. 2010.\nGenetic disruption of the alternative splicing of drebrin gene impairs context-dependent fear\nlearning in adulthood. Neuroscience 165: 138–150. 10.1016/j.neuroscience.2009.10.016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuroscience.2009.10.016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19837137"
+      }
+    }
+    reference {
+      citation {
+        value: "Kreis P, Hendricusdottir R, Kay L, Papageorgiou IE, van Diepen M, Mack\nT, Ryves J, Harwood A, Leslie NR, Kann O, et al. 2013. Phosphorylation of the actin binding\nprotein Drebrin at S647 is regulated by neuronal activity and PTEN. PLoS ONE 8: e71957\n10.1371/journal.pone.0071957"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1371/journal.pone.0071957"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3733845"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "23940795"
+      }
+    }
+    reference {
+      citation {
+        value: "Kreis P, Leondaritis G, Lieberam I, Eickholt BJ. 2014. Subcellular\ntargeting and dynamic regulation of PTEN: Implications for neuronal cells and neurological\ndisorders. Front Mol Neurosci 7: 23 10.3389/fnmol.2014.00023"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.3389/fnmol.2014.00023"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3978343"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24744697"
+      }
+    }
+    reference {
+      citation {
+        value: "Kreis P, Gallrein C, Rojas-Puente E, Mack TGA, Kroon C, Dinkel V,\nWillmes C, Murk K, Tom-Dieck S, Schuman EM, et al. 2019. ATM phosphorylation of the\n                    actin-binding protein drebrin controls oxidation stress-resistance in\nmammalian neurons and C.\n                    elegans. Nat Commun 10: 486 10.1038/s41467-019-08420-w"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/s41467-019-08420-w"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6353951"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30700723"
+      }
+    }
+    reference {
+      citation {
+        value: "Kuwahara A, Hirabayashi Y, Knoepfler PS, Taketo MM, Sakai J, Kodama T,\nGotoh Y. 2010. Wnt signaling and its downstream target N-myc regulate basal progenitors in the\ndeveloping neocortex. Development 137: 1035–1044. 10.1242/dev.046417"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1242/dev.046417"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20215343"
+      }
+    }
+    reference {
+      citation {
+        value: "Kwon CH, Zhu X, Zhang J, Knoop LL, Tharp R, Smeyne RJ, Eberhart CG,\nBurger PC, Baker SJ. 2001. Pten regulates neuronal soma size: A mouse model of\nLhermitte–Duclos disease. Nat Genet 29: 404–411. 10.1038/ng781"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/ng781"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "11726927"
+      }
+    }
+    reference {
+      citation {
+        value: "Kwon CH, Zhu X, Zhang J, Baker SJ. 2003. mTor is required for\nhypertrophy of Pten-deficient neuronal soma in vivo. Proc Natl Acad Sci 100: 12923–12928.\n10.1073/pnas.2132711100"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1073/pnas.2132711100"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC240720"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "14534328"
+      }
+    }
+    reference {
+      citation {
+        value: "Kwon CH, Luikart BW, Powell CM, Zhou J, Matheny SA, Zhang W, Li Y,\nBaker SJ, Parada LF. 2006. Pten regulates neuronal arborization and social interaction in mice.\nNeuron 50: 377–388. 10.1016/j.neuron.2006.03.023"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2006.03.023"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3902853"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16675393"
+      }
+    }
+    reference {
+      citation {
+        value: "LaSarge CL, Pun RY, Muntifering MB, Danzer SC. 2016. Disrupted\nhippocampal network physiology following PTEN deletion from newborn dentate granule cells.\nNeurobiol Dis 96: 105–114. 10.1016/j.nbd.2016.09.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.nbd.2016.09.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5102799"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "27597527"
+      }
+    }
+    reference {
+      citation {
+        value: "Lasorella A, Stegmüller J, Guardavaccaro D, Liu G, Carro MS,\nRothschild G, de la Torre-Ubieta L, Pagano M, Bonni A, Iavarone A. 2006. Degradation of Id2 by\nthe anaphase-promoting complex couples cell cycle exit and axonal growth. Nature 442:\n471–474. 10.1038/nature04895"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/nature04895"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16810178"
+      }
+    }
+    reference {
+      citation {
+        value: "Lee E, Lee J, Kim E. 2017. Excitation/inhibition imbalance in animal\nmodels of autism spectrum disorders. Biol Psychiatry 81: 838–847.\n10.1016/j.biopsych.2016.05.011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.biopsych.2016.05.011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "27450033"
+      }
+    }
+    reference {
+      citation {
+        value: "Lee H, Thacker S, Sarn N, Dutta R, Eng C. 2019. Constitutional\nmislocalization of Pten drives precocious maturation in oligodendrocytes and aberrant\n                    myelination in model of autism spectrum disorder. Transl Psychiatry 9: 13\n10.1038/s41398-018-0364-7"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/s41398-018-0364-7"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6341090"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30664625"
+      }
+    }
+    reference {
+      citation {
+        value: "Leslie NR, Longy M. 2016. Inherited PTEN mutations and the prediction\nof phenotype. Semin Cell Dev Biol 52: 30–38. 10.1016/j.semcdb.2016.01.030"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.semcdb.2016.01.030"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26827793"
+      }
+    }
+    reference {
+      citation {
+        value: "Li L, Liu F, Salmonsen RA, Turner TK, Litofsky NS, Di Cristofano A,\nPandolfi PP, Jones SN, Recht LD, Ross AH. 2002. PTEN in neural precursor cells: Regulation of\nmigration, apoptosis, and proliferation. Mol Cell Neurosci 20: 21–29.\n10.1006/mcne.2002.1115"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1006/mcne.2002.1115"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "12056837"
+      }
+    }
+    reference {
+      citation {
+        value: "Liu Y, Du X, Zhang S, Liu Y, Zhang Q, Yin Q, McNutt MA, Yin Y. 2017.\nPTEN regulates spindle assembly checkpoint timing through MAD1 in interphase. Oncotarget 8:\n98040–98050. 10.18632/oncotarget.20532"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.18632/oncotarget.20532"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5716712"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29228672"
+      }
+    }
+    reference {
+      citation {
+        value: "Luat AF, Asano E, Kumar A, Chugani HT, Sood S. 2017. Corpus\n                    callosotomy for intractable epilepsy revisited: The children\\\'s hospital of\nmichigan series. J\n                    Child Neurol 32: 624–629. 10.1177/0883073817697847"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1177/0883073817697847"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5436305"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28511630"
+      }
+    }
+    reference {
+      citation {
+        value: "Lugo JN, Smith GD, Arbuckle EP, White J, Holley AJ, Floruta CM, Ahmed\nN, Gomez MC, Okonkwo O. 2014. Deletion of PTEN produces autism-like behavioral deficits and\nalterations in synaptic proteins. Front Mol Neurosci 7: 27 10.3389/fnmol.2014.00027"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.3389/fnmol.2014.00027"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3997048"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24795561"
+      }
+    }
+    reference {
+      citation {
+        value: "Luikart BW, Schnell E, Washburn EK, Bensen AL, Tovar KR, Westbrook GL.\n2011. Pten knockdown in vivo increases excitatory drive onto dentate granule cells. J Neurosci\n31: 4345–4354. 10.1523/jneurosci.0061-11.2011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.0061-11.2011"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3113533"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "21411674"
+      }
+    }
+    reference {
+      citation {
+        value: "Lyu J, Yu X, He L, Cheng T, Zhou J, Cheng C, Chen Z, Cheng G, Qiu Z,\nZhou W. 2015. The protein phosphatase activity of PTEN is essential for regulating neural stem\ncell differentiation. Mol Brain 8: 26 10.1186/s13041-015-0114-1"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1186/s13041-015-0114-1"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4427940"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25927309"
+      }
+    }
+    reference {
+      citation {
+        value: "Lyu JW, Yuan B, Cheng TL, Qiu ZL, Zhou WH. 2016. Reciprocal regulation\nof autism-related genes MeCP2 and PTEN via microRNAs. Sci Rep 6: 20392 10.1038/srep20392"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/srep20392"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4740767"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26843422"
+      }
+    }
+    reference {
+      citation {
+        value: "Ma H, Nguyen C, Lee KS, Kahn M. 2005. Differential roles for the\ncoactivators CBP and p300 on TCF/β-catenin-mediated survivin gene expression. Oncogene 24:\n3619–3631. 10.1038/sj.onc.1208433"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/sj.onc.1208433"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15782138"
+      }
+    }
+    reference {
+      citation {
+        value: "Maire CL, Ramkissoon S, Hayashi M, Haidar S, Ramkissoon L, DiTomaso E,\nLigon KL. 2014. Pten loss in Olig2 expressing neural progenitor cells and oligodendrocytes leads\nto interneuron dysplasia and leukodystrophy. Stem Cells 32: 313–326. 10.1002/stem.1590"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/stem.1590"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4096461"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24395742"
+      }
+    }
+    reference {
+      citation {
+        value: "Meli R, Weisova P, Propst F. 2015. Repulsive axon guidance by draxin\n                    is mediated by protein kinase B (Akt), glycogen synthase kinase-3β\n(GSK-3β) and\n                    microtubule-associated protein 1B. PLoS ONE 10: e0119524\n10.1371/journal.pone.0119524"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1371/journal.pone.0119524"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4361590"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25775433"
+      }
+    }
+    reference {
+      citation {
+        value: "Mingo J, Rodríguez-Escudero I, Luna S, Fernández-Acero T,\n                    Amo L, Jonasson AR, Zori RT, López JI, Molina M, Cid VJ, et al. 2018. A\npathogenic role for\n                    germline PTEN variants which accumulate into the nucleus. Eur J Hum Genet\n26: 1180–1187.\n                    10.1038/s41431-018-0155-x"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/s41431-018-0155-x"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6057996"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29706633"
+      }
+    }
+    reference {
+      citation {
+        value: "Mizui T, Takahashi H, Sekino Y, Shirao T. 2005. Overexpression of\ndrebrin A in immature neurons induces the accumulation of F-actin and PSD-95 into dendritic\nfilopodia, and the formation of large abnormal protrusions. Mol Cell Neurosci 30:\n                    149–157. 10.1016/j.mcn.2005.06.008"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.mcn.2005.06.008"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16054392"
+      }
+    }
+    reference {
+      citation {
+        value: "Nadler JV. 2003. The recurrent mossy fiber pathway of the epileptic\nbrain. Neurochem Res 28: 1649–1658. 10.1023/A:1026004904199"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1023/A:1026004904199"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "14584819"
+      }
+    }
+    reference {
+      citation {
+        value: "Narayanan SP, Flores AI, Wang F, Macklin WB. 2009. Akt signals through\nthe mammalian target of rapamycin pathway to regulate CNS myelination. J Neurosci 29:\n6860–6870. 10.1523/jneurosci.0232-09.2009"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.0232-09.2009"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2757755"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19474313"
+      }
+    }
+    reference {
+      citation {
+        value: "Negri G, Magini P, Milani D, Colapietro P, Rusconi D, Scarano E,\n                    Bonati MT, Priolo M, Crippa M, Mazzanti L, et al. 2016. From whole gene\ndeletion to point\n                    mutations of EP300-positive Rubinstein–Taybi patients: New insights\ninto the mutational\n                    spectrum and peculiar clinical hallmarks. Hum Mutat 37: 175–183.\n10.1002/humu.22922"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/humu.22922"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26486927"
+      }
+    }
+    reference {
+      citation {
+        value: "Nguyen LH, Anderson AE. 2018. mTOR-dependent alterations of Kv1.1\nsubunit expression in the neuronal subset-specific Pten knockout mouse model of cortical\ndysplasia with epilepsy. Sci Rep 8: 3568 10.1038/s41598-018-21656-8"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/s41598-018-21656-8"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5824782"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29476105"
+      }
+    }
+    reference {
+      citation {
+        value: "Palomero T, Sulis ML, Cortina M, Real PJ, Barnes K, Ciofani M,\n                    Caparros E, Buteau J, Brown K, Perkins SL, et al. 2007. Mutational loss of\nPTEN induces\n                    resistance to NOTCH1 inhibition in T-cell leukemia. Nat Med 13:\n1203–1210. 10.1038/nm1636"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/nm1636"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2600418"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "17873882"
+      }
+    }
+    reference {
+      citation {
+        value: "Paridaen JT, Huttner WB. 2014. Neurogenesis during development of the\nvertebrate central nervous system. EMBO Rep 15: 351–364. 10.1002/embr.201438447"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/embr.201438447"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3989667"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24639559"
+      }
+    }
+    reference {
+      citation {
+        value: "Perandones C, Costanzo RV, Kowaljow V, Pivetta OH, Carminatti H,\nRadrizzani M. 2004. Correlation between synaptogenesis and the PTEN phosphatase expression in\ndendrites during postnatal brain development. Brain Res Mol Brain Res 128: 8–19.\n10.1016/j.molbrainres.2004.05.021"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.molbrainres.2004.05.021"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15337313"
+      }
+    }
+    reference {
+      citation {
+        value: "Polakis P. 2000. Wnt signaling and cancer. Genes Dev 14:\n1837–1851. 10.1101/gad.14.15.1837"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1101/gad.14.15.1837"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "10921899"
+      }
+    }
+    reference {
+      citation {
+        value: "Pun RY, Rolle IJ, Lasarge CL, Hosford BE, Rosen JM, Uhl JD, Schmeltzer\nSN, Faulkner C, Bronson SL, Murphy BL, et al. 2012. Excessive activation of mTOR in postnatally\ngenerated granule cells is sufficient to cause epilepsy. Neuron 75: 1022–1034.\n10.1016/j.neuron.2012.08.002"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2012.08.002"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3474536"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22998871"
+      }
+    }
+    reference {
+      citation {
+        value: "Ramaswami G, Geschwind DH. 2018. Genetics of autism spectrum disorder.\nHandb Clin Neurol 147: 321–329. 10.1016/B978-0-444-63233-3.00021-X"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/B978-0-444-63233-3.00021-X"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29325621"
+      }
+    }
+    reference {
+      citation {
+        value: "Reemst K, Noctor SC, Lucassen PJ, Hol EM. 2016. The indispensable\n                    roles of microglia and astrocytes during brain development. Front Hum\nNeurosci 10: 566\n                    10.3389/fnhum.2016.00566"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.3389/fnhum.2016.00566"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5099170"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "27877121"
+      }
+    }
+    reference {
+      citation {
+        value: "Rodríguez-Escudero I, Oliver MD, Andrés-Pons A, Molina M,\n                    Cid VJ, Pulido R. 2011. A comprehensive functional analysis of PTEN\nmutations: Implications in\n                    tumor- and autism-related syndromes. Hum Mol Genet 20: 4132–4142.\n10.1093/hmg/ddr337"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1093/hmg/ddr337"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "21828076"
+      }
+    }
+    reference {
+      citation {
+        value: "Russell SA, Bashaw GJ. 2018. Axon guidance pathways and the control of\ngene expression. Dev Dyn 247: 571–580. 10.1002/dvdy.24609"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/dvdy.24609"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6167058"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29226467"
+      }
+    }
+    reference {
+      citation {
+        value: "Sakamoto K, Karelina K, Obrietan K. 2011. CREB: A multifaceted\nregulator of neuronal plasticity and protection. J Neurochem 116: 1–9.\n10.1111/j.1471-4159.2010.07080.x"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1111/j.1471-4159.2010.07080.x"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3575743"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "21044077"
+      }
+    }
+    reference {
+      citation {
+        value: "Santos VR, Pun RYK, Arafa SR, LaSarge CL, Rowley S, Khademi S, Bouley\nT, Holland KD, Garcia-Cairasco N, Danzer SC. 2017. PTEN deletion increases hippocampal granule\ncell excitability in male and female mice. Neurobiol Dis 108: 339–351.\n10.1016/j.nbd.2017.08.014"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.nbd.2017.08.014"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5675774"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28855130"
+      }
+    }
+    reference {
+      citation {
+        value: "Sarbassov DD, Ali SM, Kim DH, Guertin DA, Latek RR, Erdjument-Bromage\nH, Tempst P, Sabatini DM. 2004. Rictor, a novel binding partner of mTOR, defines a\nrapamycin-insensitive and raptor-independent pathway that regulates the cytoskeleton. Curr Biol\n14: 1296–1302. 10.1016/j.cub.2004.06.054"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.cub.2004.06.054"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15268862"
+      }
+    }
+    reference {
+      citation {
+        value: "Shi SH, Jan LY, Jan YN. 2003. Hippocampal neuronal polarity specified\nby spatially localized mPar3/mPar6 and PI 3-kinase activity. Cell 112: 63–75.\n10.1016/S0092-8674(02)01249-7"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/S0092-8674(02)01249-7"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "12526794"
+      }
+    }
+    reference {
+      citation {
+        value: "Shimojo H, Ohtsuka T, Kageyama R. 2008. Oscillations in notch\n                    signaling regulate maintenance of neural progenitors. Neuron 58:\n52–64.\n                    10.1016/j.neuron.2008.02.014"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.neuron.2008.02.014"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "18400163"
+      }
+    }
+    reference {
+      citation {
+        value: "Skelton PD, Frazel PW, Lee D, Suh H, Luikart BW. 2019. Pten loss\nresults in inappropriate excitatory connectivity. Mol Psychiatry. 10.1038/s41380-019-0412-6"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/s41380-019-0412-6"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6785382"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30967683"
+      }
+    }
+    reference {
+      citation {
+        value: "Smith GD, White J, Lugo JN. 2016. Superimposing status epilepticus on\nneuron subset-specific PTEN haploinsufficient and wild type mice results in long-term changes in\nbehavior. Sci Rep 6: 36559 10.1038/srep36559"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/srep36559"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5098193"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "27819284"
+      }
+    }
+    reference {
+      citation {
+        value: "Song MS, Carracedo A, Salmena L, Song SJ, Egia A, Malumbres M,\n                    Pandolfi PP. 2011. Nuclear PTEN regulates the APC-CDH1 tumor-suppressive\ncomplex in a\n                    phosphatase-independent manner. Cell 144: 187–199.\n10.1016/j.cell.2010.12.020"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.cell.2010.12.020"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3249980"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "21241890"
+      }
+    }
+    reference {
+      citation {
+        value: "Song Z, Han X, Zou H, Zhang B, Ding Y, Xu X, Zeng J, Liu J, Gong A.\n2018. PTEN–GSK3β-MOB1 axis controls neurite outgrowth in vitro and in vivo. Cell\n                    Mol Life Sci 75: 4445–4464. 10.1007/s00018-018-2890-0"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1007/s00018-018-2890-0"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30069702"
+      }
+    }
+    reference {
+      citation {
+        value: "Spena S, Milani D, Rusconi D, Negri G, Colapietro P, Elcioglu N,\nBedeschi F, Pilotta A, Spaccini L, Ficcadenti A, et al. 2015. Insights into genotype-phenotype\ncorrelations from CREBBP point mutation screening in a cohort of 46 Rubinstein–Taybi\nsyndrome patients. Clin Genet 88: 431–440. 10.1111/cge.12537"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1111/cge.12537"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25388907"
+      }
+    }
+    reference {
+      citation {
+        value: "Sperow M, Berry RB, Bayazitov IT, Zhu G, Baker SJ, Zakharenko SS.\n                    2012. Phosphatase and tensin homologue (PTEN) regulates synaptic plasticity\nindependently of its\n                    effect on neuronal morphology and migration. J Physiol 590: 777–792.\n10.1113/jphysiol.2011.220236"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1113/jphysiol.2011.220236"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3381310"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22147265"
+      }
+    }
+    reference {
+      citation {
+        value: "Spinelli L, Black FM, Berg JN, Eickholt BJ, Leslie NR. 2015.\nFunctionally distinct groups of inherited PTEN mutations in autism and tumour syndromes. J Med\nGenet 52: 128–134. 10.1136/jmedgenet-2014-102803"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1136/jmedgenet-2014-102803"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4316932"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25527629"
+      }
+    }
+    reference {
+      citation {
+        value: "Takeuchi K, Gertner MJ, Zhou J, Parada LF, Bennett MV, Zukin RS. 2013.\nDysregulation of synaptic plasticity precedes appearance of morphological defects in a Pten\nconditional knockout mouse model of autism. Proc Natl Acad Sci 110: 4738–4743.\n10.1073/pnas.1222803110"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1073/pnas.1222803110"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3607034"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "23487788"
+      }
+    }
+    reference {
+      citation {
+        value: "Teo JL, Ma H, Nguyen C, Lam C, Kahn M. 2005. Specific inhibition of\nCBP/β-catenin interaction rescues defects in neuronal differentiation caused by a\npresenilin-1 mutation. Proc Natl Acad Sci 102: 12171–12176. 10.1073/pnas.0504600102"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1073/pnas.0504600102"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC1189325"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16093313"
+      }
+    }
+    reference {
+      citation {
+        value: "Thion MS, Garel S. 2017. On place and time: microglia in embryonic and\nperinatal brain development. Curr Opin Neurobiol 47: 121–130. 10.1016/j.conb.2017.10.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.conb.2017.10.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29080445"
+      }
+    }
+    reference {
+      citation {
+        value: "Tilot AK, Gaugler MK, Yu Q, Romigh T, Yu W, Miller RH, Frazier TW II,\nEng C. 2014. Germline disruption of Pten localization causes enhanced sex-dependent social\nmotivation and increased glial production. Hum Mol Genet 23: 3212–3227.\n                    10.1093/hmg/ddu031"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1093/hmg/ddu031"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4030776"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24470394"
+      }
+    }
+    reference {
+      citation {
+        value: "Trotman LC, Niki M, Dotan ZA, Koutcher JA, Di Cristofano A, Xiao A,\nKhoo AS, Roy-Burman P, Greenberg NM, Van Dyke T, et al. 2003. Pten dose dictates cancer\nprogression in the prostate. PLoS Biol 1: E59 10.1371/journal.pbio.0000059"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1371/journal.pbio.0000059"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC270016"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "14691534"
+      }
+    }
+    reference {
+      citation {
+        value: "Trotman LC, Wang X, Alimonti A, Chen Z, Teruya-Feldstein J, Yang H,\nPavletich NP, Carver BS, Cordon-Cardo C, Erdjument-Bromage H, et al. 2007. Ubiquitination\nregulates PTEN nuclear import and tumor suppression. Cell 128: 141–156.\n10.1016/j.cell.2006.11.040"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.cell.2006.11.040"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC1855245"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "17218261"
+      }
+    }
+    reference {
+      citation {
+        value: "Urbanska M, Gozdz A, Swiech LJ, Jaworski J. 2012. Mammalian target of\nrapamycin complex 1 (mTORC1) and 2 (mTORC2) control the dendritic arbor morphology of\n                    hippocampal neurons. J Biol Chem 287: 30240–30256.\n10.1074/jbc.M112.374405"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1074/jbc.M112.374405"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3436277"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22810227"
+      }
+    }
+    reference {
+      citation {
+        value: "Vanderver A, Tonduti D, Kahn I, Schmidt J, Medne L, Vento J, Chapman\nKA, Lanpher B, Pearl P, Gropman A, et al. 2014. Characteristic brain magnetic resonance imaging\npattern in patients with macrocephaly and PTEN mutations. Am J Med Genet A 164: 627–633.\n10.1002/ajmg.a.36309"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/ajmg.a.36309"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5234041"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24375884"
+      }
+    }
+    reference {
+      citation {
+        value: "Vogt D, Cho KKA, Lee AT, Sohal VS, Rubenstein JLR. 2015. The\nparvalbumin/somatostatin ratio is increased in Pten mutant mice and by human PTEN ASD alleles.\nCell Rep 11: 944–956. 10.1016/j.celrep.2015.04.019"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.celrep.2015.04.019"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4431948"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25937288"
+      }
+    }
+    reference {
+      citation {
+        value: "Wagner U, Utton M, Gallo JM, Miller CC. 1996. Cellular phosphorylation\nof tau by GSK-3 β influences tau binding to microtubules and microtubule organisation. J\nCell Sci 109: 1537–1543."
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "8799840"
+      }
+    }
+    reference {
+      citation {
+        value: "Wang X, Trotman LC, Koppie T, Alimonti A, Chen Z, Gao Z, Wang J,\nErdjument-Bromage H, Tempst P, Cordon-Cardo C, et al. 2007. NEDD4-1 is a proto-oncogenic\nubiquitin ligase for PTEN. Cell 128: 129–139. 10.1016/j.cell.2006.11.039"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.cell.2006.11.039"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC1828909"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "17218260"
+      }
+    }
+    reference {
+      citation {
+        value: "Wen Y, Li W, Choudhury GR, He R, Yang T, Liu R, Jin K, Yang SH. 2013.\nAstroglial PTEN loss disrupts neuronal lamination by dysregulating radial glia–guided\nneuronal migration. Aging Dis 4: 113–126."
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3660121"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "23730527"
+      }
+    }
+    reference {
+      citation {
+        value: "Williams MR, DeSpenza T Jr, Li M, Gulledge AT, Luikart BW. 2015.\nHyperactivity of newborn Pten knock-out neurons results from increased excitatory synaptic\n                    drive. J Neurosci 35: 943–959. 10.1523/jneurosci.3144-14.2015"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.3144-14.2015"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4300333"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25609613"
+      }
+    }
+    reference {
+      citation {
+        value: "Willmes CG, Mack TG, Ledderose J, Schmitz D, Wozny C, Eickholt BJ.\n2017. Investigation of hippocampal synaptic transmission and plasticity in mice deficient in the\nactin-binding protein Drebrin. Sci Rep 7: 42652 10.1038/srep42652"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/srep42652"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5309812"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28198431"
+      }
+    }
+    reference {
+      citation {
+        value: "Wood L, Gray NW, Zhou Z, Greenberg ME, Shepherd GM. 2009. Synaptic\ncircuit abnormalities of motor-frontal layer 2/3 pyramidal neurons in an RNA interference model\nof methyl-CpG-binding protein 2 deficiency. J Neurosci 29: 12440–12448.\n10.1523/jneurosci.3321-09.2009"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.3321-09.2009"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2782478"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19812320"
+      }
+    }
+    reference {
+      citation {
+        value: "Wrobel CN, Mutch CA, Swaminathan S, Taketo MM, Chenn A. 2007.\nPersistent expression of stabilized β-catenin delays maturation of radial glial cells into\nintermediate progenitors. Dev Biol 309: 285–297. 10.1016/j.ydbio.2007.07.013"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.ydbio.2007.07.013"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC2083700"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "17706960"
+      }
+    }
+    reference {
+      citation {
+        value: "Xiong Q, Oviedo HV, Trotman LC, Zador AM. 2012. PTEN regulation of\nlocal and long-range connections in mouse auditory cortex. J Neurosci 32: 1643–1652.\n10.1523/jneurosci.4480-11.2012"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1523/jneurosci.4480-11.2012"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3532033"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22302806"
+      }
+    }
+    reference {
+      citation {
+        value: "Yue Q, Groszer M, Gil JS, Berk AJ, Messing A, Wu H, Liu X. 2005. PTEN\ndeletion in Bergmann glia leads to premature differentiation and affects laminar organization.\nDevelopment 132: 3281–3291. 10.1242/dev.01891"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1242/dev.01891"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "15944184"
+      }
+    }
+    reference {
+      citation {
+        value: "Zinin N, Adameyko I, Wilhelm M, Fritz N, Uhlen P, Ernfors P,\n                    Henriksson MA. 2014. MYC proteins promote neuronal differentiation by\ncontrolling the mode of\n                    progenitor cell division. EMBO Rep 15: 383–391.\n10.1002/embr.201337424"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/embr.201337424"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3989669"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "24599748"
+      }
+    }
+    reference {
+      citation {
+        value: "Zori RT, Marsh DJ, Graham GE, Marliss EB, Eng C. 1998. Germline PTEN\nmutation in a family with Cowden syndrome and Bannayan-Riley-Ruvalcaba syndrome. Am J Med Genet\n80: 399–402. 10.1002/(SICI)1096-8628(19981204)80:4<399::AID-AJMG18>3.0.CO;2-O"
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "\n10.1002/(SICI)1096-8628(19981204)80:4<399::AID-AJMG18>3.0.CO;2-O"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "9856571"
+      }
+    }
+  }
+}
+
