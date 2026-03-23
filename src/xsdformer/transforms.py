@@ -162,8 +162,8 @@ def _drop_fields(
 
 
 def _get_single_field(msg: xsd.Message) -> xsd.Field | None:
-    """Returns the single field of a message, or None if it has != 1 fields."""
-    fields = list(msg.get_fields())
+    """Returns the single non-dropped field of a message, or None if it has != 1."""
+    fields = [f for f in msg.get_fields() if f.transform_hint is not TransformHint.DROPPED]
     if len(fields) != 1:
         return None
     return fields[0]
@@ -190,6 +190,8 @@ def _inline_wrappers(
             inner_proto_type=field.proto_type,
         )
         for ref_field in field_index.get(id(type_def), []):
+            if ref_field.transform_hint is TransformHint.DROPPED:
+                continue
             ref_field.proto_type = field.proto_type
             ref_field.transform_hint = info
         to_remove.add(id(type_def))
@@ -219,6 +221,8 @@ def _flatten_list_wrappers(
             continue
         # Single repeated field wrapper. Flatten it.
         for ref_field in field_index.get(id(type_def), []):
+            if ref_field.transform_hint is TransformHint.DROPPED:
+                continue
             ref_field.proto_type = field.proto_type
             ref_field.computed_occurs = field.computed_occurs
             ref_field.transform_hint = TransformHint.FLATTENED_LIST

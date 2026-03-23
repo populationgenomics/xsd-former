@@ -417,15 +417,18 @@ def _(field: xsd.Elem) -> Iterable[str]:
 
     _consume_elem_once = _make_elem_consumer(field, val)
 
-    match field.occurs:
-        case (1, 1):
-            yield from _consume_elem_once()
-        case (0, 1):
-            yield f"if children and children[0].tag == {field.source.elem!r}:"
-            yield from text.indent(_consume_elem_once())
-        case _:
-            yield f"while children and children[0].tag == {field.source.elem!r}:"
-            yield from text.indent(_consume_elem_once())
+    if field.is_repeated:
+        yield f"while children and children[0].tag == {field.source.elem!r}:"
+        yield from text.indent(_consume_elem_once())
+    elif field.occurs == (1, 1) and not isinstance(field.proto_type, xsd.Message):
+        # Strictly required primitive: consume unconditionally.
+        yield from _consume_elem_once()
+    else:
+        # Optional field, or required message field — guard defensively since
+        # real data sometimes omits required sub-elements, and a missing
+        # sub-message defaults harmlessly to empty proto.
+        yield f"if children and children[0].tag == {field.source.elem!r}:"
+        yield from text.indent(_consume_elem_once())
 
 
 @_handle_field_definition.register
