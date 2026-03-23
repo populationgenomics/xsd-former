@@ -2,11 +2,12 @@ import pathlib
 
 import click
 
+from xsdformer.build import build_package
 from xsdformer.dtd import dtd
 from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
-from xsdformer.transforms import TransformConfig, apply_transforms
+from xsdformer.transforms import BuildConfig, TransformConfig, apply_transforms
 from xsdformer.xsd import xsd
 
 
@@ -231,6 +232,85 @@ def dtd_command(  # noqa: PLR0913
         )
         with open(json_schema_out, "w") as f:
             f.write(schema)
+
+
+@cli.command("build")
+@click.argument("schema_file", type=click.Path(exists=True))
+@click.option(
+    "--transforms",
+    type=click.Path(exists=True),
+    help="Transform config YAML (provides build: section too).",
+)
+@click.option("--namespace", type=str, help="Proto namespace (overrides config).")
+@click.option("--package-name", type=str, help="Python package name (overrides config).")
+@click.option("--version", type=str, default=None, help="Package version (default: 0.1.0).")
+@click.option(
+    "--out-dir",
+    type=click.Path(),
+    default=".",
+    show_default=True,
+    help="Output directory for generated source tree.",
+)
+@click.option(
+    "--build",
+    "run_build",
+    is_flag=True,
+    help="Also invoke `python -m build --wheel` after source generation.",
+)
+@click.option(
+    "--wheel-out",
+    type=click.Path(),
+    default=None,
+    help="Where to put the .whl file (default: <out-dir>/dist/).",
+)
+def build_command(  # noqa: PLR0913
+    schema_file: str,
+    transforms: str | None,
+    namespace: str | None,
+    package_name: str | None,
+    version: str | None,
+    out_dir: str,
+    run_build: bool,
+    wheel_out: str | None,
+) -> None:
+    """Generates a pip-installable Python package from an XSD or DTD schema."""
+    schema_path = pathlib.Path(schema_file)
+
+    # Load build config from transforms YAML if provided.
+    build_cfg: BuildConfig | None = None
+    if transforms:
+        build_cfg = BuildConfig.from_yaml(pathlib.Path(transforms))
+
+    # CLI options override config.
+    resolved_namespace = namespace or (build_cfg.namespace if build_cfg else None)
+    resolved_package_name = package_name or (build_cfg.package_name if build_cfg else None)
+    resolved_version = version or (build_cfg.version if build_cfg else "0.1.0")
+
+    if not resolved_namespace:
+        resolved_namespace = schema_path.stem
+    if not resolved_package_name:
+        raise click.UsageError(
+            "--package-name is required (or set build.package_name in the transforms config)",
+        )
+
+    # Parse schema.
+    suffix = schema_path.suffix.lower()
+    type_defs = dtd.process_dtd(str(schema_path)) if suffix == ".dtd" else xsd.process_xsd(str(schema_path))
+
+    if transforms:
+        config = TransformConfig.from_yaml(pathlib.Path(transforms))
+        type_defs = apply_transforms(type_defs, config)
+
+    package_dir = build_package(
+        type_defs=type_defs,
+        namespace=resolved_namespace,
+        package_name=resolved_package_name,
+        version=resolved_version,
+        out_dir=pathlib.Path(out_dir),
+        run_build=run_build,
+        wheel_out=pathlib.Path(wheel_out) if wheel_out else None,
+    )
+    click.echo(f"Generated package: {package_dir}")
 
 
 if __name__ == "__main__":

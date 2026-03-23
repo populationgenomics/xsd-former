@@ -43,6 +43,27 @@ class CoercedToTimestampInfo:
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
+class BuildConfig:
+    namespace: str
+    package_name: str
+    version: str = "0.1.0"
+
+    @classmethod
+    def from_yaml(cls, path: pathlib.Path) -> BuildConfig | None:
+        """Loads BuildConfig from the `build:` section of a YAML file, or None if absent."""
+        with open(path) as f:
+            data: dict[str, Any] = yaml.safe_load(f) or {}
+        build = data.get("build")
+        if not build:
+            return None
+        return cls(
+            namespace=build["namespace"],
+            package_name=build["package_name"],
+            version=build.get("version", "0.1.0"),
+        )
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
 class TransformConfig:
     drop_types: frozenset[str] = frozenset()
     drop_fields: dict[str, frozenset[str]] = dataclasses.field(default_factory=dict)
