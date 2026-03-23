@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 class TransformHint(enum.Enum):
     DROPPED = "dropped"
     INLINED_WRAPPER = "inlined_wrapper"
-    FLATTENED_LIST = "flattened_list"
     COLLAPSED_TO_STRING = "collapsed_to_string"
 
 
@@ -35,6 +34,16 @@ class SerializeContentInfo:
     """Hint for serialized content: the ValueElem should call a named serializer."""
 
     serializer: str  # e.g. "markdown"
+
+
+@dataclasses.dataclass(frozen=True)
+class FlattenedListInfo:
+    """Hint that this field was a list-wrapper flattened into the parent.
+
+    inner_tag is the XML element tag of the items to collect from the wrapper.
+    """
+
+    inner_tag: str
 
 
 @dataclasses.dataclass(frozen=True)
@@ -220,12 +229,15 @@ def _flatten_list_wrappers(
         ):
             continue
         # Single repeated field wrapper. Flatten it.
+        inner_source = field.get_source()
+        inner_tag = inner_source.elem if isinstance(inner_source, xsd.XMLElemSource) else None
+        hint = FlattenedListInfo(inner_tag=inner_tag)
         for ref_field in field_index.get(id(type_def), []):
             if ref_field.transform_hint is TransformHint.DROPPED:
                 continue
             ref_field.proto_type = field.proto_type
             ref_field.computed_occurs = field.computed_occurs
-            ref_field.transform_hint = TransformHint.FLATTENED_LIST
+            ref_field.transform_hint = hint
         to_remove.add(id(type_def))
     return [d for d in defs if id(d) not in to_remove]
 

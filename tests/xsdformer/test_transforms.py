@@ -16,6 +16,7 @@ from xsdformer.py import xml_converter
 from xsdformer.py.xml_converter import _parse_date_element, _serialize_markdown
 from xsdformer.transforms import (
     CoercedToTimestampInfo,
+    FlattenedListInfo,
     InlinedWrapperInfo,
     SerializeContentInfo,
     TransformConfig,
@@ -125,7 +126,7 @@ class TestFlattenListWrappers:
         authors_field = next(f for f in book.get_fields() if f.name == "authors")
         assert authors_field.is_repeated
         assert authors_field.proto_type == xsd.AtomicType.STRING
-        assert authors_field.transform_hint is TransformHint.FLATTENED_LIST
+        assert isinstance(authors_field.transform_hint, FlattenedListInfo)
 
     def test_end_to_end(self, py_converter_module_factory: PyConverterModuleFactory) -> None:
         config = TransformConfig(flatten_list_wrappers=True)
