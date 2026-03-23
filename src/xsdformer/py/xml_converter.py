@@ -162,9 +162,9 @@ _PROTO_PY_CONVERTER_CONSTANTS: tuple[tuple[str, Any], ...] = (("_MONTH_NAMES", _
 
 def _make_atom_caster(atom_type: xsd.AtomicType, var: str) -> str:
     caster_map = {
-        xsd.AtomicType.ID: "{0}",
-        xsd.AtomicType.URI: "{0}",
-        xsd.AtomicType.STRING: "{0}",
+        xsd.AtomicType.ID: "({0} or '')",
+        xsd.AtomicType.URI: "({0} or '')",
+        xsd.AtomicType.STRING: "({0} or '')",
         xsd.AtomicType.INT8: "int({0})",
         xsd.AtomicType.UINT8: "int({0})",
         xsd.AtomicType.INT16: "int({0})",
