@@ -435,6 +435,8 @@ def _(field: xsd.Elem) -> Iterable[str]:
 
 @_handle_field_definition.register
 def _(field: xsd.ValueElem) -> Iterable[str]:
+    if field.transform_hint is TransformHint.DROPPED:
+        return
     if isinstance(field.transform_hint, SerializeContentInfo):
         serializer_fn = f"_serialize_{field.transform_hint.serializer}"
         yield f"proto.{field.name} = {serializer_fn}(element)"
