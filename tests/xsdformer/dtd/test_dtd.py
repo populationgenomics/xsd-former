@@ -17,8 +17,8 @@ def _process(dtd_str: str) -> tuple[xsd.TypeDefinition, ...]:
     return dtd.process_dtd(io.StringIO(dtd_str))
 
 
-def _by_name(type_defs: tuple[xsd.TypeDefinition, ...]) -> dict[str, xsd.TypeDefinition]:
-    return {t.name: t for t in type_defs}
+def _by_name(type_defs: tuple[xsd.TypeDefinition, ...]) -> dict[str, xsd.Message]:
+    return {t.name: t for t in type_defs if isinstance(t, xsd.Message)}
 
 
 def _fields_by_name(msg: xsd.Message) -> dict[str, xsd.Field]:
@@ -100,6 +100,7 @@ def test_enumerated_attribute() -> None:
     types = _by_name(type_defs)
     fields = _fields_by_name(types["Item"])
     attr = fields["status"]
+    assert isinstance(attr, xsd.Attr)
     assert isinstance(attr.proto_type, xsd.Enumeration)
     assert attr.proto_type.enum_values == ("draft", "published", "archived")
     assert attr.default == "draft"

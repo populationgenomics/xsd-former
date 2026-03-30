@@ -165,9 +165,9 @@ def _process_attributes(
     element: _ElementDecl,
     message: xsd.Message,
     enum_registry: dict[frozenset[str], xsd.Enumeration],
-) -> list[xsd.Attr]:
+) -> list[xsd.FieldDefinition]:
     """Creates Attr IR nodes from DTD attribute declarations."""
-    attrs = []
+    attrs: list[xsd.FieldDefinition] = []
     for attr in element.iterattributes():
         proto_type = _attr_type_from_dtd(attr, message, enum_registry)
         attrs.append(
