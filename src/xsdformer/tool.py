@@ -8,8 +8,12 @@ from xsdformer.py import xml_converter
 from xsdformer.xsd import xsd
 
 
-@click.command()
-@click.argument("xsd_file", type=click.Path(exists=True))
+@click.group()
+def cli() -> None:
+    """A tool to convert XSD and Protobuf to other formats."""
+
+
+@cli.command("xsd")
 @click.option("--proto-out", type=click.Path(), help="Output protobuf file.")
 @click.option("--py-out", type=click.Path(), help="Output python converter file.")
 @click.option(
@@ -33,7 +37,7 @@ from xsdformer.xsd import xsd
     help="Package name to use in the protobuf file.",
     type=str,
 )
-def main(  # noqa: PLR0913
+def xsd_command(  # noqa: PLR0913
     xsd_file: str,
     proto_out: str,
     py_out: str,
@@ -81,5 +85,43 @@ def main(  # noqa: PLR0913
             f.write(schema)
 
 
+@cli.command()
+@click.argument("proto_file", type=click.Path(exists=True))
+@click.argument("namespace", type=str)
+@click.argument("main_message", type=str)
+@click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
+@click.option(
+    "--preserving-proto-field-name",
+    is_flag=True,
+    help="Use the proto field name in the JSON schema, not the json_name.",
+)
+@click.option(
+    "--include-all",
+    is_flag=True,
+    help="Include all messages from the proto file, not just those reachable from the main message.",
+)
+def proto(  # noqa: PLR0913
+    proto_file: str,
+    namespace: str,
+    main_message: str,
+    json_schema_out: str | None,
+    preserving_proto_field_name: bool,
+    include_all: bool,
+) -> None:
+    """Converts a .proto file to a JSON schema."""
+    schema = jsonschema_generator.generate_from_proto(
+        pathlib.Path(proto_file),
+        namespace,
+        main_message,
+        preserving_proto_field_name=preserving_proto_field_name,
+        include_all=include_all,
+    )
+    if json_schema_out:
+        with open(json_schema_out, "w") as f:
+            f.write(schema)
+    else:
+        print(schema, flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    cli()

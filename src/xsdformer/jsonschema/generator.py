@@ -1,10 +1,9 @@
-import importlib.util
 import json
 import pathlib
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any, TypeVar
 
 from google.protobuf import descriptor, descriptor_pb2, descriptor_pool, timestamp_pb2
@@ -64,6 +63,7 @@ class _JsonSchemaFromDesc:
         self,
         descriptor_set: descriptor_pb2.FileDescriptorSet,
         preserving_proto_field_name: bool = False,
+        include_all: bool = False,
     ) -> None:
         """Initializes the generator.
 
@@ -71,9 +71,12 @@ class _JsonSchemaFromDesc:
             descriptor_set: The FileDescriptorSet to generate the schema from.
             preserving_proto_field_name: If true, use the proto field name for keys
               instead of the json_name.
+            include_all: If true, include all messages from the descriptor set, not
+                just those reachable from the main message.
         """
         self._pool = descriptor_pool.DescriptorPool()
         self._preserving_proto_field_name = preserving_proto_field_name
+        self._include_all = include_all
 
         timestamp_fdp = descriptor_pb2.FileDescriptorProto()
         timestamp_fdp.ParseFromString(timestamp_pb2.DESCRIPTOR.serialized_pb)
@@ -97,16 +100,23 @@ class _JsonSchemaFromDesc:
         Returns:
             A dictionary representing the JSON schema.
         """
-        message_descriptor = self._pool.FindMessageTypeByName(message_name)
-        if not message_descriptor:
+        main_message_descriptor = self._pool.FindMessageTypeByName(message_name)
+        if not main_message_descriptor:
             raise ValueError(f"Message '{message_name}' not found in descriptor set.")
 
-        # Start the conversion
-        self._convert_message_to_schema(message_descriptor)
+        if self._include_all:
+            for fdp in self._fdp_map.values():
+                for msg_proto in fdp.message_type:
+                    full_name = f"{fdp.package}.{msg_proto.name}" if fdp.package else msg_proto.name
+                    msg_descriptor = self._pool.FindMessageTypeByName(full_name)
+                    if msg_descriptor:
+                        self._convert_message_to_schema(msg_descriptor)
+        else:
+            self._convert_message_to_schema(main_message_descriptor)
 
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "$ref": f"#/definitions/{message_descriptor.full_name}",
+            "$ref": f"#/definitions/{main_message_descriptor.full_name}",
             "definitions": self._definitions,
         }
 
@@ -421,6 +431,62 @@ class _JsonSchemaFromDesc:
         return schema
 
 
+def _generate_schema_from_descriptor_set(
+    descriptor_set: descriptor_pb2.FileDescriptorSet,
+    namespace: str,
+    main_message: str,
+    preserving_proto_field_name: bool = False,
+    include_all: bool = False,
+) -> str:
+    """Generates a JSON schema from a FileDescriptorSet."""
+    schema_generator = _JsonSchemaFromDesc(
+        descriptor_set,
+        preserving_proto_field_name=preserving_proto_field_name,
+        include_all=include_all,
+    )
+    fully_qualified_main_message = f"{namespace}.{main_message}"
+    schema = schema_generator.generate(fully_qualified_main_message)
+
+    return json.dumps(schema, indent=2)
+
+
+def _compile_proto_to_descriptor_set(
+    proto_path: pathlib.Path,
+    include_paths: Sequence[pathlib.Path] = (),
+) -> descriptor_pb2.FileDescriptorSet:
+    """Compiles a .proto file to a FileDescriptorSet."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        desc_path = tmp_path / f"{proto_path.stem}.desc"
+
+        protoc_command = [
+            sys.executable,
+            "-m",
+            "grpc_tools.protoc",
+            f"--proto_path={proto_path.parent}",
+        ]
+        if include_paths:
+            for include_path in include_paths:
+                protoc_command.append(f"--proto_path={include_path}")
+        protoc_command.extend(
+            [
+                f"--descriptor_set_out={desc_path}",
+                "--include_source_info",
+                str(proto_path),
+            ],
+        )
+
+        subprocess.run(  # noqa: S603
+            protoc_command,
+            check=True,
+        )
+
+        with open(desc_path, "rb") as f:
+            descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
+
+    return descriptor_set
+
+
 def generate(
     namespace: str,
     type_defs: tuple[xsd.TypeDefinition, ...],
@@ -429,42 +495,32 @@ def generate(
 ) -> str:
     """Generates a JSON schema from XSD type definitions."""
     proto_def = "\n".join(proto_generator.generate(namespace, type_defs))
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = pathlib.Path(tmpdir)
         proto_path = tmp_path / f"{namespace}.proto"
         proto_path.write_text(proto_def)
-
-        desc_path = tmp_path / f"{namespace}.desc"
-
-        spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
-        if not spec or not spec.origin:
-            raise ImportError("google.protobuf.timestamp_pb2 not found")
-
-        proto_include_path = pathlib.Path(spec.origin).parent.parent
-
-        subprocess.run(  # noqa: S603
-            [
-                sys.executable,
-                "-m",
-                "grpc_tools.protoc",
-                f"--proto_path={tmp_path}",
-                f"--proto_path={proto_include_path}",
-                f"--descriptor_set_out={desc_path}",
-                "--include_source_info",
-                str(proto_path.relative_to(tmp_path)),
-            ],
-            check=True,
-        )
-
-        with open(desc_path, "rb") as f:
-            descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
-
-    schema_generator = _JsonSchemaFromDesc(
+        descriptor_set = _compile_proto_to_descriptor_set(proto_path)
+    return _generate_schema_from_descriptor_set(
         descriptor_set,
-        preserving_proto_field_name=preserving_proto_field_name,
+        namespace,
+        main_message,
+        preserving_proto_field_name,
     )
-    fully_qualified_main_message = f"{namespace}.{main_message}"
-    schema = schema_generator.generate(fully_qualified_main_message)
 
-    return json.dumps(schema, indent=2)
+
+def generate_from_proto(
+    proto_path: pathlib.Path,
+    namespace: str,
+    main_message: str,
+    preserving_proto_field_name: bool = False,
+    include_all: bool = False,
+) -> str:
+    """Generates a JSON schema from a .proto file."""
+    descriptor_set = _compile_proto_to_descriptor_set(proto_path)
+    return _generate_schema_from_descriptor_set(
+        descriptor_set,
+        namespace,
+        main_message,
+        preserving_proto_field_name,
+        include_all=include_all,
+    )

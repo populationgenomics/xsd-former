@@ -259,7 +259,7 @@ def _(field: xsd.Seq) -> Iterable[str]:
 
     match field.occurs:
         case (1, 1):
-            return body
+            yield from body
         case (0, 1):
             yield f"if children and children[0].tag in {fst!r}:"
             yield from text.indent(body)

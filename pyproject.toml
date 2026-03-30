@@ -2,7 +2,7 @@
 name = "xsdformer"
 version = "1.0.0"
 description = "A tool to convert XSD to Protobuf definitions."
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "click",
     "jinja2>=3.1.6",
@@ -10,17 +10,17 @@ dependencies = [
     "protobuf>=6.32.1",
     "pytest>=8.4.1",
     "xmlschema",
+    "jsonschema",
 ]
 
 [tool.dependency-groups]
 dev = [
     "ruff",
     "grpcio-tools",
-    "jsonschema",
 ]
 
 [project.scripts]
-xsd-to-proto = "xsdformer.tool:main"
+xsdformer = "xsdformer.tool:cli"
 
 [build-system]
 requires = ["hatchling"]
