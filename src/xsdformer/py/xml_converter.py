@@ -10,7 +10,7 @@ from typing import Any
 from lxml import etree
 
 from xsdformer import generator
-from xsdformer.transforms import InlinedWrapperInfo, TransformHint
+from xsdformer.transforms import InlinedWrapperInfo, SerializeContentInfo, TransformHint
 from xsdformer.xsd import text, xsd
 
 
@@ -56,6 +56,41 @@ def _xml_date(val: str) -> datetime.datetime:
     return datetime.datetime.strptime(val, "%Y-%m-%d")  # noqa: DTZ007
 
 
+def _serialize_markdown(element: etree._Element) -> str:
+    tags = {
+        "b": ("**", "**"),
+        "B": ("**", "**"),
+        "i": ("*", "*"),
+        "I": ("*", "*"),
+        "u": ("__", "__"),
+        "U": ("__", "__"),
+        "sup": ("^(", ")"),
+        "Sup": ("^(", ")"),
+        "sub": ("~(", ")"),
+        "Sub": ("~(", ")"),
+    }
+    parts: list[str] = []
+
+    def _walk(el: etree._Element) -> None:
+        pair = tags.get(el.tag)
+        if pair:
+            parts.append(pair[0])
+        if el.text:
+            parts.append(el.text)
+        for child in el:
+            _walk(child)
+        if pair:
+            parts.append(pair[1])
+        if el.tail:
+            parts.append(el.tail)
+
+    if element.text:
+        parts.append(element.text)
+    for child in element:
+        _walk(child)
+    return "".join(parts)
+
+
 _PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
     _node_is,
     _consume,
@@ -63,6 +98,7 @@ _PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
     _xml_as_str,
     _xml_bool,
     _xml_date,
+    _serialize_markdown,
 )
 
 
@@ -311,6 +347,11 @@ def _(field: xsd.Elem) -> Iterable[str]:
 
 @_handle_field_definition.register
 def _(field: xsd.ValueElem) -> Iterable[str]:
+    if isinstance(field.transform_hint, SerializeContentInfo):
+        serializer_fn = f"_serialize_{field.transform_hint.serializer}"
+        yield f"proto.{field.name} = {serializer_fn}(element)"
+        return
+
     caster = _make_caster(field.proto_type, "element.text")
     if field.is_repeated:
 

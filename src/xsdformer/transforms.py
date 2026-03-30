@@ -30,6 +30,13 @@ class InlinedWrapperInfo:
     inner_proto_type: xsd.AtomicType
 
 
+@dataclasses.dataclass(frozen=True)
+class SerializeContentInfo:
+    """Hint for serialized content: the ValueElem should call a named serializer."""
+
+    serializer: str  # e.g. "markdown"
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class TransformConfig:
     drop_types: frozenset[str] = frozenset()
@@ -39,6 +46,7 @@ class TransformConfig:
     collapse_to_string: frozenset[str] = frozenset()
     rename_types: dict[str, str] = dataclasses.field(default_factory=dict)
     rename_fields: dict[str, dict[str, str]] = dataclasses.field(default_factory=dict)
+    serialize_content: dict[str, str] = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> TransformConfig:
@@ -56,6 +64,7 @@ class TransformConfig:
             collapse_to_string=frozenset(data.get("collapse_to_string", [])),
             rename_types=dict(data.get("rename_types", {})),
             rename_fields=rename_fields,
+            serialize_content=dict(data.get("serialize_content", {})),
         )
 
 
@@ -193,6 +202,25 @@ def _collapse_to_string(
     return [d for d in defs if id(d) not in to_remove]
 
 
+def _serialize_content(
+    defs: list[xsd.TypeDefinition],
+    serialize_content: dict[str, str],
+) -> None:
+    """For targeted messages, mark the ValueElem for serialization and drop Elem fields."""
+    for type_def in defs:
+        if type_def.name not in serialize_content:
+            continue
+        if not isinstance(type_def, xsd.Message):
+            continue
+        serializer = serialize_content[type_def.name]
+        info = SerializeContentInfo(serializer=serializer)
+        for field in type_def.get_fields():
+            if isinstance(field, xsd.ValueElem):
+                field.transform_hint = info
+            elif isinstance(field, xsd.Elem):
+                field.transform_hint = TransformHint.DROPPED
+
+
 def _renumber_fields(defs: list[xsd.TypeDefinition]) -> None:
     for type_def in defs:
         if not isinstance(type_def, xsd.Message):
@@ -227,17 +255,23 @@ def apply_transforms(
     # Rebuild index after drops.
     field_index = _build_field_index(result)
 
-    # 3. Auto-detect transforms.
-    if config.inline_wrappers:
-        result = _inline_wrappers(result, field_index)
-        field_index = _build_field_index(result)
-
-    if config.flatten_list_wrappers:
-        result = _flatten_list_wrappers(result, field_index)
-        field_index = _build_field_index(result)
+    # 3. Auto-detect transforms (loop to handle cascading).
+    changed = True
+    while changed:
+        prev_len = len(result)
+        if config.inline_wrappers:
+            result = _inline_wrappers(result, field_index)
+            field_index = _build_field_index(result)
+        if config.flatten_list_wrappers:
+            result = _flatten_list_wrappers(result, field_index)
+            field_index = _build_field_index(result)
+        changed = len(result) < prev_len
 
     # 4. Explicit collapse.
     result = _collapse_to_string(result, config.collapse_to_string, field_index)
+
+    # 4b. Serialize content (after collapse so it can override hints on already-collapsed fields).
+    _serialize_content(result, config.serialize_content)
 
     # 5. Renumber fields.
     _renumber_fields(result)

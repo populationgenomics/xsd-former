@@ -1,0 +1,550 @@
+# PMID: 33073003
+medline_citation {
+  owner: OWNER_NLM
+  status: STATUS_PUB_MED_NOT_MEDLINE
+  pmid {
+    version: "1"
+    value: "33073003"
+  }
+  date_revised {
+    year: "2023"
+    month: "09"
+    day: "13"
+  }
+  article {
+    pub_model: PUB_MODEL_ELECTRONIC_E_COLLECTION
+    journal {
+      issn {
+        issn_type: ISSN_TYPE_ELECTRONIC
+        value: "2409-515X"
+      }
+      journal_issue {
+        cited_medium: CITED_MEDIUM_INTERNET
+        volume: "6"
+        issue: "1"
+        pub_date {
+          month: "Mar"
+        }
+      }
+      title: "International journal of neonatal screening"
+      isoabbreviation: "Int J Neonatal Screen"
+    }
+    article_title {
+      value: "Newborn Screening for Pompe Disease in Illinois: Experience with 684,290 Infants."
+    }
+    pagination {
+      medline_pgn: "4"
+    }
+    elocation_id {
+      eid_type: EID_TYPE_PII
+      valid_yn: VALID_YN_Y
+      value: "4"
+    }
+    elocation_id {
+      eid_type: EID_TYPE_DOI
+      valid_yn: VALID_YN_Y
+      value: "10.3390/ijns6010004"
+    }
+    abstract {
+      abstract_text {
+        value: "Statewide newborn screening for Pompe disease began in Illinois in 2015. As of 30 September 2019, a total of 684,290 infants had been screened and 395 infants (0.06%) were screen positive. A total of 29 cases of Pompe disease were identified (3 infantile, 26 late-onset). While many of the remainder were found to have normal alpha-glucosidase activity on the follow-up testing (234 of 395), other findings included 62 carriers, 39 infants with pseudodeficiency, and eight infants who could not be given a definitive diagnosis due to inconclusive follow-up testing."
+      }
+      copyright_information: "© 2020 by the authors."
+    }
+    author_list {
+      complete_yn: VALID_YN_Y
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "BK"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Feinberg School of Medicine of Northwestern University, Chicago, IL 60611, USA; JCharrow@luriechildrens.org."
+          }
+        }
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Ann and Robert H. Lurie Children\'s Hospital of Chicago, Chicago, IL 60611, USA; lhitchins@luriechildrens.org (L.H.); rahickey@luriechildrens.org (R.H.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "J"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Feinberg School of Medicine of Northwestern University, Chicago, IL 60611, USA; JCharrow@luriechildrens.org."
+          }
+        }
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Ann and Robert H. Lurie Children\'s Hospital of Chicago, Chicago, IL 60611, USA; lhitchins@luriechildrens.org (L.H.); rahickey@luriechildrens.org (R.H.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "GE"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, University of Illinois College of Medicine, Chicago, IL 60612, USA; geh@uic.edu."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "J"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Southern Illinois University School of Medicine, Springfield, IL 62701, USA; jfleischer95@siumed.edu (J.F.); dgroepper@siumed.edu (D.G.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "DK"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Washington University School of Medicine and St. Louis Children\'s Hospital, St. Louis, MO 63110, USA; grange_d@kids.wustl.edu."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "SR"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Saint Louis University, St. Louis, MO 63104, USA; braddock@slu.edu (S.R.B.); katherine.christensen@health.slu.edu (K.M.C.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "L"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Ann and Robert H. Lurie Children\'s Hospital of Chicago, Chicago, IL 60611, USA; lhitchins@luriechildrens.org (L.H.); rahickey@luriechildrens.org (R.H.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "R"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Ann and Robert H. Lurie Children\'s Hospital of Chicago, Chicago, IL 60611, USA; lhitchins@luriechildrens.org (L.H.); rahickey@luriechildrens.org (R.H.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "KM"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Saint Louis University, St. Louis, MO 63104, USA; braddock@slu.edu (S.R.B.); katherine.christensen@health.slu.edu (K.M.C.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "D"
+        affiliation_info {
+          affiliation {
+            value: "Department of Pediatrics, Southern Illinois University School of Medicine, Springfield, IL 62701, USA; jfleischer95@siumed.edu (J.F.); dgroepper@siumed.edu (D.G.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "H"
+        affiliation_info {
+          affiliation {
+            value: "Office of Health Promotion, Illinois Department of Public Health, Springfield, IL 62761, USA; Heather.Shryock@Illinois.gov (H.S.); Pamela.E.Smith@illinois.gov (P.S.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "P"
+        affiliation_info {
+          affiliation {
+            value: "Office of Health Promotion, Illinois Department of Public Health, Springfield, IL 62761, USA; Heather.Shryock@Illinois.gov (H.S.); Pamela.E.Smith@illinois.gov (P.S.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "R"
+        affiliation_info {
+          affiliation {
+            value: "Newborn Screening Laboratory, Illinois Department of Public Health, Chicago, IL 60603, USA; Rong.Shao@Illinois.gov (R.S.); Khaja.Basheeruddin@Illinois.gov (K.B.)."
+          }
+        }
+      }
+      author {
+        valid_yn: VALID_YN_Y
+        initials: "K"
+        affiliation_info {
+          affiliation {
+            value: "Newborn Screening Laboratory, Illinois Department of Public Health, Chicago, IL 60603, USA; Rong.Shao@Illinois.gov (R.S.); Khaja.Basheeruddin@Illinois.gov (K.B.)."
+          }
+        }
+      }
+    }
+    language: "eng"
+    publication_type_list {
+      ui: "D016428"
+      value: "Journal Article"
+    }
+    article_date {
+      date_type: "Electronic"
+      year: "2020"
+      month: "01"
+      day: "21"
+    }
+  }
+  medline_journal_info {
+    country: "Switzerland"
+    medline_ta: "Int J Neonatal Screen"
+    nlm_unique_id: "101665400"
+    issnlinking: "2409-515X"
+  }
+  keyword_list {
+    owner: OWNER_NOTNLM
+    keyword {
+      major_topic_yn: VALID_YN_N
+      value: "Pompe disease"
+    }
+    keyword {
+      major_topic_yn: VALID_YN_N
+      value: "newborn screening"
+    }
+  }
+  coi_statement {
+    value: "Conflicts of InterestB.K.B. has received consulting fees and/or honoraria from Sanofi Genzyme, Biomarin, Shire (a Takeda company), Ultragenyx, Moderna, Horizon, Alexion, Chiesi, Denali, JCR Pharma, Aeglea, and Agios. She has conducted contracted research for Sanofi Genzyme, Biomarin, Shire, Alexion, Ultragenyx, and Sangamo and Homology Medicines. J.C. has also received grant support for research from: Sanofi Genzyme, Shire, Amicus, BioMarin, and Protalix. Dorothy K. Grange conducts contracted research for Biomarin and Shire (a Takeda company). The following authors declare no conflict of interest: K.B., S.R.B., K.M.C., J.F., D.G., R.H., L.H., G.E.H., H.S., R.S., and P.S."
+  }
+}
+pubmed_data {
+  history {
+    pub_status: PUB_STATUS_RECEIVED
+    year: "2019"
+    month: "12"
+    day: "11"
+  }
+  history {
+    pub_status: PUB_STATUS_ACCEPTED
+    year: "2020"
+    month: "1"
+    day: "18"
+  }
+  history {
+    pub_status: PUB_STATUS_ENTREZ
+    year: "2020"
+    month: "10"
+    day: "19"
+    hour: "6"
+    minute: "0"
+  }
+  history {
+    pub_status: PUB_STATUS_PUBMED
+    year: "2020"
+    month: "10"
+    day: "20"
+    hour: "6"
+    minute: "0"
+  }
+  history {
+    pub_status: PUB_STATUS_MEDLINE
+    year: "2020"
+    month: "10"
+    day: "20"
+    hour: "6"
+    minute: "1"
+  }
+  history {
+    pub_status: PUB_STATUS_PMC_RELEASE
+    year: "2020"
+    month: "1"
+    day: "21"
+  }
+  publication_status: "epublish"
+  article_id_list {
+    id_type: ID_TYPE_PUBMED
+    value: "33073003"
+  }
+  article_id_list {
+    id_type: ID_TYPE_PMC
+    value: "PMC7422983"
+  }
+  article_id_list {
+    id_type: ID_TYPE_DOI
+    value: "10.3390/ijns6010004"
+  }
+  article_id_list {
+    id_type: ID_TYPE_PII
+    value: "ijns6010004"
+  }
+  reference_list {
+    reference {
+      citation {
+        value: "Kishnani P.S., Corzo D., Leslie N.D., Gruskin D., van der Ploeg A., Clancy J.P., Parini R., Morin G., Beck M., Bauer M.S., et al. Early treatment with alglucosidase alfa prolongs long-term survival in infants with Pompe disease. Pediatr. Res. 2009;66:329–335. doi: 10.1203/PDR.0b013e3181b24e94."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1203/PDR.0b013e3181b24e94"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3129995"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19542901"
+      }
+    }
+    reference {
+      citation {
+        value: "Kishnani P.S., Goldenberg P.C., DeArmey S.L., Heller J., Benjamin D., Young S., Bali D., Smith S.A., Li J.S., Mandel H., et al. Cross-reactive immunologic material status affects treatment outcomes in Pompe disease infants. Mol. Genet. Metab. 2010;99:26–33. doi: 10.1016/j.ymgme.2009.08.003."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.ymgme.2009.08.003"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3721340"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19775921"
+      }
+    }
+    reference {
+      citation {
+        value: "Messinger Y.H., Mendelsohn N.J., Rhead W., Dimmock D., Hershkovitz E., Champion M., Jones S.A., Olson R., White A., Wells C., et al. Successful immune tolerance induction to enzyme replacement therapy in CRIM-negative infants with Pompe disease. Mol. Genet. Metab. 2012;14:135–142."
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3711224"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22237443"
+      }
+    }
+    reference {
+      citation {
+        value: "Van der Ploeg A.T., Clemens P.R., Corzo D., Escolar D.M., Florence J., Groeneveld G.J., Herson S., Kishnani P.S., Laforet P., Lake S.L., et al. A randomized study of alglucosidase alfa in late-onset Pompe disease. N. Engl. J. Med. 2010;362:1396–1406. doi: 10.1056/NEJMoa0909859."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1056/NEJMoa0909859"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "20393176"
+      }
+    }
+    reference {
+      citation {
+        value: "Kishnani P.S., Steiner R.D., Bali D., Berger K., Byrne B.J., Case L.E., Crowley J.F., Downs S., Howell R.R., Kravitz R.M., et al. Pompe disease diagnosis and management guidelines. Genet. Med. 2006;8:267–288. doi: 10.1097/01.gim.0000218152.87434.f3."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1097/01.gim.0000218152.87434.f3"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC3110959"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "16702877"
+      }
+    }
+    reference {
+      citation {
+        value: "Young S.P., Piraud M., Goldstein J.L., Zhang H., Rehder C., Laforet P., Kishnani P.S., Millington D.S., Bashir M.R., Bali D.S. Assessing disease severity in Pompe disease: The roles of a urine glucose tetrasaccharide biomarker and imaging techniques. Am. J. Med. Genet. C Semin. Med. Genet. 2012;160C:50–58. doi: 10.1002/ajmg.c.31320."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/ajmg.c.31320"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "22252961"
+      }
+    }
+    reference {
+      citation {
+        value: "Chien Y.H., Goldstein J.L., Hwu W.L., Smith P.B., Lee N.C., Chiang S.C., Tolun A.A., Zhang H., Vaisnins A.E., Millington D.S., et al. Baseline urine glucose tetrasaccharide concentrations in patients with infantile- and late-onset Pompe disease identified by newborn screening. JIMD Rep. 2015;19:67–73."
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC4501239"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25681082"
+      }
+    }
+    reference {
+      citation {
+        value: "Kumamoto S., Katafuchi T., Nakamura K., Endo F., Oda E., Okuyama T., Kroos M.A., Reuser A.J., Okumiya T. High frequency of acid alpha-glucosidase pseudodeficiency complicating newborn screening for glycogen storage disease type II in the Japanese population. Mol. Genet. Metab. 2009;99:190–195. doi: 10.1016/j.ymgme.2009.03.004."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.ymgme.2009.03.004"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19362502"
+      }
+    }
+    reference {
+      citation {
+        value: "Chien Y.H., Chiang S.C., Zhang X.K., Keutzer J., Lee N.C., Huang A.C., Chen C.A., Wu M.H., Huang P.H., Tsai F.J., et al. Early detection of Pompe disease by newborn screening is feasible: Results from the Taiwan screening program. Pediatrics. 2008;122:e39–e45. doi: 10.1542/peds.2007-2222."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1542/peds.2007-2222"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "18519449"
+      }
+    }
+    reference {
+      citation {
+        value: "Chien Y.H., Lee N.C., Thurberg B.L., Chiang S.C., Zhang X.K., Keutzer J., Huang A.C., Wu M.H., Huang P.H., Tsai F.J., et al. Pompe disease in infants: Improving the prognosis by newborn screening and early treatment. Pediatrics. 2009;124:e1116–e1125. doi: 10.1542/peds.2008-3667."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1542/peds.2008-3667"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "19948615"
+      }
+    }
+    reference {
+      citation {
+        value: "Hopkins P.V., Campbell C., Klug T., Rogers S., Raburn-Miller J., Kiesling J. Lysosomal storage disorder newborn screening implementation: Findings from the first six months of full population pilot testing in Missouri. J. Pediatr. 2015;166:172–177. doi: 10.1016/j.jpeds.2014.09.023."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.jpeds.2014.09.023"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "25444528"
+      }
+    }
+    reference {
+      citation {
+        value: "Burton B.K., Charrow J., Hoganson G.E., Waggoner D., Tinkle B., Braddock S.R., Schneider M., Grange D.K., Nash C., Shryock H., et al. Newborn screening for lysosomal storage disorders in Illinois: The initial 15-month experience. J. Pediatr. 2017;190:130–135. doi: 10.1016/j.jpeds.2017.06.048."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.jpeds.2017.06.048"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28728811"
+      }
+    }
+    reference {
+      citation {
+        value: "Herbert M., Cope H., Li J.S., Kishnani P.S. Severe cardiac involvement is rare in patients with late-onset Pompe disease and the common c.-32-13T>G variant: Implications for newborn screening. J. Pediatr. 2018;198:308–312. doi: 10.1016/j.jpeds.2018.02.007."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.jpeds.2018.02.007"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29627187"
+      }
+    }
+    reference {
+      citation {
+        value: "Kazi Z.B., Desai A.K., Berrier K.L., Troxler R.B., Wang R.Y., Abdul-Rahman O.A., Tanpaiboon P., Mendelsohn N.J., Herskovitz E., Kronn D., et al. Sustained immune tolerance induction in enzyme replacement therapy-treated CRIM-negative patients with infantile Pompe disease. JCI Insight. 2017;2:e94328. doi: 10.1172/jci.insight.94328."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1172/jci.insight.94328"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC5621909"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "28814660"
+      }
+    }
+    reference {
+      citation {
+        value: "Kazi Z.B., Desai A.K., Troxler R.B., Kronn D., Packman S., Sabbadini M., Rizzo W.B., Scherer K., Abdul-Rahman O., Tanpaiboon P., et al. An immune tolerance approach using transient low-dose methotrexate in ERT-naïve setting of patients treated with a therapeutic protein: Experience in infantile-onset Pompe disease. Genet. Med. 2019;21:887–895. doi: 10.1038/s41436-018-0270-7."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1038/s41436-018-0270-7"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6417984"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "30214072"
+      }
+    }
+    reference {
+      citation {
+        value: "Hopkins P.V., Klug T., Vermette L., Raburn-Miller J., Kiesling J., Rogers S. Incidence of 4 lysosomal storage disorders from 4 years of newborn screening. JAMA Pediatr. 2018;172:696–697. doi: 10.1001/jamapediatrics.2018.0263."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1001/jamapediatrics.2018.0263"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6137509"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "29813145"
+      }
+    }
+    reference {
+      citation {
+        value: "Yang C.F., Yang C.C., Liao H.C., Huang L.Y., Chiang C.C., Ho H.C., Lai C.J., Chu T.H., Yang T.F., Hsu T.R., et al. Very early treatment for infantile-onset Pompe disease contributes to better outcomes. J. Pediatr. 2016;169:174–180. doi: 10.1016/j.jpeds.2015.10.078."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1016/j.jpeds.2015.10.078"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "26685070"
+      }
+    }
+    reference {
+      citation {
+        value: "Reuser A.J.J., van der Ploeg A.T., Chien Y.H., Llerena J., Jr., Abbott M.A., Clemens P.R., Kimonis V.E., Leslie N., Maruti S.S., Sanson B.J., et al. GAA variants and phenotypes amount 1,079 patients with Pompe disease; data from the Pompe Registry. Hum. Mutat. 2019;40:2146–2164. doi: 10.1002/humu.23878."
+      }
+      article_id_list {
+        id_type: ID_TYPE_DOI
+        value: "10.1002/humu.23878"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PMC
+        value: "PMC6852536"
+      }
+      article_id_list {
+        id_type: ID_TYPE_PUBMED
+        value: "31342611"
+      }
+    }
+  }
+}
