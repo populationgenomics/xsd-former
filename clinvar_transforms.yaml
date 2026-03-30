@@ -457,4 +457,3 @@ comments:
   Xref.db: The name of the database. e.g. Gene, Ensembl, HGNC.
   Xref.url: The URL of the identifier.
   Zygosity: The zygosity of the co-occurring variant, not the interpreted variant.
-

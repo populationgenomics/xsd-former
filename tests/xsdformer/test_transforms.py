@@ -327,7 +327,7 @@ class TestComments:
             comments={
                 "Book": "A book record.",
                 "Book.title": "The book title.",
-            }
+            },
         )
         result = apply_transforms(defs, config)
         proto = "\n".join(proto_gen.generate("test", result))
