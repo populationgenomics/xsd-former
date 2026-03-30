@@ -55,7 +55,7 @@ class CoercedToTimestampInfo:
 class MapFieldConfig:
     """Config for converting a message type to a proto map<key, value>."""
 
-    key: str    # field name of the map key within the inner message
+    key: str  # field name of the map key within the inner message
     value: str  # field name of the map value within the inner message
 
 
@@ -278,12 +278,12 @@ def _apply_maps(
         if not isinstance(key_field.proto_type, xsd.AtomicType):
             raise ValueError(
                 f"maps: key field {cfg.key!r} in {type_def.name!r} must be an atomic type "
-                f"(proto3 map keys cannot be enums or messages); got {key_field.proto_type!r}"
+                f"(proto3 map keys cannot be enums or messages); got {key_field.proto_type!r}",
             )
         if not isinstance(val_field.proto_type, xsd.AtomicType):
             raise ValueError(
                 f"maps: value field {cfg.value!r} in {type_def.name!r} must be an atomic type; "
-                f"got {val_field.proto_type!r}"
+                f"got {val_field.proto_type!r}",
             )
         map_type = xsd.MapType(
             documentation=type_def.documentation,

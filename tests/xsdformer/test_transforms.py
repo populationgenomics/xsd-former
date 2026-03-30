@@ -7,6 +7,7 @@ import subprocess
 import sys
 import types
 
+import pytest
 from lxml import etree
 
 from tests.xsdformer.conftest import PyConverterModuleFactory
@@ -774,8 +775,7 @@ class TestMaps:
         assert result.entry["baz"] == "qux"
 
     def test_enum_key_raises(self) -> None:
-        import pytest
-        _ENUM_KEY_DTD = """
+        dtd_str = """
             <!ELEMENT catalog (entry*)>
             <!ELEMENT entry EMPTY>
             <!ATTLIST entry
@@ -783,7 +783,7 @@ class TestMaps:
                 value CDATA #REQUIRED
             >
         """
-        defs = _parse_dtd(_ENUM_KEY_DTD)
+        defs = _parse_dtd(dtd_str)
         config = TransformConfig(maps={"Entry": MapFieldConfig(key="key", value="value")})
         with pytest.raises(ValueError, match="atomic type"):
             apply_transforms(defs, config)

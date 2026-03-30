@@ -10,7 +10,13 @@ from typing import Any
 from lxml import etree
 
 from xsdformer import generator
-from xsdformer.transforms import CoercedToTimestampInfo, FlattenedListInfo, InlinedWrapperInfo, SerializeContentInfo, TransformHint
+from xsdformer.transforms import (
+    CoercedToTimestampInfo,
+    FlattenedListInfo,
+    InlinedWrapperInfo,
+    SerializeContentInfo,
+    TransformHint,
+)
 from xsdformer.xsd import text, xsd
 
 
@@ -382,7 +388,7 @@ def _handle_flattened_list_elem(field: xsd.Elem, info: FlattenedListInfo) -> Ite
     def _body() -> Iterable[str]:
         yield f"wrapper = _consume(children, {wrapper_tag!r})"
         if info.inner_tag is not None:
-            yield f"for inner_elem in wrapper:"
+            yield "for inner_elem in wrapper:"
             inner = [f"if inner_elem.tag == {info.inner_tag!r}:", *text.indent(inner_consumer())]
             yield from text.indent(inner)
         else:
