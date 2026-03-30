@@ -13,8 +13,9 @@ from tests.xsdformer.conftest import PyConverterModuleFactory
 from xsdformer.dtd import dtd
 from xsdformer.protobuf import generator as proto_gen
 from xsdformer.py import xml_converter
-from xsdformer.py.xml_converter import _serialize_markdown
+from xsdformer.py.xml_converter import _parse_date_element, _serialize_markdown
 from xsdformer.transforms import (
+    CoercedToTimestampInfo,
     InlinedWrapperInfo,
     SerializeContentInfo,
     TransformConfig,
@@ -304,6 +305,36 @@ class TestCombined:
         assert "Book" in names
 
 
+class TestComments:
+    def test_adds_type_comment(self) -> None:
+        defs = _parse()
+        config = TransformConfig(comments={"Book": "A book record."})
+        result = apply_transforms(defs, config)
+        book = next(d for d in result if d.name == "Book")
+        assert book.documentation == "A book record."
+
+    def test_adds_field_comment(self) -> None:
+        defs = _parse()
+        config = TransformConfig(comments={"Book.title": "The book title."})
+        result = apply_transforms(defs, config)
+        book = next(d for d in result if d.name == "Book")
+        title_field = next(f for f in book.get_fields() if f.name == "title")
+        assert title_field.documentation == "The book title."
+
+    def test_comment_appears_in_proto(self) -> None:
+        defs = _parse()
+        config = TransformConfig(
+            comments={
+                "Book": "A book record.",
+                "Book.title": "The book title.",
+            },
+        )
+        result = apply_transforms(defs, config)
+        proto = "\n".join(proto_gen.generate("test", result))
+        assert "// A book record." in proto
+        assert "// The book title." in proto
+
+
 _MIXED_DTD = """
     <!ELEMENT article (title, abstract?)>
     <!ATTLIST article id ID #REQUIRED>
@@ -462,3 +493,238 @@ class TestSerializeMarkdownDirect:
     def test_unknown_tag_extracts_text(self) -> None:
         el = etree.fromstring(b"<t>See <math>x=1</math> here</t>")
         assert _serialize_markdown(el) == "See x=1 here"
+
+
+def _build_dtd_converter(
+    dtd_str: str,
+    config: TransformConfig,
+    namespace: str,
+    tmp_path: pathlib.Path,
+) -> types.ModuleType:
+    """Compile a DTD + transforms into a converter module."""
+    type_defs = dtd.process_dtd(io.StringIO(dtd_str))
+    type_defs = apply_transforms(type_defs, config)
+
+    proto_def = "\n".join(proto_gen.generate(namespace, type_defs))
+    proto_path = tmp_path / f"{namespace}.proto"
+    proto_path.write_text(proto_def)
+
+    spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+    assert spec is not None
+    assert spec.origin is not None
+    proto_include = pathlib.Path(spec.origin).parent.parent
+    subprocess.run(  # noqa: S603
+        [
+            sys.executable,
+            "-m",
+            "grpc_tools.protoc",
+            f"--proto_path={tmp_path}",
+            f"--proto_path={proto_include}",
+            f"--python_out={tmp_path}",
+            str(proto_path.relative_to(tmp_path)),
+        ],
+        check=True,
+    )
+
+    pb2_spec = importlib.util.spec_from_file_location(
+        f"{namespace}_pb2",
+        tmp_path / f"{namespace}_pb2.py",
+    )
+    assert pb2_spec is not None
+    assert pb2_spec.loader is not None
+    module_pb2 = importlib.util.module_from_spec(pb2_spec)
+    pb2_spec.loader.exec_module(module_pb2)
+
+    converter_code = "\n".join(
+        xml_converter.generate(namespace, type_defs, module_pb2.__name__),
+    )
+    converter = types.ModuleType(f"{namespace}_converter")
+    old = sys.modules.get(module_pb2.__name__)
+    sys.modules[module_pb2.__name__] = module_pb2
+    try:
+        exec(converter_code, converter.__dict__)
+    finally:
+        if old is None:
+            del sys.modules[module_pb2.__name__]
+        else:
+            sys.modules[module_pb2.__name__] = old
+    return converter
+
+
+_BOOL_DTD = """
+    <!ELEMENT root (item+)>
+    <!ATTLIST root complete (Y|N) "Y">
+    <!ELEMENT item (#PCDATA)>
+    <!ATTLIST item active (Y|N) #REQUIRED>
+"""
+
+
+class TestCoerceToBool:
+    def test_auto_detects_yn_enums(self) -> None:
+        defs = _parse_dtd(_BOOL_DTD)
+        config = TransformConfig(coerce_to_bool=True)
+        result = apply_transforms(defs, config)
+        # The Y/N enum should be removed.
+        assert not any(isinstance(d, xsd.Enumeration) for d in result)
+        root = next(d for d in result if d.name == "Root")
+        complete_field = next(f for f in root.get_fields() if f.name == "complete")
+        assert complete_field.proto_type is xsd.AtomicType.BOOL
+
+    def test_end_to_end(self, tmp_path: pathlib.Path) -> None:
+        config = TransformConfig(coerce_to_bool=True)
+        converter = _build_dtd_converter(_BOOL_DTD, config, "booltest", tmp_path)
+
+        xml = b'<root complete="Y"><item active="Y">a</item><item active="N">b</item></root>'
+        result = converter.Root(etree.fromstring(xml))
+        assert result.complete is True
+        assert result.item[0].active is True
+        assert result.item[1].active is False
+
+
+_DATE_DTD = """
+    <!ELEMENT article (title, date_published, date_revised?)>
+    <!ELEMENT title (#PCDATA)>
+    <!ELEMENT date_published (year, month?, day?)>
+    <!ELEMENT date_revised (year, month, day)>
+    <!ELEMENT year (#PCDATA)>
+    <!ELEMENT month (#PCDATA)>
+    <!ELEMENT day (#PCDATA)>
+"""
+
+
+class TestCoerceToTimestamp:
+    def test_removes_date_type_and_sets_hint(self) -> None:
+        defs = _parse_dtd(_DATE_DTD)
+        config = TransformConfig(
+            coerce_to_timestamp=frozenset({"DatePublished", "DateRevised"}),
+        )
+        result = apply_transforms(defs, config)
+        names = [d.name for d in result]
+        assert "DatePublished" not in names
+        assert "DateRevised" not in names
+        article = next(d for d in result if d.name == "Article")
+        dp_field = next(f for f in article.get_fields() if f.name == "date_published")
+        assert dp_field.proto_type is xsd.AtomicType.DATE
+        assert isinstance(dp_field.transform_hint, CoercedToTimestampInfo)
+
+    def test_end_to_end_full_date(self, tmp_path: pathlib.Path) -> None:
+        config = TransformConfig(
+            coerce_to_timestamp=frozenset({"DatePublished", "DateRevised"}),
+            inline_wrappers=True,
+        )
+        converter = _build_dtd_converter(_DATE_DTD, config, "datetest", tmp_path)
+
+        xml = b"""
+        <article>
+          <title>Test</title>
+          <date_published><year>2024</year><month>03</month><day>15</day></date_published>
+          <date_revised><year>2024</year><month>06</month><day>01</day></date_revised>
+        </article>
+        """
+        result = converter.Article(etree.fromstring(xml))
+        assert result.date_published.seconds != 0
+        # 2024-03-15 in UTC
+        dt = result.date_published.ToDatetime()
+        assert dt.year == 2024
+        assert dt.month == 3
+        assert dt.day == 15
+
+        dt_rev = result.date_revised.ToDatetime()
+        assert dt_rev.year == 2024
+        assert dt_rev.month == 6
+
+    def test_end_to_end_partial_date(self, tmp_path: pathlib.Path) -> None:
+        config = TransformConfig(
+            coerce_to_timestamp=frozenset({"DatePublished"}),
+            inline_wrappers=True,
+        )
+        converter = _build_dtd_converter(_DATE_DTD, config, "datetest2", tmp_path)
+
+        xml = b"""
+        <article>
+          <title>Test</title>
+          <date_published><year>2024</year></date_published>
+        </article>
+        """
+        result = converter.Article(etree.fromstring(xml))
+        dt = result.date_published.ToDatetime()
+        assert dt.year == 2024
+        assert dt.month == 1
+        assert dt.day == 1
+
+    def test_end_to_end_month_name(self, tmp_path: pathlib.Path) -> None:
+        config = TransformConfig(
+            coerce_to_timestamp=frozenset({"DatePublished"}),
+            inline_wrappers=True,
+        )
+        converter = _build_dtd_converter(_DATE_DTD, config, "datetest3", tmp_path)
+
+        xml = b"""
+        <article>
+          <title>Test</title>
+          <date_published><year>2024</year><month>Mar</month></date_published>
+        </article>
+        """
+        result = converter.Article(etree.fromstring(xml))
+        dt = result.date_published.ToDatetime()
+        assert dt.year == 2024
+        assert dt.month == 3
+
+    def test_end_to_end_optional_date(self, tmp_path: pathlib.Path) -> None:
+        config = TransformConfig(
+            coerce_to_timestamp=frozenset({"DatePublished", "DateRevised"}),
+            inline_wrappers=True,
+        )
+        converter = _build_dtd_converter(_DATE_DTD, config, "datetest4", tmp_path)
+
+        xml = b"""
+        <article>
+          <title>Test</title>
+          <date_published><year>2024</year><month>01</month><day>01</day></date_published>
+        </article>
+        """
+        result = converter.Article(etree.fromstring(xml))
+        # date_revised is optional and absent — should be default (empty Timestamp).
+        assert result.date_revised.seconds == 0
+
+
+class TestParseDateElementDirect:
+    """Direct tests of _parse_date_element."""
+
+    def test_full_date(self) -> None:
+        el = etree.fromstring(b"<d><Year>2024</Year><Month>03</Month><Day>15</Day></d>")
+        dt = _parse_date_element(el)
+        assert dt.year == 2024
+        assert dt.month == 3
+        assert dt.day == 15
+
+    def test_year_only(self) -> None:
+        el = etree.fromstring(b"<d><Year>2024</Year></d>")
+        dt = _parse_date_element(el)
+        assert dt.year == 2024
+        assert dt.month == 1
+        assert dt.day == 1
+
+    def test_month_name(self) -> None:
+        el = etree.fromstring(b"<d><Year>2024</Year><Month>Mar</Month></d>")
+        dt = _parse_date_element(el)
+        assert dt.month == 3
+
+    def test_with_time(self) -> None:
+        el = etree.fromstring(
+            b"<d><Year>2024</Year><Month>01</Month><Day>15</Day><Hour>10</Hour><Minute>30</Minute></d>",
+        )
+        dt = _parse_date_element(el)
+        assert dt.hour == 10
+        assert dt.minute == 30
+
+    def test_medline_date(self) -> None:
+        el = etree.fromstring(b"<d><MedlineDate>1998 Dec-1999 Jan</MedlineDate></d>")
+        dt = _parse_date_element(el)
+        assert dt.year == 1998
+
+    def test_season_ignored(self) -> None:
+        el = etree.fromstring(b"<d><Year>2024</Year><Season>Winter</Season></d>")
+        dt = _parse_date_element(el)
+        assert dt.year == 2024
+        assert dt.month == 1

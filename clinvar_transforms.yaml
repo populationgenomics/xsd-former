@@ -1,0 +1,459 @@
+inline_wrappers: true
+flatten_list_wrappers: true
+comments:
+  Accession.date_deleted: The date the SCV was deleted.
+  Accession.value: The accession of the deleted SCV.
+  Accession.version: The version of the deleted SCV.
+  Age: The age of the sample.
+  Age.age_unit: The unit of the age.
+  Age.type: The type of the age.
+  Age.value: The value of the age.
+  AgeUnit: The unit of the age.
+  AggregateClassificationSet: A set of aggregate classifications.
+  AggregateClassificationSet.germline_classification: The aggregate germline classification.
+  AggregateClassificationSet.oncogenicity_classification: The aggregate oncogenicity classification.
+  AggregateClassificationSet.somatic_clinical_impact: The aggregate somatic clinical impact classification.
+  AggregateGermlineReviewStatusValue: The aggregate review status based on all germline submissions for this record.
+  AggregateOncogenicityReviewStatusValue: The aggregate review status based on all oncogenicity submissions for this record.
+  AggregateSomaticClinicalImpactReviewStatusValue: The aggregate review status based on all somatic clinical impact submissions for this record.
+  AggregatedGermlineClassification: The aggregate classification of a germline variant.
+  AggregatedGermlineClassification.condition_list: The list of conditions.
+  AggregatedGermlineClassification.description: We are not providing an enumeration for the values we report for germline classification within the xsd. Details are in https://github.com/ncbi/clinvar/ClassificationOnClinVar.md.
+  AggregatedGermlineClassification.description_history: The history of the description.
+  AggregatedGermlineClassification.explanation: Explanation is used only when the description is 'conflicting data from submitters' The element summarizes the conflict.
+  AggregatedGermlineClassification.review_status: The aggregate review status based on all germline submissions for this record.
+  AggregatedOncogenicityClassification: The aggregate classification of an oncogenicity variant.
+  AggregatedOncogenicityClassification.condition_list: The list of conditions.
+  AggregatedOncogenicityClassification.description: We are not providing an enumeration for the values we report for oncogenicity classification within the xsd. Details are in https://github.com/ncbi/clinvar/ClassificationOnClinVar.md.
+  AggregatedOncogenicityClassification.description_history: The history of the description.
+  AggregatedOncogenicityClassification.explanation: Explanation is used only when the description is 'conflicting data from submitters' The element summarizes the conflict.
+  AggregatedOncogenicityClassification.review_status: The aggregate review status based on all oncogenic submissions for this record.
+  AggregatedSomaticClinicalImpact: The aggregate classification of a somatic clinical impact variant.
+  AggregatedSomaticClinicalImpact.condition_list: The list of conditions.
+  AggregatedSomaticClinicalImpact.description: We are not providing an enumeration for the values we report for somatic clinical impact classification within the xsd. Details are in https://github.com/ncbi/clinvar/ClassificationOnClinVar.md.
+  AggregatedSomaticClinicalImpact.description_history: The history of the description.
+  AggregatedSomaticClinicalImpact.review_status: The aggregate review status based on all somatic clinical impact submissions for this record.
+  Allele: An allele.
+  Allele.allele_frequency_list: A list of allele frequencies.
+  Allele.allele_id: The allele ID.
+  Allele.canonical_spdi: The canonical SPDI.
+  Allele.classifications: The aggregate classifications of the allele.
+  Allele.common_name: The common name of the allele.
+  Allele.functional_consequence: The functional consequences of the allele.
+  Allele.gene_list: 0 to many genes (and related data ) related to the allele being reported.
+  Allele.global_minor_allele_frequency: The global minor allele frequency.
+  Allele.hgvslist: A list of HGVS expressions.
+  Allele.location: The location of the allele.
+  Allele.other_name_list: Other names for the allele.
+  Allele.protein_change: These are the single-letter representations of the protein change.
+  Allele.xref_list: A list of cross-references.
+  AlleleDescr: Description of an allele in a co-occurrence set.
+  AlleleDescr.relative_orientation: The relative orientation of the allele.
+  AlleleFrequency: An allele frequency.
+  AlleleFrequency.source: The source of the allele frequency.
+  AlleleFrequency.url: The URL of the allele frequency.
+  AlleleFrequency.value: The value of the allele frequency.
+  AlleleFrequencyList: A list of allele frequencies.
+  AlleleScv: An allele from a single submission (SCV).
+  AlleleScv.allele_id: The allele ID.
+  AlleleScv.citation_list: A list of citations.
+  AlleleScv.gene_list: 0 to many genes (and related data ) related to the allele being reported.
+  AlleleScv.molecular_consequence_list: Currently redundant with the MolecularConsequence element of the HGVS element?
+  AlleleScv.other_name_list: Other names for the allele.
+  AlleleScv.protein_change: Single letter representation of the amino acid change and its location.
+  AlleleScv.xref_list: A list of cross-references.
+  AssemblyStatus: The status of the assembly.
+  Attribute: An attribute of the observed data.
+  Attribute.type: The type of the attribute. e.g. 'GARD id', 'keyword'
+  Attribute.value: The value of the attribute.
+  AttributeSet: An attribute set for the measure trait.
+  ChromosomeStr: The chromosome for the location of the variant. Values are 1-22, X, Y, and MT. If the location is pseudoautosomal, submit on X and ClinVar will calculate the Y location.
+  Citation.citation_text: This should be used only when there is no database ID for the publication and no URL.
+  Citation.type: NCBI classifies citations by type, based in part on curation but also on the publication type provided by PubMed. These types are reported in our public XML, but not expected to be provided
+    by submitters. Values include general, review, practice guideline, Position Statement, Translational/Evidence-based, Suggested Reading, and Recommendation.
+  Citation.url: Complete URL of the citation.
+  ClassificationScore: A classification score.
+  ClassificationScore.type: The type of the score.
+  ClassificationScore.value: The value of the score.
+  ClassificationTypeScv: This is the classification from a single submission (SCV).
+  ClassificationTypeScv.comment: Explanation of the classification, providing the rationale for the classification.
+  ClassificationTypeScv.date_last_evaluated: Date the classification was last evaluated.
+  ClassificationTypeScv.explanation_of_classification: Explanation of the classification.
+  ClassificationTypeScv.review_status: The review status of the submission.
+  ClassifiedConditionList: A list of classified conditions.
+  ClassifiedConditionList.classified_condition: The classified conditions.
+  ClassifiedRecord: A classified record.
+  ClassifiedRecord.classifications: The aggregate classifications of the record.
+  ClassifiedRecord.clinical_assertion_list: A list of clinical assertions.
+  ClassifiedRecord.deleted_scvlist: A list of deleted SCV accessions.
+  ClassifiedRecord.general_citations: A list of general citations.
+  ClassifiedRecord.genotype: Describes the combination of sequence changes on each chromosome of a homologous pair
+  ClassifiedRecord.haplotype: Describes multiple sequence changes on one of the chromosomes of a homologous pair or on the mitochondrion.
+  ClassifiedRecord.rcvlist: A list of RCV accessions.
+  ClassifiedRecord.simple_allele: Describes a single sequence change relative to a contiguous region of a chromosome or the mitochondrion.
+  ClassifiedRecord.trait_mapping_list: This element is used to report how each user-submitted trait name was mapped to a MedGen CUI identifier and a preferred name. The structure may be used in the future
+    to report, when a trait is identified by a source's identifier (e.g. MIM number), the preferred name used by that source at the time of submission. For MappingType XRef, MappingRef is the database name
+    and MappingValue is the database's identifier. For MappingType Name, MappingRef is Alternate or Preferred, and MappingValue is the submitted name of the trait. ClinicalAssertionID is an integer identifier
+    that corresponds 1:1 to the SCV assigned to the submission.
+  ClassifiedVariation: A classified variation.
+  ClassifiedVariation.accession: The accession of the variation.
+  ClassifiedVariation.version: The version of the variation.
+  ClassifiedVariationList: A list of classified variations.
+  ClinAsserTraitSetType: A set of traits from a single submission (SCV).
+  ClinAsserTraitSetType.contributes_to_aggregate_classification: Whether the trait set contributes to the aggregate classification.
+  ClinAsserTraitSetType.date_last_evaluated: The date the trait set was last evaluated.
+  ClinAsserTraitSetType.lower_level_of_evidence: Whether the trait set has a lower level of evidence.
+  ClinAsserTraitSetType.multiple_condition_explanation: An explanation for multiple conditions.
+  ClinAsserTraitSetType.trait: The traits in the set.
+  ClinAsserTraitType: A trait from a single submission (SCV).
+  ClinAsserTraitType.clinical_features_affected_status: The affected status of the clinical features.
+  ClinAsserTraitType.id: The ID of the trait.
+  ClinAsserTraitType.name: The name of the trait.
+  ClinAsserTraitType.source: The source of the trait.
+  ClinAsserTraitType.symbol: The symbol of the trait.
+  ClinAsserTraitType.trait_relationship: Relationships to other traits.
+  ClinVarAccession: The ClinVar accession.
+  ClinVarAccession.accession: The accession.
+  ClinVarAccession.date_created: DateCreated is the date when the record first became public in ClinVar.
+  ClinVarAccession.date_updated: The date that the latest update to the submitted record (SCV) became public in ClinVar.
+  ClinVarAccession.type: The only valid value here for Type is 'SCV'. This attribute is maintained for consistency with ClinVarFullRelease.
+  ClinVarAccession.version: The version.
+  ClinVarSubmissionId: The submission ID.
+  ClinVarSubmissionId.local_key: The identifier provided by the submitter to facilitate identification of records corresponding to their submissions. If not provided by a submitter, NCBI generates one.
+    If provided by submitter, that is represented in localKeyIsSubmitted.
+  ClinVarSubmissionId.local_key_is_submitted: Whether the local key was submitted.
+  ClinVarSubmissionId.submitted_assembly: The assembly of the submission.
+  ClinVarSubmissionId.title: The title of the submission.
+  ClinicalAssertionRecordHistory: History of a clinical assertion record.
+  ClinicalAssertionRecordHistory.comment: A comment about the change.
+  ClinicalFeaturesAffectedStatusType: To indicate whether each clinical feature was present, absent, or not tested in the individual(s) observed.
+  ClinicalSignificanceType: Clinical significance of a variant.
+  ClinicalSignificanceType.date_last_evaluated: Date the clinical significance was last evaluated.
+  ClinicalSignificanceType.description: Structure used to support old data of AlleleDescriptionSet within Co-occurenceSet.
+  ClinicalSignificanceType.explanation: Explanation is used only when the description is 'conflicting data from submitters' The element summarizes the conflict.
+  ClinicalSignificanceType.review_status: The review status of the submission.
+  CoOccurrenceType: A set of co-occurring variants.
+  CoOccurrenceType.allele_desc_set: The set of alleles in the co-occurrence.
+  CoOccurrenceType.count: The number of individuals with this co-occurrence set.
+  CoOccurrenceType.zygosity: The zygosity of the co-occurring variant.
+  Comment.type: public (is rendered on the web) or private (for internal use; to explain a submission and be stored in the database but not rendered on the web). There are subcategories of public comments,
+    differentiated by type.
+  Comment.value: A free text comment. Line breaks are retained, but no other formatting.
+  CommentType: Type of comment.
+  Description: The description of the classification.
+  Description.clinical_impact_assertion_type: The clinical impact assertion type.
+  Description.clinical_impact_clinical_significance: The clinical impact clinical significance.
+  Description.value: The value of the classification.
+  DrugResponse: A drug response.
+  DrugResponse.name: The name of the drug response.
+  DrugResponse.phenotype_list: The list of phenotypes.
+  DrugResponse.target_id: The target ID of the drug response.
+  DrugResponse.xref_list: A list of cross-references.
+  EvidenceObservation: An observation of evidence.
+  EvidenceObservation.citation_list: A list of citations.
+  EvidenceObservation.description: A description of the observation.
+  EvidenceObservation.families: The families in the observation.
+  EvidenceObservation.indications: The indications for testing.
+  EvidenceObservation.individuals: The individuals in the observation.
+  EvidenceObservation.method: Method of data capture, not method of evaluation.
+  EvidenceObservation.mode_of_inheritance: The mode of inheritance.
+  EvidenceObservation.observed_phenotypes: The observed phenotypes.
+  EvidenceObservation.other_gene: Other genes in the observation.
+  EvidenceObservation.same_gene: The same gene in the observation.
+  EvidenceObservation.segregation: The segregation of the variant.
+  Evidencetype: Type of evidence.
+  FamilyInfo.family_history: Used to indicate that at least one other member of a family has the reported condition. It does not require that other family members were included in the observation set. Allowed
+    values are yes, no.
+  FamilyInfo.num_families: Number of families tested. Used as the denominator when 'Number of families with variant' is reported for Observed data.
+  FamilyInfo.num_families_with_segregation_observed: Number of independent families where the variant segregates with the condition among two or more family members.
+  FamilyInfo.num_families_with_variant: Number of families with variant.
+  FamilyInfo.pedigree_id: An anonymous identifier used to indicate individual observations that are from the same family.
+  FunctionalConsequence: The functional consequence of a variation.
+  FunctionalConsequence.value: The functional consequence, using terms from Sequence Ontology.
+  Gene: A gene.
+  Gene.full_name: The full name of the gene.
+  Gene.gene_id: The Gene ID of the gene.
+  Gene.haploinsufficiency: Haploinsufficiency information.
+  Gene.hgnc_id: The HGNC ID of the gene.
+  Gene.location: The location of the gene.
+  Gene.omim: The OMIM numbers of the gene.
+  Gene.property: Used to set key words for retrieval or display about a gene, such as genes listed by the ACMG guidelines.
+  Gene.relationship_type: The relationship type of the gene to the variant.
+  Gene.source: calculated or submitted
+  Gene.triplosensitivity: Triplosensitivity information.
+  Gene.xref: Used for gene specific identifiers such as MIM number, Gene ID, HGNC ID, etc.
+  GeneList: A list of genes.
+  GeneList.gene_count: The number of genes.
+  GeneralCitations: A list of general citations.
+  Genotype: A genotype.
+  Genotype.citation_list: A list of citations.
+  Genotype.classifications: The aggregate classifications of the genotype.
+  Genotype.common_name: The common name of the genotype.
+  Genotype.functional_consequence: The functional consequences of the genotype.
+  Genotype.haplotype: Allow more than 2 haplotypes per genotype to support representation of ploidy.
+  Genotype.hgvslist: A list of HGVS expressions.
+  Genotype.name: The name of the genotype.
+  Genotype.other_name_list: Names other than 'preferred' used for the Genotype.
+  Genotype.simple_allele: Describes a single sequence change relative to a contiguous region of a chromosome or the mitochondrion.
+  Genotype.xref_list: A list of cross-references.
+  GenotypeScv: A genotype from a single submission (SCV).
+  GenotypeScv.citation_list: A list of citations.
+  GenotypeScv.functional_consequence: The functional consequences of the genotype.
+  GenotypeScv.haplotype: Allows more than 2 haplotypes per genotype to support representation of ploidy.
+  GenotypeScv.name: The name of the genotype.
+  GenotypeScv.other_name_list: Other names used for the Genotype
+  GenotypeScv.simple_allele: The simple alleles in the genotype.
+  GenotypeScv.xref_list: A list of cross-references.
+  GermlineClassification: The germline classification.
+  GermlineClassification.review_status: The aggregate review status based on all germline submissions for this record.
+  GlobalMinorAlleleFrequency: The global minor allele frequency.
+  GlobalMinorAlleleFrequency.minor_allele: The minor allele.
+  GlobalMinorAlleleFrequency.source: The source of the global minor allele frequency.
+  GlobalMinorAlleleFrequency.url: The URL of the global minor allele frequency.
+  GlobalMinorAlleleFrequency.value: The value of the global minor allele frequency.
+  Haploinsufficiency: Haploinsufficiency information, including a score from ClinGen.
+  Haploinsufficiency.clin_gen: The ClinGen haploinsufficiency score URL.
+  Haploinsufficiency.last_evaluated: The date the haploinsufficiency was last evaluated.
+  Haploinsufficiency.value: The value of the haploinsufficiency. e.g. 'Little evidence for dosage pathogenicity'
+  Haplotype: A haplotype.
+  Haplotype.classifications: The aggregate classifications of the haplotype.
+  Haplotype.common_name: The common name of the haplotype.
+  Haplotype.functional_consequence: The functional consequences of the haplotype.
+  Haplotype.hgvslist: List of all the HGVS expressions valid for, or used to submit, a variant.
+  Haplotype.name: The preferred representation of the haplotype.
+  Haplotype.number_of_chromosomes: The number of chromosomes with the haplotype.
+  Haplotype.number_of_copies: The number of copies of the haplotype.
+  Haplotype.other_name_list: Names other than 'preferred' used for the haplotype.
+  Haplotype.simple_allele: The simple alleles in the haplotype.
+  Haplotype.xref_list: A list of cross-references.
+  HaplotypeScv: A haplotype from a single submission (SCV).
+  HaplotypeScv.citation_list: A list of citations.
+  HaplotypeScv.classifications: The aggregate classifications of the haplotype.
+  HaplotypeScv.functional_consequence: The functional consequences of the haplotype.
+  HaplotypeScv.name: The name of the haplotype.
+  HaplotypeScv.number_of_chromosomes: The number of chromosomes with the haplotype.
+  HaplotypeScv.number_of_copies: The number of copies of the haplotype.
+  HaplotypeScv.other_name_list: Other names used for the haplotype
+  HaplotypeScv.simple_allele: The simple alleles in the haplotype.
+  HaplotypeScv.xref_list: A list of cross-references.
+  Hgvs: Type of HGVS expression.
+  Hgvsexpression: An HGVS expression.
+  Hgvsexpression.assembly: The assembly on which the expression is based.
+  Hgvsexpression.molecular_consequence: The molecular consequence.
+  Hgvsexpression.nucleotide_expression: The nucleotide expression.
+  Hgvsexpression.protein_expression: The protein expression.
+  Hgvsexpression.type: The type of the HGVS expression.
+  Id.source: The name of the data service providing an identifier for a citation. e.g. PubMed, PubMedCentral, DOI, NCBI bookshelf.
+  Id.value: The identifier provided by that data source for a citation.
+  IncludedRecord: A record that is included in another record.
+  IncludedRecord.classifications: The aggregate classifications of the record.
+  IncludedRecord.classified_variation_list: Maintains the list of classified variants represented in this submission, although not submitted with an Classification independently.
+  IncludedRecord.general_citations: A list of general citations.
+  IncludedRecord.haplotype: Describes a single sequence change relative to a contiguous region of a chromosome or the mitochondrion.
+  IncludedRecord.submitted_classification_list: A list of submitted classifications.
+  Indication: An indication for testing.
+  Indication.xref_list: A list of cross-references.
+  IndicationListType: A list of indications.
+  IndicationListType.indication: The indication may be a set of phenotypic descriptions.
+  IndicationListType.phenotype_set_type: The type of the phenotype set.
+  IndicationType: An indication for testing.
+  IndicationType.id: The ID of the indication.
+  IndicationType.symbol: The symbol of the indication.
+  IndicationType.trait: Represents the value for the test indication as a name of a trait.
+  IndicationType.type: The type of the indication.
+  Location: The location of a variation.
+  Location.cytogenetic_location: Cytogenetic location is maintained independent of sequence location, and can be submitted or computed from the sequence location
+  Location.sequence_location: Location on a defined sequence, with reference and alternate allele, and start /stop values depending on the specificity with which the variant location is known. The number
+    system of offset 1, and right-justified to be consistent with HGVS location data
+  MeasureTraitType: A measure trait type.
+  MeasureTraitType.additional_submitters: Optional element used only if there are multiple submitters. When there are multiple, each is listed in this element.
+  MeasureTraitType.assertion: The assertion of the measure trait.
+  MeasureTraitType.attribute_set: AttributeSet is a package to represent a unit of information, the source(s) of that unit, identifiers representing that unit, and comments.
+  MeasureTraitType.classification: The classification of the measure trait.
+  MeasureTraitType.clin_var_accession: Only SCV accessions will be stored here.
+  MeasureTraitType.clin_var_submission_id: The submission ID.
+  MeasureTraitType.contributes_to_aggregate_classification: Whether the measure trait contributes to the aggregate classification.
+  MeasureTraitType.date_created: DateCreated is the date when the record first became public in ClinVar.
+  MeasureTraitType.date_last_updated: The date that the latest update to the submitted record (SCV) became public in ClinVar.
+  MeasureTraitType.fdarecognized_database: Whether the database is FDA recognized.
+  MeasureTraitType.id: The ID of the measure trait.
+  MeasureTraitType.observed_in_list: A list of observed in.
+  MeasureTraitType.record_status: The status of the record.
+  MeasureTraitType.replaced_list: The list of SCV accessions this SCV record has replaced.
+  MeasureTraitType.replaces: The list of accessions this record replaces.
+  MeasureTraitType.study_description: The description of the study.
+  MeasureTraitType.study_name: The name of the study.
+  MeasureTraitType.submission_date: SubmissionDate is when ClinVar received the submission.
+  MeasureTraitType.submission_name_list: A list of submission names.
+  MeasureTraitType.trait_set: The trait set of the measure trait.
+  Method: A method used to generate evidence.
+  Method.description: Free text to enrich the description of the method and to provide information not captured in specific fields.
+  Method.obs_method_attribute: ObsMethodAttribute is used to indicate an attribute specific to a particular method in conjunction with a particular observation .
+  Method.source_type: The source type of the method.
+  MethodAttribute: An attribute of a method.
+  MethodRefs: A reference to a method.
+  MethodType: A method used to generate evidence.
+  MethodType.description: Free text to enrich the description of the method and to provide information not captured in specific fields.
+  MethodType.obs_method_attribute: ObsMethodAttribute is used to indicate an attribute specific to a particular method in conjunction with a particular observation .
+  Methodlist: The method used to collect data for a submission.
+  MolecularConsequence: A molecular consequence.
+  MolecularConsequence.function: The function of the molecular consequence.
+  MolecularConsequence.hgvs: The HGVS expression.
+  MolecularConsequence.rs: The dbSNP rs number.
+  MolecularConsequence.soid: The Sequence Ontology ID.
+  MolecularConsequenceList: A list of molecular consequences.
+  Name: A name of the allele.
+  Name.type: Type of name, e.g. 'Preferred' or 'Alternate'.
+  Name.value: Name provided by the submitter.
+  NucleotideSequenceExpression.assembly: The assembly on which the sequence is located.
+  ObsMethodAttribute: An attribute of a method specific to an observation.
+  ObservationSet: A set of observations.
+  ObservationSet.co_occurrence_set: The set of co-occurring variants.
+  ObservationSet.method: The methods used for the observation.
+  ObservationSet.observed_data: This is an AttributeSet, there will be 1 attribute supported by optional citations, xrefs and comment. There must be at least one ObservedData Set, but can be any number.
+    For each ObservedData set the Attribute will be either decimal or string depending on type. The value will be stored here, but decimals will be entered to the database as a string.
+  ObservationSet.sample: The sample for the observation.
+  ObservationSet.trait_set: The trait set for the observation.
+  ObservedData: The observed data.
+  ObservedData.severity: The severity of the observation.
+  OncogenicityClassification: The oncogenicity classification.
+  OncogenicityClassification.review_status: The aggregate review status based on all oncogenic submissions for this record.
+  Origin: The origin of the sample.
+  PharmaType: A pharmacogenomic record.
+  Phenotype: A phenotype.
+  Phenotype.xref_list: A list of cross-references.
+  PhenotypeDetails: Details of a phenotype.
+  PhenotypeDetails.date_evaluated: The date the phenotype was evaluated.
+  PhenotypeDetails.type: Type is used to separate biochemical tests from clinical features with attributes.
+  PhenotypeDetails.xref_list: A list of cross-references.
+  PhenotypeListDetailsType: A list of phenotypes with details.
+  PhenotypeListDetailsType.phenotype_details: The set of descriptors and values for person-specific phenotype information.
+  PhenotypeListDetailsType.phenotype_set_type: The type of the phenotype set.
+  PhenotypeSet: Category/type of condition set.
+  ProteinSequenceExpression.single_letter_protein_change: Protein change in single letter format.
+  Rcv: An RCV record.
+  Rcv.classified_condition_list: The list of classified conditions.
+  Rcv.rcvclassifications: The classifications of the RCV record.
+  Rcv.replaced_list: The list of RCV accessions this RCV record has replaced.
+  Rcvclassifications: The classifications of the RCV record.
+  RcvinterpretedCondition: 'Information about the interpreted condition (disease or phenotype).
+
+    The value ''not provided'' is used for submissions where no condition was named.'
+  RcvinterpretedCondition.db: The database name. Allowed values are OMIM, MedGen, Orphanet, MeSH, HP, MONDO.
+  RcvinterpretedCondition.id: The database identifier for the condition.
+  RcvinterpretedCondition.value: The name of the condition.
+  Rcvlist: A list of RCV accessions.
+  Rcvlist.independent_observations: The number of independent observations.
+  Rcvlist.rcvaccession: Maintains the list of RCV accessions and their titles referencing the VariationID, in part to support indexing and retrieval for NCBI's web services. This structure does not report
+    RCV/SCV relationships
+  RecordHistory: The history of a record.
+  RecordHistory.comment: A comment about the change.
+  RecordHistory.variation_id: Attribute @VaritionID is only populated for VCV, where @Accession is like VCV000000009
+  RecordStatus: The status of the record.
+  RecordType: The type of the record.
+  RelativeOrientation: The relative orientation of the allele.
+  ReleaseType: A release of the ClinVar database.
+  ReleaseType.variation_archive: The variation archives in the release.
+  Sample: A sample.
+  Sample.age: The age of the sample.
+  Sample.family_data: Family data for the sample.
+  Sample.indication: The indication for testing.
+  Sample.number_chr_tested: Denominator, total number chromosomes tested. Number affected and unaffected are captured in the element NumberObserved.
+  Sample.number_females: Denominator, total females included in this observation set.
+  Sample.number_males: Denominator, total males included in this observation set.
+  Sample.number_tested: Denominator, total individuals included in this observation set.
+  Sample.origin: The origin of the sample.
+  Sample.proband: Whether the sample is from a proband.
+  Sample.sample_description: A description of the sample.
+  Sample.sex: Sex should be used ONLY if explicit values are not available for number of males or females, and there is a need to indicate that the genders in the sample are known.
+  Sample.somatic_variant_allele_fraction: The allele fraction of the somatic variant.
+  Sample.somatic_variant_in_normal_tissue: Whether a somatic variant is present in normal tissue.
+  Sample.species: The species of the sample.
+  SampleDescription: A description of the sample.
+  SequenceLocation: The location of a variation on a sequence.
+  SequenceLocation.accession: The accession of the sequence.
+  SequenceLocation.alternate_allele: The alternate allele.
+  SequenceLocation.alternate_allele_vcf: The alternate allele in VCF format.
+  SequenceLocation.assembly: The assembly on which the location is based.
+  SequenceLocation.assembly_accession_version: The assembly accession and version.
+  SequenceLocation.assembly_status: The status of the assembly.
+  SequenceLocation.chr: The chromosome.
+  SequenceLocation.display_start: The display start position of the variation.
+  SequenceLocation.display_stop: The display stop position of the variation.
+  SequenceLocation.inner_start: The inner start position of the variation.
+  SequenceLocation.inner_stop: The inner stop position of the variation.
+  SequenceLocation.outer_start: The outer start position of the variation.
+  SequenceLocation.outer_stop: The outer stop position of the variation.
+  SequenceLocation.position_vcf: The position in VCF format.
+  SequenceLocation.reference_allele: The reference allele.
+  SequenceLocation.reference_allele_vcf: The reference allele in VCF format.
+  SequenceLocation.start: The start position of the variation.
+  SequenceLocation.stop: The stop position of the variation.
+  SequenceLocation.strand: The strand of the variation.
+  SequenceLocation.variant_length: The length of the variation.
+  SetElementSetType: A set of elements.
+  Severity: Severity of the condition.
+  SingleGermlineClassification: The classification of a germline variant from a single submission.
+  SingleGermlineClassification.description: We are not providing an enumeration for the values we report for germline classification within the xsd. Details are in https://github.com/ncbi/clinvar/ClassificationOnClinVar.md.
+  SingleGermlineClassification.explanation: Explanation is used only when the description is 'conflicting data from submitters' The element summarizes the conflict.
+  SingleGermlineClassification.review_status: The aggregate review status based on all germline submissions for this record.
+  SingleOncogenicityClassification: The classification of an oncogenicity variant from a single submission.
+  SingleOncogenicityClassification.description: We are not providing an enumeration for the values we report for oncogenicity classification within the xsd. Details are in https://github.com/ncbi/clinvar/ClassificationOnClinVar.md.
+  SingleOncogenicityClassification.explanation: Explanation is used only when the description is 'conflicting data from submitters' The element summarizes the conflict.
+  SingleOncogenicityClassification.review_status: The aggregate review status based on all oncogenic submissions for this record.
+  SingleSomaticClinicalImpact: The classification of a somatic clinical impact variant from a single submission.
+  SingleSomaticClinicalImpact.description: We are not providing an enumeration for the values we report for somatic clinical impact classification within the xsd. Details are in https://github.com/ncbi/clinvar/ClassificationOnClinVar.md.
+  SingleSomaticClinicalImpact.review_status: The aggregate review status based on all somatic clinical impact submissions for this record.
+  SoftwareSet: Description of key software.
+  SoftwareSet.purpose: The purpose of the software. e.g. alignment, variant calling.
+  SomaticClinicalImpact: The somatic clinical impact classification.
+  SomaticClinicalImpact.clinical_impact_assertion_type: The clinical impact assertion type.
+  SomaticClinicalImpact.clinical_impact_clinical_significance: The clinical impact clinical significance.
+  SomaticClinicalImpact.drug_for_therapeutic_assertion: The drug for therapeutic assertion.
+  SomaticClinicalImpact.review_status: The aggregate review status based on all somatic clinical impact submissions for this record.
+  SomaticClinicalImpact.value: The classification value.
+  SomaticVariantInNormalTissue: Whether a somatic variant is present in normal tissue.
+  Species: The species of the variation.
+  Status: Record status.
+  SubmitterReviewStatusValue: Review status indicates the level of confidence in any assertion.
+  SubmitterType.submitter_name: The name of the person submitting this batch.
+  TraitMapping.clinical_assertion_id: Reference to clinical_assertion_list.clinical_assertion[{num}].id
+  TraitMapping.mapping_type: 'The type of the mapping. Can be MAPPING_TYPE_NAME or MAPPING_TYPE_XREF.
+
+    MAPPING_TYPE_NAME: The mapping is done by name. The mapping_value will be the name of the trait.
+
+    MAPPING_TYPE_XREF: The mapping is done by cross-reference. The mapping_value will be an ID from the database specified in mapping_ref.'
+  TraitMappingList: A list of trait mappings.
+  TraitRelationship: A relationship between traits.
+  TraitRelationship.name: The name of the related trait.
+  TraitRelationship.source: The source of the relationship.
+  TraitRelationship.symbol: The symbol of the related trait.
+  TraitRelationship.type: The type of the relationship.
+  Triplosensitivity: Triplosensitivity information, including a score from ClinGen.
+  Triplosensitivity.clin_gen: The ClinGen triplosensitivity score URL.
+  Triplosensitivity.last_evaluated: The date the triplosensitivity was last evaluated.
+  Triplosensitivity.value: The value of the triplosensitivity. e.g. 'No evidence available'
+  Type: The type of the attribute.
+  VariationArchiveType: A variation archive.
+  VariationArchiveType.accession: Accession assigned to the variant, or set of variants, that was Classified.
+  VariationArchiveType.classified_record: This element describes the classification of a single allele, haplotype, or genotype based on all submissions to ClinVar. This differs from the element IncludedRecord,
+    which describes simple alleles or haplotypes, referenced in ClassifiedRecord, but for which no explicit classification was submitted. Once that variation is described, details are added about the phenotypes
+    being classified, the classification, the submitters providing the classifications, and all supported evidence.
+  VariationArchiveType.comment: A comment about the record.
+  VariationArchiveType.date_created: DateCreated is the date when the record first became public in ClinVar.
+  VariationArchiveType.date_last_updated: The date the record was last updated in the public database. The update may be a change to one of the submitted records (SCVs) or annotation added to the aggregate
+    record by NCBI staff. This date is independent of a version change; annotated added by NCBI may change without representing a change in the version.
+  VariationArchiveType.included_record: This element describes a single allele or haplotype included in submissions to ClinVar, but for which no explicit classification was submitted. It also references
+    the submissions and the Classified records that include them.
+  VariationArchiveType.most_recent_submission: This date is of the most recent submitted record (SCV) for the VCV; it may reflect a new submitted record or an update to a submitted record.
+  VariationArchiveType.record_status: The status of the record.
+  VariationArchiveType.record_type: The type of the record.
+  VariationArchiveType.replaced_by: The record that this record was replaced by.
+  VariationArchiveType.replaced_list: The list of VCV accessions this record has replaced.
+  VariationArchiveType.species: The species of the variation.
+  VariationArchiveType.variation_name: This is ClinVar's name for the variant. ClinVar uses this term in its web displays.
+  VariationType: Description of the type of variation.
+  Xref: The database cross-reference structure (XRef) is provided to represent pointers to identifiers in other databases for the same concept.
+  Xref.db: The name of the database. e.g. Gene, Ensembl, HGNC.
+  Xref.url: The URL of the identifier.
+  Zygosity: The zygosity of the co-occurring variant, not the interpreted variant.

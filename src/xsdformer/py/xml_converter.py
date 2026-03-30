@@ -10,7 +10,7 @@ from typing import Any
 from lxml import etree
 
 from xsdformer import generator
-from xsdformer.transforms import InlinedWrapperInfo, SerializeContentInfo, TransformHint
+from xsdformer.transforms import CoercedToTimestampInfo, InlinedWrapperInfo, SerializeContentInfo, TransformHint
 from xsdformer.xsd import text, xsd
 
 
@@ -40,9 +40,9 @@ def _consume_if(
 
 def _xml_bool(val: str) -> int:
     match val:
-        case "0" | "false":
+        case "0" | "false" | "N":
             return False
-        case "1" | "true":
+        case "1" | "true" | "Y":
             return True
         case _:
             raise ValueError(f"Invalid boolean value: {val}")
@@ -54,6 +54,60 @@ def _xml_date(val: str) -> datetime.datetime:
     if re.match(r"[+-]\d{2}:\d{2}$", val[-6:]):
         return datetime.datetime.strptime(val, "%Y-%m-%d%z")
     return datetime.datetime.strptime(val, "%Y-%m-%d")  # noqa: DTZ007
+
+
+_MONTH_NAMES = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
+
+
+def _find_child(element: etree._Element, *names: str) -> etree._Element | None:
+    for name in names:
+        el = element.find(name)
+        if el is not None:
+            return el
+    return None
+
+
+def _parse_date_element(element: etree._Element) -> datetime.datetime:
+    year_el = _find_child(element, "Year", "year")
+    if year_el is None:
+        md = _find_child(element, "MedlineDate", "medline_date")
+        if md is not None and md.text:
+            m = re.match(r"(\d{4})", md.text)
+            if m:
+                return datetime.datetime(int(m.group(1)), 1, 1)  # noqa: DTZ001
+        return datetime.datetime(1, 1, 1)  # noqa: DTZ001
+    year = int(year_el.text)
+    month_el = _find_child(element, "Month", "month")
+    if month_el is not None and month_el.text:
+        month_text = month_el.text.strip()
+        try:
+            month = int(month_text)
+        except ValueError:
+            month = _MONTH_NAMES.get(month_text.lower()[:3], 1)
+    else:
+        month = 1
+    day_el = _find_child(element, "Day", "day")
+    day = int(day_el.text) if day_el is not None and day_el.text else 1
+    hour_el = _find_child(element, "Hour", "hour")
+    hour = int(hour_el.text) if hour_el is not None and hour_el.text else 0
+    minute_el = _find_child(element, "Minute", "minute")
+    minute = int(minute_el.text) if minute_el is not None and minute_el.text else 0
+    second_el = _find_child(element, "Second", "second")
+    second = int(second_el.text) if second_el is not None and second_el.text else 0
+    return datetime.datetime(year, month, day, hour, minute, second)  # noqa: DTZ001
 
 
 def _serialize_markdown(element: etree._Element) -> str:
@@ -98,8 +152,12 @@ _PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
     _xml_as_str,
     _xml_bool,
     _xml_date,
+    _find_child,
+    _parse_date_element,
     _serialize_markdown,
 )
+
+_PROTO_PY_CONVERTER_CONSTANTS: tuple[tuple[str, Any], ...] = (("_MONTH_NAMES", _MONTH_NAMES),)
 
 
 def _make_atom_caster(atom_type: xsd.AtomicType, var: str) -> str:
@@ -283,6 +341,27 @@ def _handle_inlined_wrapper_elem(
             yield from text.indent(_consume_once())
 
 
+def _handle_coerced_to_timestamp_elem(field: xsd.Elem) -> Iterable[str]:
+    """Emit code to consume a date element and parse it into a Timestamp."""
+    tag = field.source.elem
+
+    def _consume_once() -> Iterable[str]:
+        if field.is_repeated:
+            yield f"proto.{field.name}.add().FromDatetime(_parse_date_element(_consume(children, {tag!r})))"
+        else:
+            yield f"proto.{field.name}.FromDatetime(_parse_date_element(_consume(children, {tag!r})))"
+
+    match field.occurs:
+        case (1, 1):
+            yield from _consume_once()
+        case (0, 1):
+            yield f"if children and children[0].tag == {tag!r}:"
+            yield from text.indent(_consume_once())
+        case _:
+            yield f"while children and children[0].tag == {tag!r}:"
+            yield from text.indent(_consume_once())
+
+
 def _handle_dropped_elem(field: xsd.Elem) -> Iterable[str]:
     """Emit code to consume and discard an element."""
     match field.occurs:
@@ -320,6 +399,10 @@ def _handle_flattened_list_elem(field: xsd.Elem) -> Iterable[str]:
 def _(field: xsd.Elem) -> Iterable[str]:
     if field.transform_hint is TransformHint.DROPPED:
         yield from _handle_dropped_elem(field)
+        return
+
+    if isinstance(field.transform_hint, CoercedToTimestampInfo):
+        yield from _handle_coerced_to_timestamp_elem(field)
         return
 
     if isinstance(field.transform_hint, InlinedWrapperInfo):
@@ -442,6 +525,9 @@ class PyXMLConverterGenerator:
         yield "from lxml import etree"
         yield ""
         yield ""
+        for name, value in _PROTO_PY_CONVERTER_CONSTANTS:
+            yield f"{name} = {value!r}"
+            yield ""
         for method in _PROTO_PY_CONVERTER_METHODS:
             yield from inspect.getsource(method).split("\n")
 
