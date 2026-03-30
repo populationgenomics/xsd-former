@@ -451,3 +451,43 @@ def test_generate_from_proto_definitions_only(
     assert "$ref" not in schema
     assert "testall.MessageA" in schema["definitions"]
     assert "testall.MessageB" in schema["definitions"]
+
+
+def test_generate_from_proto_with_enum(generate_schema_from_proto_content: _SchemaGenerator) -> None:
+    """Tests that enums are created as definitions and referenced."""
+    proto_content = """
+        syntax = "proto3";
+
+        package testenum;
+
+        enum MyEnum {
+          UNKNOWN = 0;
+          VALUE1 = 1;
+          VALUE2 = 2;
+        }
+
+        message MyMessage {
+          MyEnum my_enum = 1;
+        }
+    """
+    schema = generate_schema_from_proto_content(
+        proto_content,
+        namespace="testenum",
+        main_message="MyMessage",
+        preserving_proto_field_name=False,
+    )
+
+    assert "testenum.MyEnum" in schema["definitions"]
+    assert schema["definitions"]["testenum.MyEnum"] == {"enum": ["UNKNOWN", "VALUE1", "VALUE2"]}
+
+    message_def = schema["definitions"]["testenum.MyMessage"]
+    assert message_def["properties"]["myEnum"] == {"$ref": "#/definitions/testenum.MyEnum"}
+
+    # Validate a correct payload against the schema
+    instance = {"myEnum": "VALUE1"}
+    jsonschema.validate(instance=instance, schema=schema)
+
+    # Assert that an incorrect payload fails validation
+    invalid_instance = {"myEnum": "INVALID_VALUE"}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(instance=invalid_instance, schema=schema)
