@@ -7,6 +7,7 @@ import subprocess
 import sys
 import types
 
+import pytest
 from lxml import etree
 
 from tests.xsdformer.conftest import PyConverterModuleFactory
@@ -16,7 +17,9 @@ from xsdformer.py import xml_converter
 from xsdformer.py.xml_converter import _parse_date_element, _serialize_markdown
 from xsdformer.transforms import (
     CoercedToTimestampInfo,
+    FlattenedListInfo,
     InlinedWrapperInfo,
+    MapFieldConfig,
     SerializeContentInfo,
     TransformConfig,
     TransformHint,
@@ -125,7 +128,7 @@ class TestFlattenListWrappers:
         authors_field = next(f for f in book.get_fields() if f.name == "authors")
         assert authors_field.is_repeated
         assert authors_field.proto_type == xsd.AtomicType.STRING
-        assert authors_field.transform_hint is TransformHint.FLATTENED_LIST
+        assert isinstance(authors_field.transform_hint, FlattenedListInfo)
 
     def test_end_to_end(self, py_converter_module_factory: PyConverterModuleFactory) -> None:
         config = TransformConfig(flatten_list_wrappers=True)
@@ -728,3 +731,59 @@ class TestParseDateElementDirect:
         dt = _parse_date_element(el)
         assert dt.year == 2024
         assert dt.month == 1
+
+
+_MAP_DTD = """
+    <!ELEMENT catalog (entry*)>
+    <!ELEMENT entry EMPTY>
+    <!ATTLIST entry
+        key   CDATA #REQUIRED
+        value CDATA #REQUIRED
+    >
+"""
+
+
+class TestMaps:
+    def test_removes_message_type(self) -> None:
+        defs = _parse_dtd(_MAP_DTD)
+        config = TransformConfig(maps={"Entry": MapFieldConfig(key="key", value="value")})
+        result = apply_transforms(defs, config)
+        assert not any(d.name == "Entry" for d in result)
+
+    def test_rewrites_field_to_map_type(self) -> None:
+        defs = _parse_dtd(_MAP_DTD)
+        config = TransformConfig(maps={"Entry": MapFieldConfig(key="key", value="value")})
+        result = apply_transforms(defs, config)
+        catalog = next(d for d in result if d.name == "Catalog")
+        entry_field = next(f for f in catalog.get_fields() if f.name == "entry")
+        assert isinstance(entry_field.proto_type, xsd.MapType)
+        assert entry_field.proto_type.key_type is xsd.AtomicType.STRING
+        assert entry_field.proto_type.value_type is xsd.AtomicType.STRING
+
+    def test_end_to_end(self, tmp_path: pathlib.Path) -> None:
+        config = TransformConfig(maps={"Entry": MapFieldConfig(key="key", value="value")})
+        converter = _build_dtd_converter(_MAP_DTD, config, "maptest", tmp_path)
+
+        xml = b"""
+        <catalog>
+          <entry key="foo" value="bar"/>
+          <entry key="baz" value="qux"/>
+        </catalog>
+        """
+        result = converter.Catalog(etree.fromstring(xml))
+        assert result.entry["foo"] == "bar"
+        assert result.entry["baz"] == "qux"
+
+    def test_enum_key_raises(self) -> None:
+        dtd_str = """
+            <!ELEMENT catalog (entry*)>
+            <!ELEMENT entry EMPTY>
+            <!ATTLIST entry
+                key   (a|b|c) #REQUIRED
+                value CDATA #REQUIRED
+            >
+        """
+        defs = _parse_dtd(dtd_str)
+        config = TransformConfig(maps={"Entry": MapFieldConfig(key="key", value="value")})
+        with pytest.raises(ValueError, match="atomic type"):
+            apply_transforms(defs, config)

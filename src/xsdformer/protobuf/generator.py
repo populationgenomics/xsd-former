@@ -71,7 +71,14 @@ class ProtobufGenerator:
 
     @_message_field.register
     def _(self, field_def: xsd.Choice, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
-        oneof = not in_oneof and all(not f.is_repeated for f in field_def.get_fields())
+        # Only generate a oneof when every branch is a single leaf Field. If any
+        # branch is a Seq/Choice container (multiple fields that can coexist within
+        # that branch), a oneof would incorrectly make them mutually exclusive.
+        oneof = (
+            not in_oneof
+            and all(not f.is_repeated for f in field_def.get_fields())
+            and all(isinstance(branch, xsd.Field) for branch in field_def.content)
+        )
 
         inner = itertools.chain.from_iterable(
             self.message_field(inner, path, in_oneof=in_oneof or oneof) for inner in field_def.content

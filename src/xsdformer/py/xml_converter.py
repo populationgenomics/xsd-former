@@ -10,7 +10,13 @@ from typing import Any
 from lxml import etree
 
 from xsdformer import generator
-from xsdformer.transforms import CoercedToTimestampInfo, InlinedWrapperInfo, SerializeContentInfo, TransformHint
+from xsdformer.transforms import (
+    CoercedToTimestampInfo,
+    FlattenedListInfo,
+    InlinedWrapperInfo,
+    SerializeContentInfo,
+    TransformHint,
+)
 from xsdformer.xsd import text, xsd
 
 
@@ -162,9 +168,9 @@ _PROTO_PY_CONVERTER_CONSTANTS: tuple[tuple[str, Any], ...] = (("_MONTH_NAMES", _
 
 def _make_atom_caster(atom_type: xsd.AtomicType, var: str) -> str:
     caster_map = {
-        xsd.AtomicType.ID: "{0}",
-        xsd.AtomicType.URI: "{0}",
-        xsd.AtomicType.STRING: "{0}",
+        xsd.AtomicType.ID: "({0} or '')",
+        xsd.AtomicType.URI: "({0} or '')",
+        xsd.AtomicType.STRING: "({0} or '')",
         xsd.AtomicType.INT8: "int({0})",
         xsd.AtomicType.UINT8: "int({0})",
         xsd.AtomicType.INT16: "int({0})",
@@ -374,15 +380,20 @@ def _handle_dropped_elem(field: xsd.Elem) -> Iterable[str]:
             yield from text.indent([f"_consume(children, {field.source.elem!r})"])
 
 
-def _handle_flattened_list_elem(field: xsd.Elem) -> Iterable[str]:
+def _handle_flattened_list_elem(field: xsd.Elem, info: FlattenedListInfo) -> Iterable[str]:
     """Emit code to consume a wrapper element and iterate its children."""
     wrapper_tag = field.source.elem
     inner_consumer = _make_elem_consumer(field, "inner_elem")
 
     def _body() -> Iterable[str]:
         yield f"wrapper = _consume(children, {wrapper_tag!r})"
-        yield "for inner_elem in wrapper:"
-        yield from text.indent(inner_consumer())
+        if info.inner_tag is not None:
+            yield "for inner_elem in wrapper:"
+            inner = [f"if inner_elem.tag == {info.inner_tag!r}:", *text.indent(inner_consumer())]
+            yield from text.indent(inner)
+        else:
+            yield "for inner_elem in wrapper:"
+            yield from text.indent(inner_consumer())
 
     match field.occurs:
         case (1, 1):
@@ -409,8 +420,8 @@ def _(field: xsd.Elem) -> Iterable[str]:
         yield from _handle_inlined_wrapper_elem(field, field.transform_hint)
         return
 
-    if field.transform_hint is TransformHint.FLATTENED_LIST:
-        yield from _handle_flattened_list_elem(field)
+    if isinstance(field.transform_hint, FlattenedListInfo):
+        yield from _handle_flattened_list_elem(field, field.transform_hint)
         return
 
     val = f"_consume(children, {field.source.elem!r})"
@@ -430,6 +441,8 @@ def _(field: xsd.Elem) -> Iterable[str]:
 
 @_handle_field_definition.register
 def _(field: xsd.ValueElem) -> Iterable[str]:
+    if field.transform_hint is TransformHint.DROPPED:
+        return
     if isinstance(field.transform_hint, SerializeContentInfo):
         serializer_fn = f"_serialize_{field.transform_hint.serializer}"
         yield f"proto.{field.name} = {serializer_fn}(element)"

@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 class TransformHint(enum.Enum):
     DROPPED = "dropped"
     INLINED_WRAPPER = "inlined_wrapper"
-    FLATTENED_LIST = "flattened_list"
     COLLAPSED_TO_STRING = "collapsed_to_string"
 
 
@@ -38,8 +37,26 @@ class SerializeContentInfo:
 
 
 @dataclasses.dataclass(frozen=True)
+class FlattenedListInfo:
+    """Hint that this field was a list-wrapper flattened into the parent.
+
+    inner_tag is the XML element tag of the items to collect from the wrapper.
+    """
+
+    inner_tag: str
+
+
+@dataclasses.dataclass(frozen=True)
 class CoercedToTimestampInfo:
     """Hint that this field was a date message coerced to google.protobuf.Timestamp."""
+
+
+@dataclasses.dataclass(frozen=True)
+class MapFieldConfig:
+    """Config for converting a message type to a proto map<key, value>."""
+
+    key: str  # field name of the map key within the inner message
+    value: str  # field name of the map value within the inner message
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -76,6 +93,7 @@ class TransformConfig:
     coerce_to_bool: bool = False
     coerce_to_timestamp: frozenset[str] = frozenset()
     comments: dict[str, str] = dataclasses.field(default_factory=dict)
+    maps: dict[str, MapFieldConfig] = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> TransformConfig:
@@ -97,6 +115,10 @@ class TransformConfig:
             coerce_to_bool=data.get("coerce_to_bool", False),
             coerce_to_timestamp=frozenset(data.get("coerce_to_timestamp", [])),
             comments=dict(data.get("comments", {})),
+            maps={
+                type_name: MapFieldConfig(key=cfg["key"], value=cfg["value"])
+                for type_name, cfg in data.get("maps", {}).items()
+            },
         )
 
 
@@ -162,8 +184,8 @@ def _drop_fields(
 
 
 def _get_single_field(msg: xsd.Message) -> xsd.Field | None:
-    """Returns the single field of a message, or None if it has != 1 fields."""
-    fields = list(msg.get_fields())
+    """Returns the single non-dropped field of a message, or None if it has != 1."""
+    fields = [f for f in msg.get_fields() if f.transform_hint is not TransformHint.DROPPED]
     if len(fields) != 1:
         return None
     return fields[0]
@@ -190,6 +212,8 @@ def _inline_wrappers(
             inner_proto_type=field.proto_type,
         )
         for ref_field in field_index.get(id(type_def), []):
+            if ref_field.transform_hint is TransformHint.DROPPED:
+                continue
             ref_field.proto_type = field.proto_type
             ref_field.transform_hint = info
         to_remove.add(id(type_def))
@@ -218,10 +242,62 @@ def _flatten_list_wrappers(
         ):
             continue
         # Single repeated field wrapper. Flatten it.
+        inner_source = field.get_source()
+        inner_tag = inner_source.elem if isinstance(inner_source, xsd.XMLElemSource) else None
+        hint = FlattenedListInfo(inner_tag=inner_tag)
         for ref_field in field_index.get(id(type_def), []):
+            if ref_field.transform_hint is TransformHint.DROPPED:
+                continue
             ref_field.proto_type = field.proto_type
             ref_field.computed_occurs = field.computed_occurs
-            ref_field.transform_hint = TransformHint.FLATTENED_LIST
+            ref_field.transform_hint = hint
+        to_remove.add(id(type_def))
+    return [d for d in defs if id(d) not in to_remove]
+
+
+def _apply_maps(
+    defs: list[xsd.TypeDefinition],
+    maps: dict[str, MapFieldConfig],
+    field_index: dict[int, list[xsd.Field]],
+) -> list[xsd.TypeDefinition]:
+    """Convert message types listed in `maps` config to MapType."""
+    to_remove: set[int] = set()
+    for type_def in defs:
+        if type_def.name not in maps:
+            continue
+        if not isinstance(type_def, xsd.Message):
+            raise ValueError(f"maps: {type_def.name!r} is not a message type")
+        cfg = maps[type_def.name]
+        fields_by_name = {f.name: f for f in type_def.get_fields()}
+        key_field = fields_by_name.get(cfg.key)
+        val_field = fields_by_name.get(cfg.value)
+        if key_field is None:
+            raise ValueError(f"maps: key field {cfg.key!r} not found in {type_def.name!r}")
+        if val_field is None:
+            raise ValueError(f"maps: value field {cfg.value!r} not found in {type_def.name!r}")
+        if not isinstance(key_field.proto_type, xsd.AtomicType):
+            raise ValueError(
+                f"maps: key field {cfg.key!r} in {type_def.name!r} must be an atomic type "
+                f"(proto3 map keys cannot be enums or messages); got {key_field.proto_type!r}",
+            )
+        if not isinstance(val_field.proto_type, xsd.AtomicType):
+            raise ValueError(
+                f"maps: value field {cfg.value!r} in {type_def.name!r} must be an atomic type; "
+                f"got {val_field.proto_type!r}",
+            )
+        map_type = xsd.MapType(
+            documentation=type_def.documentation,
+            name=type_def.name,
+            enclosing_type=type_def.enclosing_type,
+            key_type=key_field.proto_type,
+            value_type=val_field.proto_type,
+            key_source=key_field.get_source(),
+            value_source=val_field.get_source(),
+        )
+        for ref_field in field_index.get(id(type_def), []):
+            if ref_field.transform_hint is TransformHint.DROPPED:
+                continue
+            ref_field.proto_type = map_type
         to_remove.add(id(type_def))
     return [d for d in defs if id(d) not in to_remove]
 
@@ -367,6 +443,11 @@ def apply_transforms(
     # 3b. Coerce date messages to Timestamp (after flatten so wrappers like History are gone).
     if config.coerce_to_timestamp:
         result = _coerce_to_timestamp(result, config.coerce_to_timestamp, field_index)
+        field_index = _build_field_index(result)
+
+    # 3c. Convert message types to proto maps.
+    if config.maps:
+        result = _apply_maps(result, config.maps, field_index)
         field_index = _build_field_index(result)
 
     # 4. Explicit collapse.
