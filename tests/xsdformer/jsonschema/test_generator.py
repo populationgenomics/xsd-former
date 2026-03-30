@@ -15,24 +15,28 @@ from xsdformer.xsd import xsd
 
 
 class _SchemaGenerator(Protocol):
-    def __call__(
+    def __call__(  # noqa: PLR0913
         self,
         proto_content: str,
+        *,
         main_message: str = "TestMessage",
         namespace: str = "test",
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
+        definitions_only: bool = False,
     ) -> dict[str, Any]: ...
 
 
 @pytest.fixture
 def generate_schema_from_proto_content() -> _SchemaGenerator:
-    def _generate(
+    def _generate(  # noqa: PLR0913
         proto_content: str,
+        *,
         main_message: str = "TestMessage",
         namespace: str = "test",
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
+        definitions_only: bool = False,
     ) -> dict[str, Any]:
         with tempfile.TemporaryDirectory() as tmpdir:
             proto_path = pathlib.Path(tmpdir) / "test.proto"
@@ -44,6 +48,7 @@ def generate_schema_from_proto_content() -> _SchemaGenerator:
                 main_message=main_message,
                 preserving_proto_field_name=preserving_proto_field_name,
                 include_all=include_all,
+                definitions_only=definitions_only,
             )
         return json.loads(schema_str)
 
@@ -78,6 +83,38 @@ def test_generate_schema_from_xsd() -> None:
     expected_schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$ref": "#/definitions/test.Person",
+        "definitions": {
+            "test.Person": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "address": {"$ref": "#/definitions/test.Address"},
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                    },
+                },
+            },
+            "test.Address": {
+                "type": "object",
+                "properties": {
+                    "street": {"type": "string"},
+                    "city": {"type": "string"},
+                },
+            },
+        },
+    }
+
+    assert schema == expected_schema
+
+
+def test_generate_schema_definitions_only() -> None:
+    type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
+    schema_str = generator.generate("test", type_defs, "Person", definitions_only=True)
+    schema = json.loads(schema_str)
+
+    expected_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "definitions": {
             "test.Person": {
                 "type": "object",
@@ -384,3 +421,33 @@ def test_field_comment_preferred_over_type_comment_from_proto(
     schema = generate_schema_from_proto_content(_FIELD_COMMENT_PREFERRED_PROTO)
     field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
     assert field_schema["description"] == "This is a comment on the field."
+
+
+def test_generate_from_proto_definitions_only(
+    generate_schema_from_proto_content: _SchemaGenerator,
+) -> None:
+    """Tests the --definitions-only flag to generate a schema with only definitions."""
+    proto_content = """
+        syntax = "proto3";
+
+        package testall;
+
+        message MessageA {
+            string field_a = 1;
+        }
+
+        message MessageB {
+            string field_b = 1;
+        }
+    """
+    schema = generate_schema_from_proto_content(
+        proto_content,
+        namespace="testall",
+        main_message=None,
+        include_all=True,
+        definitions_only=True,
+    )
+
+    assert "$ref" not in schema
+    assert "testall.MessageA" in schema["definitions"]
+    assert "testall.MessageB" in schema["definitions"]
