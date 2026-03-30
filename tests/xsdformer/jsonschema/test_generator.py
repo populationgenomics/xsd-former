@@ -3,6 +3,7 @@ import io
 import json
 import pathlib
 import tempfile
+from typing import Any, Protocol
 
 import jsonschema
 import pytest
@@ -11,6 +12,43 @@ from google.protobuf import json_format
 from tests.xsdformer import conftest
 from xsdformer.jsonschema import generator
 from xsdformer.xsd import xsd
+
+
+class _SchemaGenerator(Protocol):
+    def __call__(
+        self,
+        proto_content: str,
+        main_message: str = "TestMessage",
+        namespace: str = "test",
+        preserving_proto_field_name: bool = True,
+        include_all: bool = False,
+    ) -> dict[str, Any]: ...
+
+
+@pytest.fixture
+def generate_schema_from_proto_content() -> _SchemaGenerator:
+    def _generate(
+        proto_content: str,
+        main_message: str = "TestMessage",
+        namespace: str = "test",
+        preserving_proto_field_name: bool = True,
+        include_all: bool = False,
+    ) -> dict[str, Any]:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            proto_path = pathlib.Path(tmpdir) / "test.proto"
+            proto_path.write_text(proto_content)
+
+            schema_str = generator.generate_from_proto(
+                proto_path=proto_path,
+                namespace=namespace,
+                main_message=main_message,
+                preserving_proto_field_name=preserving_proto_field_name,
+                include_all=include_all,
+            )
+        return json.loads(schema_str)
+
+    return _generate
+
 
 _TEST_XSD = """
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -103,8 +141,8 @@ def test_generate_schema_with_preserving_proto_field_name() -> None:
     assert schema == expected_schema
 
 
-def test_generate_from_proto() -> None:
-    proto_content = """
+def test_generate_from_proto(generate_schema_from_proto_content: _SchemaGenerator) -> None:
+    _proto_content = """
         syntax = "proto3";
 
         package testpkg;
@@ -118,18 +156,12 @@ def test_generate_from_proto() -> None:
             google.protobuf.Timestamp created_at = 4;
         }
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_path = pathlib.Path(tmpdir)
-        proto_path = tmp_path / "test.proto"
-        proto_path.write_text(proto_content)
-
-        json_schema_str = generator.generate_from_proto(
-            proto_path=proto_path,
-            namespace="testpkg",
-            main_message="Person",
-        )
-
-    schema = json.loads(json_schema_str)
+    schema = generate_schema_from_proto_content(
+        _proto_content,
+        namespace="testpkg",
+        main_message="Person",
+        preserving_proto_field_name=False,
+    )
 
     # Assert the schema structure is correct
     assert schema["$ref"] == "#/definitions/testpkg.Person"
@@ -158,9 +190,9 @@ def test_generate_from_proto() -> None:
         jsonschema.validate(instance=person_instance_invalid, schema=schema)
 
 
-def test_generate_from_proto_include_all() -> None:
+def test_generate_from_proto_include_all(generate_schema_from_proto_content: _SchemaGenerator) -> None:
     """Tests the --include-all flag to include all messages from a proto file."""
-    proto_content = """
+    _proto_content = """
         syntax = "proto3";
 
         package testall;
@@ -173,34 +205,21 @@ def test_generate_from_proto_include_all() -> None:
             string field_b = 1;
         }
     """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_path = pathlib.Path(tmpdir)
-        proto_path = tmp_path / "test.proto"
-        proto_path.write_text(proto_content)
 
-        # Test default behavior (include_all=False)
-        json_schema_str_default = generator.generate_from_proto(
-            proto_path=proto_path,
-            namespace="testall",
-            main_message="MessageA",
-            include_all=False,
-        )
-        schema_default = json.loads(json_schema_str_default)
+    schema_default = generate_schema_from_proto_content(_proto_content, namespace="testall", main_message="MessageA")
 
-        assert "testall.MessageA" in schema_default["definitions"]
-        assert "testall.MessageB" not in schema_default["definitions"]
+    assert "testall.MessageA" in schema_default["definitions"]
+    assert "testall.MessageB" not in schema_default["definitions"]
 
-        # Test with include_all=True
-        json_schema_str_all = generator.generate_from_proto(
-            proto_path=proto_path,
-            namespace="testall",
-            main_message="MessageA",
-            include_all=True,
-        )
-        schema_all = json.loads(json_schema_str_all)
+    schema_all = generate_schema_from_proto_content(
+        _proto_content,
+        namespace="testall",
+        main_message="MessageA",
+        include_all=True,
+    )
 
-        assert "testall.MessageA" in schema_all["definitions"]
-        assert "testall.MessageB" in schema_all["definitions"]
+    assert "testall.MessageA" in schema_all["definitions"]
+    assert "testall.MessageB" in schema_all["definitions"]
 
 
 @pytest.mark.parametrize("preserving_proto_field_name", [True, False])
@@ -241,3 +260,127 @@ def test_xsd_to_json_schema_e2e(
 
     # 5. Validate the JSON against the JSON Schema
     jsonschema.validate(instance=json_dict, schema=schema)
+
+
+_TRAILING_COMMENT_PROTO = """
+    syntax = "proto3";
+
+    package test;
+
+    message TestMessage {
+      string a_field = 1; // This is a trailing comment.
+    }
+"""
+
+
+def test_trailing_comment_from_proto() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(_TRAILING_COMMENT_PROTO)
+
+        schema_str = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="test",
+            main_message="TestMessage",
+            preserving_proto_field_name=True,
+        )
+
+    schema = json.loads(schema_str)
+    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    assert field_schema["description"] == "This is a trailing comment."
+
+
+_MIXED_COMMENTS_PROTO = """
+    syntax = "proto3";
+
+    package test;
+
+    message TestMessage {
+      string a_field = 1; // This is a trailing comment for a_field.
+      // This is a leading comment for b_field.
+      string b_field = 2;
+    }
+"""
+
+
+def test_mixed_comments_from_proto() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
+        proto_path = tmp_path / "test.proto"
+        proto_path.write_text(_MIXED_COMMENTS_PROTO)
+
+        schema_str = generator.generate_from_proto(
+            proto_path=proto_path,
+            namespace="test",
+            main_message="TestMessage",
+            preserving_proto_field_name=True,
+        )
+
+    schema = json.loads(schema_str)
+    a_field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    b_field_schema = schema["definitions"]["test.TestMessage"]["properties"]["b_field"]
+    assert a_field_schema["description"] == "This is a trailing comment for a_field."
+    assert b_field_schema["description"] == "This is a leading comment for b_field."
+
+
+_FIELD_COMMENT_PREFERRED_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="DescribedType">
+    <xs:annotation>
+      <xs:documentation>This is a comment on the type.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="foo" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="TestMessage">
+    <xs:sequence>
+      <xs:element name="a_field" type="DescribedType">
+        <xs:annotation>
+          <xs:documentation>This is a comment on the field.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="test_message" type="TestMessage" />
+</xs:schema>
+"""
+
+
+def test_field_comment_preferred_over_type_comment() -> None:
+    type_defs = xsd.process_xsd(io.StringIO(_FIELD_COMMENT_PREFERRED_XSD))
+    schema_str = generator.generate(
+        "test",
+        type_defs,
+        "TestMessage",
+        preserving_proto_field_name=True,
+    )
+    schema = json.loads(schema_str)
+    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    assert field_schema["description"] == "This is a comment on the field."
+
+
+_FIELD_COMMENT_PREFERRED_PROTO = """
+    syntax = "proto3";
+
+    package test;
+
+    // This is a comment on the type.
+    message DescribedType {
+      string foo = 1;
+    }
+
+    message TestMessage {
+      // This is a comment on the field.
+      DescribedType a_field = 1;
+    }
+"""
+
+
+def test_field_comment_preferred_over_type_comment_from_proto(
+    generate_schema_from_proto_content: _SchemaGenerator,
+) -> None:
+    schema = generate_schema_from_proto_content(_FIELD_COMMENT_PREFERRED_PROTO)
+    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
+    assert field_schema["description"] == "This is a comment on the field."
