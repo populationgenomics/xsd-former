@@ -20,7 +20,7 @@ from xsdformer.xsd import xsd
 def main() -> None:
     xsd_path = pathlib.Path(sys.argv[1])
     xml_path = pathlib.Path(sys.argv[2])
-    max_records = int(sys.argv[3]) if len(sys.argv) > 3 else 3
+    max_records = int(sys.argv[3]) if len(sys.argv) > 3 else 3  # noqa: PLR2004
 
     transforms_path = pathlib.Path(__file__).parent.parent / "clinvar_transforms.yaml"
     config = TransformConfig.from_yaml(transforms_path)
@@ -40,9 +40,11 @@ def main() -> None:
         spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
         proto_include = pathlib.Path(spec.origin).parent.parent
 
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [
-                sys.executable, "-m", "grpc_tools.protoc",
+                sys.executable,
+                "-m",
+                "grpc_tools.protoc",
                 f"--proto_path={tmp_path}",
                 f"--proto_path={proto_include}",
                 f"--python_out={tmp_path}",
@@ -52,7 +54,8 @@ def main() -> None:
         )
 
         pb2_spec = importlib.util.spec_from_file_location(
-            f"{namespace}_pb2", tmp_path / f"{namespace}_pb2.py",
+            f"{namespace}_pb2",
+            tmp_path / f"{namespace}_pb2.py",
         )
         module_pb2 = importlib.util.module_from_spec(pb2_spec)
         pb2_spec.loader.exec_module(module_pb2)
@@ -62,21 +65,20 @@ def main() -> None:
             xml_converter.generate(namespace, type_defs, module_pb2.__name__),
         )
         converter = types.ModuleType("clinvar_converter")
-        exec(converter_code, converter.__dict__)
+        exec(converter_code, converter.__dict__)  # noqa: S102
 
         # Stream XML — ClinVar files are huge, use iterparse.
         open_fn = gzip.open if xml_path.suffix == ".gz" else open
         count = 0
         with open_fn(str(xml_path), "rb") as f:
-            for event, elem in etree.iterparse(f, events=("end",), tag="VariationArchive"):
+            for _event, elem in etree.iterparse(f, events=("end",), tag="VariationArchive"):
                 try:
                     proto = converter.VariationArchiveType(elem)
                     vid = proto.variation_id
                     print(f"# VCV: {proto.accession} (VariationID={vid})")
                     print(text_format.MessageToString(proto))
-                except Exception as e:
-                    print(f"# ERROR on VariationID={elem.get('VariationID', '?')}: {e}",
-                          file=sys.stderr)
+                except Exception as e:  # noqa: BLE001
+                    print(f"# ERROR on VariationID={elem.get('VariationID', '?')}: {e}", file=sys.stderr)
                 elem.clear()
                 count += 1
                 if count >= max_records:
