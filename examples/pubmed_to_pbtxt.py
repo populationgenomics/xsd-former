@@ -39,9 +39,11 @@ def main() -> None:
         spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
         proto_include = pathlib.Path(spec.origin).parent.parent
 
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [
-                sys.executable, "-m", "grpc_tools.protoc",
+                sys.executable,
+                "-m",
+                "grpc_tools.protoc",
                 f"--proto_path={tmp_path}",
                 f"--proto_path={proto_include}",
                 f"--python_out={tmp_path}",
@@ -52,7 +54,8 @@ def main() -> None:
 
         # Load compiled proto module.
         pb2_spec = importlib.util.spec_from_file_location(
-            f"{namespace}_pb2", tmp_path / f"{namespace}_pb2.py",
+            f"{namespace}_pb2",
+            tmp_path / f"{namespace}_pb2.py",
         )
         module_pb2 = importlib.util.module_from_spec(pb2_spec)
         pb2_spec.loader.exec_module(module_pb2)
@@ -63,7 +66,7 @@ def main() -> None:
             xml_converter.generate(namespace, type_defs, module_pb2.__name__),
         )
         converter = types.ModuleType("pubmed_converter")
-        exec(converter_code, converter.__dict__)
+        exec(converter_code, converter.__dict__)  # noqa: S102
 
         # Convert each XML file.
         for xml_path in xml_paths:
