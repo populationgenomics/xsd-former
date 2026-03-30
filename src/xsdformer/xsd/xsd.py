@@ -44,6 +44,9 @@ def _remove_common_prefix(
 
 def _relative_path(path: tuple[str, ...], relative_to: tuple[str, ...]) -> str:
     a, b = _remove_common_prefix(relative_to, path)
+    if not b:
+        # Self-reference or identical path: use the last name component.
+        return path[-1]
     if b[0] in a:
         return "." + ".".join(path)
     return ".".join(b)
@@ -346,12 +349,15 @@ class Message(TypeDefinition):
     content: tuple[FieldDefinition, ...]
 
     def inner_types(self) -> Iterator[TypeDefinition]:
+        seen: set[int] = set()
         for field in self.get_fields():
             if (
                 isinstance(field.proto_type, TypeDefinition)
                 and field.proto_type.enclosing_type
                 and field.proto_type.enclosing_type[0] is self
+                and id(field.proto_type) not in seen
             ):
+                seen.add(id(field.proto_type))
                 yield field.proto_type
 
     def __repr__(self) -> str:
@@ -378,9 +384,17 @@ class Enumeration(TypeDefinition):
 
         base = text.snake_case(self.name).upper()
 
-        yield EnumField(0, base + "_UNSPECIFIED", None)
+        seen: set[str] = set()
+        unspecified = base + "_UNSPECIFIED"
+        seen.add(unspecified)
+        yield EnumField(0, unspecified, None)
         for i, xml_value in enumerate(self.enum_values, start=1):
-            yield EnumField(i, base + "_" + text.snake_case(xml_value).upper(), xml_value)
+            name = base + "_" + text.snake_case(xml_value).upper()
+            if name in seen:
+                # Deduplicate by appending the field number.
+                name = f"{name}_{i}"
+            seen.add(name)
+            yield EnumField(i, name, xml_value)
 
 
 @dataclasses.dataclass(eq=False, kw_only=True)
@@ -709,7 +723,7 @@ def _gather_xsd_types(
     return type_defs
 
 
-class _TypeRewriter:
+class TypeRewriter:
     def __init__(self, type_defs: Sequence[TypeDefinition]) -> None:
         self._type_to_fields = collections.defaultdict(list)
         for type_def in type_defs:
@@ -728,7 +742,7 @@ class _TypeRewriter:
         del self._type_to_fields[old_type]
 
 
-def _find_map_fields(
+def find_map_fields(
     map_type: TypeDefinition,
     map_override: MapOverrideConfig,
 ) -> tuple[Field, Field]:
@@ -775,7 +789,7 @@ def process_xsd(  # noqa: C901
     for defs in definition_order:
         defs.sort(key=lambda t: type_defs[t].name or "")
 
-    rewriter = _TypeRewriter(list(type_defs.values()))
+    rewriter = TypeRewriter(list(type_defs.values()))
 
     path_to_type = {}
     for type_def in type_defs.values():
@@ -785,7 +799,7 @@ def process_xsd(  # noqa: C901
     for map_override in config.map_overrides:
         if map_type := path_to_type.get(map_override.map_type):
             t = inv_type_defs[map_type]
-            key_field, val_field = _find_map_fields(map_type, map_override)
+            key_field, val_field = find_map_fields(map_type, map_override)
 
             if not isinstance(key_field.proto_type, AtomicType):
                 raise RuntimeError(f"expected map key: {key_field} to have an atomic type")

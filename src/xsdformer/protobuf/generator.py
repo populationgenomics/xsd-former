@@ -47,19 +47,32 @@ class ProtobufGenerator:
     def _(self, enum_def: xsd.Enumeration) -> Iterable[str]:
         yield from self.enum(enum_def)
 
-    @functools.singledispatchmethod
     def message_field(
         self,
         field_def: xsd.FieldDefinition,
         path: tuple[str, ...],
+        *,
+        in_oneof: bool = False,
+    ) -> Iterable[str]:
+        return self._message_field(field_def, path, in_oneof=in_oneof)
+
+    @functools.singledispatchmethod
+    def _message_field(
+        self,
+        field_def: xsd.FieldDefinition,
+        path: tuple[str, ...],
+        *,
+        in_oneof: bool = False,
     ) -> Iterable[str]:
         raise NotImplementedError(f"Not implemented for {field_def=}")
 
-    @message_field.register
-    def _(self, field_def: xsd.Choice, path: tuple[str, ...]) -> Iterable[str]:
-        oneof = all(not f.is_repeated for f in field_def.get_fields())
+    @_message_field.register
+    def _(self, field_def: xsd.Choice, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
+        oneof = not in_oneof and all(not f.is_repeated for f in field_def.get_fields())
 
-        inner = itertools.chain.from_iterable(self.message_field(inner, path) for inner in field_def.content)
+        inner = itertools.chain.from_iterable(
+            self.message_field(inner, path, in_oneof=in_oneof or oneof) for inner in field_def.content
+        )
         if not oneof:
             yield from inner
         else:
@@ -67,19 +80,24 @@ class ProtobufGenerator:
             yield from text.indent(inner)
             yield "}"
 
-    @message_field.register
-    def _(self, field_def: xsd.Seq, path: tuple[str, ...]) -> Iterable[str]:
+    @_message_field.register
+    def _(self, field_def: xsd.Seq, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
         for inner in field_def.content:
-            yield from self.message_field(inner, path)
+            yield from self.message_field(inner, path, in_oneof=in_oneof)
 
-    @message_field.register
-    def _(self, field_def: xsd.Field, path: tuple[str, ...]) -> Iterable[str]:
+    @_message_field.register
+    def _(self, field_def: xsd.Field, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
+        del in_oneof
+        if field_def.name in self._emitted_fields:
+            return
+        self._emitted_fields.add(field_def.name)
         if field_def.documentation:
             yield from text.render_comment(field_def.documentation)
         type_str = field_def.proto_type_str(path)
         yield f"{type_str} {field_def.name} = {field_def.num};"
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
+        self._emitted_fields: set[str] = set()
         yield f"message {msg_def.name} {{"
         for inner in msg_def.inner_types():
             yield from text.indent(self.definition(inner))
