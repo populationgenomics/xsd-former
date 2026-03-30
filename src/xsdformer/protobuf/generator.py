@@ -3,6 +3,7 @@ import itertools
 from collections.abc import Iterable, Iterator
 
 from xsdformer import generator
+from xsdformer.transforms import TransformHint
 from xsdformer.xsd import text, xsd
 
 
@@ -88,6 +89,8 @@ class ProtobufGenerator:
     @_message_field.register
     def _(self, field_def: xsd.Field, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
         del in_oneof
+        if field_def.transform_hint is TransformHint.DROPPED:
+            return
         if field_def.name in self._emitted_fields:
             return
         self._emitted_fields.add(field_def.name)

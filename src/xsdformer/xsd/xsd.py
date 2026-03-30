@@ -8,7 +8,7 @@ import itertools
 import pathlib
 import re
 from collections.abc import Iterator, Sequence
-from typing import IO, Protocol, TypeAlias
+from typing import IO, Any, Protocol, TypeAlias
 
 import elementpath
 import xmlschema
@@ -203,6 +203,7 @@ class Field(FieldDefinition, abc.ABC):
     proto_type: TypeDefinition | AtomicType
     _computed_occurs: Occurs | None = dataclasses.field(default=None, init=False)
     num: int | None = None
+    transform_hint: Any = None
 
     def _get_computed_occurs(self) -> Occurs:
         if self._computed_occurs is None:

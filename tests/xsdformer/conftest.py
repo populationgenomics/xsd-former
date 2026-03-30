@@ -13,6 +13,7 @@ import pytest
 
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
+from xsdformer.transforms import TransformConfig, apply_transforms
 from xsdformer.xsd import xsd
 
 _BOOK_XSD = """
@@ -121,6 +122,7 @@ class Pb2ModuleFactory(Protocol):
         xsd_str: str,
         *,
         config: xsd.Config | None = None,
+        transform_config: TransformConfig | None = None,
         namespace: str,
     ) -> tuple[types.ModuleType, pathlib.Path]: ...
 
@@ -138,10 +140,13 @@ def pb2_module_factory(tmp_path: pathlib.Path) -> Pb2ModuleFactory:
         xsd_str: str,
         *,
         config: xsd.Config | None = None,
+        transform_config: TransformConfig | None = None,
         namespace: str,
     ) -> tuple[types.ModuleType, pathlib.Path]:
         unique_namespace = f"{namespace}_{uuid.uuid4().hex}"
         type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
+        if transform_config is not None:
+            type_defs = apply_transforms(type_defs, transform_config)
         proto_def = "\n".join(generator.generate(unique_namespace, type_defs))
         return _compile_proto(proto_def, unique_namespace, tmp_path, proto_include_path)
 
@@ -154,6 +159,7 @@ class PyConverterModuleFactory(Protocol):
         xsd_str: str,
         *,
         config: xsd.Config | None = None,
+        transform_config: TransformConfig | None = None,
         proto_namespace: str,
         py_module: str,
     ) -> types.ModuleType: ...
@@ -167,16 +173,20 @@ def py_converter_module_factory(
         xsd_str: str,
         *,
         config: xsd.Config | None = None,
+        transform_config: TransformConfig | None = None,
         proto_namespace: str,
         py_module: str,
     ) -> types.ModuleType:
         module_pb2, _ = pb2_module_factory(
             xsd_str,
             config=config,
+            transform_config=transform_config,
             namespace=proto_namespace,
         )
         with _insert_module(module_pb2):
             type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
+            if transform_config is not None:
+                type_defs = apply_transforms(type_defs, transform_config)
             converter_code = "\n".join(
                 xml_converter.generate(py_module, type_defs, module_pb2.__name__),
             )

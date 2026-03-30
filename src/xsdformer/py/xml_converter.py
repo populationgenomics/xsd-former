@@ -10,6 +10,7 @@ from typing import Any
 from lxml import etree
 
 from xsdformer import generator
+from xsdformer.transforms import InlinedWrapperInfo, TransformHint
 from xsdformer.xsd import text, xsd
 
 
@@ -212,8 +213,87 @@ def _make_elem_consumer(
     return _consume_elem_once
 
 
+def _handle_inlined_wrapper_elem(
+    field: xsd.Elem,
+    info: InlinedWrapperInfo,
+) -> Iterable[str]:
+    """Emit code to consume wrapper element and extract value from inner child."""
+    wrapper_tag = field.source.elem
+    match info.inner_source:
+        case xsd.XMLElemSource(elem=inner_tag):
+            extract = f"wrapper.find({inner_tag!r}).text"
+        case xsd.XMLElemTextSource():
+            extract = "wrapper.text"
+        case _:
+            raise NotImplementedError(f"Unsupported inner source: {info.inner_source}")
+
+    caster = _make_atom_caster(info.inner_proto_type, extract)
+
+    def _consume_once() -> Iterable[str]:
+        yield f"wrapper = _consume(children, {wrapper_tag!r})"
+        if field.is_repeated:
+            yield f"proto.{field.name}.append({caster})"
+        else:
+            yield f"proto.{field.name} = {caster}"
+
+    match field.occurs:
+        case (1, 1):
+            yield from _consume_once()
+        case (0, 1):
+            yield f"if children and children[0].tag == {wrapper_tag!r}:"
+            yield from text.indent(_consume_once())
+        case _:
+            yield f"while children and children[0].tag == {wrapper_tag!r}:"
+            yield from text.indent(_consume_once())
+
+
+def _handle_dropped_elem(field: xsd.Elem) -> Iterable[str]:
+    """Emit code to consume and discard an element."""
+    match field.occurs:
+        case (1, 1):
+            yield f"_consume(children, {field.source.elem!r})"
+        case (0, 1):
+            yield f"_consume_if(children, {field.source.elem!r})"
+        case _:
+            yield f"while children and children[0].tag == {field.source.elem!r}:"
+            yield from text.indent([f"_consume(children, {field.source.elem!r})"])
+
+
+def _handle_flattened_list_elem(field: xsd.Elem) -> Iterable[str]:
+    """Emit code to consume a wrapper element and iterate its children."""
+    wrapper_tag = field.source.elem
+    inner_consumer = _make_elem_consumer(field, "inner_elem")
+
+    def _body() -> Iterable[str]:
+        yield f"wrapper = _consume(children, {wrapper_tag!r})"
+        yield "for inner_elem in wrapper:"
+        yield from text.indent(inner_consumer())
+
+    match field.occurs:
+        case (1, 1):
+            yield from _body()
+        case (0, 1):
+            yield f"if children and children[0].tag == {wrapper_tag!r}:"
+            yield from text.indent(_body())
+        case _:
+            yield f"while children and children[0].tag == {wrapper_tag!r}:"
+            yield from text.indent(_body())
+
+
 @_handle_field_definition.register
 def _(field: xsd.Elem) -> Iterable[str]:
+    if field.transform_hint is TransformHint.DROPPED:
+        yield from _handle_dropped_elem(field)
+        return
+
+    if isinstance(field.transform_hint, InlinedWrapperInfo):
+        yield from _handle_inlined_wrapper_elem(field, field.transform_hint)
+        return
+
+    if field.transform_hint is TransformHint.FLATTENED_LIST:
+        yield from _handle_flattened_list_elem(field)
+        return
+
     val = f"_consume(children, {field.source.elem!r})"
 
     _consume_elem_once = _make_elem_consumer(field, val)
