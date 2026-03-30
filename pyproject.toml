@@ -5,18 +5,18 @@ description = "A tool to convert XSD to Protobuf definitions."
 requires-python = ">=3.11"
 dependencies = [
     "click",
+    "grpcio-tools",
     "jinja2>=3.1.6",
     "lxml",
     "protobuf>=6.32.1",
-    "pytest>=8.4.1",
     "xmlschema",
-    "jsonschema",
 ]
 
-[tool.dependency-groups]
+[dependency-groups]
 dev = [
+    "jsonschema",
+    "pytest>=8.4.1",
     "ruff",
-    "grpcio-tools",
 ]
 
 [project.scripts]
