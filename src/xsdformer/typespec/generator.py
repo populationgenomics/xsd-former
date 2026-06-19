@@ -1,11 +1,16 @@
-"""TypeSpec (`.tsp`) emitter — slices 2-5 (ADR 0001).
+"""TypeSpec (`.tsp`) emitter — slices 2-6 (ADR 0001).
 
 Emits a single namespace of flat `model`s with scalar fields and cardinality,
 plus string-valued `enum`s and JSDoc-style doc-comments, sourced from the same
 IR as the protobuf generator. Nested (enclosed) types are hoisted to the
 top-level namespace as `Parent_Child`, `Choice` members flatten to optional
-properties, and map-typed fields surface as `Record<V>`. `--proto-compat`
-(slice 6) is not yet handled.
+properties, and map-typed fields surface as `Record<V>`.
+
+`--proto-compat` adds the `@typespec/protobuf` decorations (`import`/`using`,
+`@package`, `@field`) and switches enums to integer-valued members (member
+names preserved, numbers = the IR's enum numbers, zero member first) — the form
+`@typespec/protobuf` requires, per ADR 0001 slice 1 — so that `tsp->proto` can
+serve as the `xsd->proto` ≡ `xsd->tsp->proto` regression check.
 """
 
 import functools
@@ -91,7 +96,12 @@ def _iter_message_fields(
 
 
 class TypeSpecGenerator:
+    def __init__(self, *, proto_compat: bool = False) -> None:
+        self._proto_compat = proto_compat
+
     def header(self) -> Iterable[str]:
+        if self._proto_compat:
+            return ['import "@typespec/protobuf";', "using Protobuf;", ""]
         return []
 
     def footer(self) -> Iterable[str]:
@@ -99,6 +109,14 @@ class TypeSpecGenerator:
 
     def begin_namespace(self, namespace: str) -> Iterable[str]:
         self._namespace = namespace
+        if self._proto_compat:
+            # `@package` carries the raw (possibly dotted) name through to proto's
+            # `package`, matching the protobuf generator's resolution; the TypeSpec
+            # `namespace` identifier is the PascalCased form.
+            return [
+                f'@package({{name: "{namespace}"}})',
+                f"namespace {_namespace_name(namespace)};",
+            ]
         return [f"namespace {_namespace_name(namespace)};"]
 
     def end_namespace(self, namespace: str) -> Iterable[str]:
@@ -129,7 +147,8 @@ class TypeSpecGenerator:
         # Default mode: string-valued members so a single artifact serves
         # pydantic/zod. Member name = proto value name (`EnumField.name`); value
         # = `xml_value` (the synthesized zero member has none, so `""`).
-        # `--proto-compat` (slice 6) will instead emit integer values.
+        # `--proto-compat`: integer values (`@typespec/protobuf` rejects string
+        # members), member names preserved, numbers = the IR's enum numbers.
         yield ""
         if enum_def.documentation:
             yield from text.render_doc_comment(enum_def.documentation)
@@ -139,23 +158,32 @@ class TypeSpecGenerator:
 
     def _enum_members(self, enum_def: xsd.Enumeration) -> Iterable[str]:
         for field_def in enum_def.field_iter():
-            value = "" if field_def.xml_value is None else field_def.xml_value
-            yield f'{field_def.name}: "{value}",'
+            if self._proto_compat:
+                yield f"{field_def.name}: {field_def.num},"
+            else:
+                value = "" if field_def.xml_value is None else field_def.xml_value
+                yield f'{field_def.name}: "{value}",'
 
     def field(self, field_def: xsd.Field, *, force_optional: bool = False) -> Iterable[str]:
         if field_def.documentation:
             yield from text.render_doc_comment(field_def.documentation)
         type_str = _field_type(field_def)
+        # `--proto-compat`: `@field(N)` pins the proto field number to the IR's,
+        # so `tsp->proto` reproduces `xsd->proto`'s wire layout.
+        prefix = f"@field({field_def.num}) " if self._proto_compat else ""
+        name = field_def.name
         if isinstance(field_def.proto_type, xsd.MapType):
             # `Record<V>` already carries collection shape: a map is required-but-
-            # possibly-empty (like repeated -> `T[]`), so no `[]` or `?` suffix.
-            yield f"{field_def.name}: {type_str};"
+            # possibly-empty (like repeated -> `T[]`), so no `[]` or optional marker.
+            yield f"{prefix}{name}: {type_str};"
         elif field_def.is_repeated:
-            yield f"{field_def.name}: {type_str}[];"
+            yield f"{prefix}{name}: {type_str}[];"
         elif force_optional or field_def.computed_occurs[0] == 0:
-            yield f"{field_def.name}: {type_str}?;"
+            # Optionality is on the property name in TypeSpec (`name?: T`), not a
+            # suffix on the type.
+            yield f"{prefix}{name}?: {type_str};"
         else:
-            yield f"{field_def.name}: {type_str};"
+            yield f"{prefix}{name}: {type_str};"
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
         yield ""
@@ -176,12 +204,14 @@ class TypeSpecGenerator:
 def generate(
     namespace: str,
     type_defs: tuple[xsd.TypeDefinition, ...],
+    *,
+    proto_compat: bool = False,
 ) -> Iterator[str]:
     # Unlike the proto/JSON-Schema generators (which nest enclosed types inline
     # and so skip them at the top level via `generate_with`), TypeSpec hoists
     # every type to the namespace under its `Parent_Child` name. So emit all
     # definitions, including enclosed ones.
-    gen = TypeSpecGenerator()
+    gen = TypeSpecGenerator(proto_compat=proto_compat)
     yield from gen.header()
     yield from gen.begin_namespace(namespace)
     for type_def in type_defs:
