@@ -44,3 +44,21 @@ def test_normalize_whitespace(input_text: str, expected_output: str) -> None:
 def test_keep() -> None:
     assert text.snake_case(text.keep("KeepThis")) == "KeepThis"
     assert text.pascal_case(text.keep("keep_this")) == "keep_this"
+
+
+def test_render_doc_comment_single_line() -> None:
+    assert list(text.render_doc_comment("A short doc.")) == ["/** A short doc. */"]
+
+
+def test_render_doc_comment_multi_line() -> None:
+    assert list(text.render_doc_comment("line one\nline two")) == [
+        "/**",
+        " * line one",
+        " * line two",
+        " */",
+    ]
+
+
+def test_render_doc_comment_escapes_block_terminator() -> None:
+    # A literal `*/` in the text would close the comment early; it must be broken.
+    assert list(text.render_doc_comment("ends with */ inside")) == ["/** ends with * / inside */"]
