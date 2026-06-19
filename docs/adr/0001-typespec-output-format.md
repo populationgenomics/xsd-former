@@ -133,7 +133,11 @@ Vertical, independently landable, each its own commit.
    `tests/xsdformer/typespec/test_generator.py`. `Enumeration`/`MapType`
    definitions emit nothing (deferred to slices 3/5); no nesting, `Choice`, or
    proto-compat yet.
-3. **Enums + docs.** Option-(b) enum emission and `render_doc_comment`.
+3. **Enums + docs.** ✅ Done. String-valued `enum` emission (member name =
+   `EnumField.name`, value = `xml_value`, synthesized `*_UNSPECIFIED: ""` zero
+   member first) and `render_doc_comment` (`text.py`) promoting XSD
+   documentation to JSDoc-style `/** … */` comments on models, fields, and
+   enums. Backbone golden tests in `test_generator.py`.
 4. **Nesting + Choice.** `Parent_Child` hoisting and `Choice`→optional-property
    flattening.
 5. **Maps.** `Record<ValueType>`.
