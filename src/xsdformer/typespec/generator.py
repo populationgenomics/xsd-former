@@ -43,6 +43,88 @@ _TSP_SCALAR = {
     xsd.AtomicType.DATE: "utcDateTime",
 }
 
+# TypeSpec reserved keywords (from the `@typespec/compiler` scanner). A property
+# name that collides with one is a syntax error unless backtick-quoted. Field
+# names are snake_case/lowercase so they can collide; model/enum names are
+# PascalCase and enum members SCREAMING_CASE, so neither does. Backtick-quoting
+# is valid for any identifier, so escaping this (possibly over-broad) set is safe.
+_TSP_RESERVED = frozenset(
+    {
+        "alias",
+        "arg",
+        "array",
+        "async",
+        "auto",
+        "const",
+        "context",
+        "dec",
+        "declare",
+        "else",
+        "enum",
+        "env",
+        "extends",
+        "extern",
+        "false",
+        "flag",
+        "fn",
+        "if",
+        "impl",
+        "implements",
+        "import",
+        "init",
+        "interface",
+        "internal",
+        "is",
+        "keyof",
+        "local",
+        "macro",
+        "metadata",
+        "mod",
+        "model",
+        "module",
+        "namespace",
+        "never",
+        "op",
+        "package",
+        "partial",
+        "private",
+        "projection",
+        "prop",
+        "property",
+        "protected",
+        "pub",
+        "public",
+        "record",
+        "return",
+        "satisfies",
+        "scalar",
+        "scenario",
+        "sealed",
+        "self",
+        "statemachine",
+        "struct",
+        "sub",
+        "super",
+        "sym",
+        "this",
+        "trait",
+        "true",
+        "typeof",
+        "typeref",
+        "union",
+        "unknown",
+        "using",
+        "valueof",
+        "void",
+        "with",
+    },
+)
+
+
+def _escape_field_name(name: str | None) -> str | None:
+    """Backtick-quotes a field name that collides with a TypeSpec keyword."""
+    return f"`{name}`" if name in _TSP_RESERVED else name
+
 
 def _namespace_name(namespace: str) -> str:
     """Renders a (possibly dotted) package as a TypeSpec namespace identifier."""
@@ -155,7 +237,7 @@ class TypeSpecGenerator:
     @_definition.register
     def _(self, map_def: xsd.MapType) -> Iterable[str]:
         del map_def  # Top-level maps emit nothing; they surface as `Record<V>`.
-        yield from iter([])
+        return ()
 
     def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
         # Default mode: string-valued members so a single artifact serves
@@ -176,7 +258,8 @@ class TypeSpecGenerator:
                 yield f"{self._proto_member_name(enum_def, field_def)}: {field_def.num},"
             else:
                 value = "" if field_def.xml_value is None else field_def.xml_value
-                yield f'{field_def.name}: "{value}",'
+                escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                yield f'{field_def.name}: "{escaped}",'
 
     @staticmethod
     def _proto_member_name(enum_def: xsd.Enumeration, field_def: xsd.EnumField) -> str:
@@ -204,7 +287,7 @@ class TypeSpecGenerator:
         # `--proto-compat`: `@field(N)` pins the proto field number to the IR's,
         # so `tsp->proto` reproduces `xsd->proto`'s wire layout.
         prefix = f"@field({field_def.num}) " if self._proto_compat else ""
-        name = field_def.name
+        name = _escape_field_name(field_def.name)
         if isinstance(field_def.proto_type, xsd.MapType):
             # `Record<V>` already carries collection shape: a map is required-but-
             # possibly-empty (like repeated -> `T[]`), so no `[]` or optional marker.

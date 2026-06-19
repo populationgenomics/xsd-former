@@ -106,7 +106,8 @@ def render_doc_comment(doc: str) -> Iterable[str]:
     Returns:
       The doc-comment lines.
     """
-    lines = doc.split("\n")
+    # Break any `*/` in the text so it can't terminate the comment block early.
+    lines = doc.replace("*/", "* /").split("\n")
     if len(lines) == 1:
         yield f"/** {lines[0]} */"
         return

@@ -356,3 +356,65 @@ def test_proto_compat_nested_enum_reprefixes_members() -> None:
         "  @field(1) origin: Sample_Origin;\n"
         "}"
     )
+
+
+# Field names that collide with TypeSpec keywords, plus a safe one.
+_KEYWORD_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="thing">
+    <xs:sequence>
+      <xs:element name="model" type="xs:string" />
+      <xs:element name="is" type="xs:string" minOccurs="0" />
+      <xs:element name="value" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="thing" type="thing" />
+</xs:schema>
+"""
+
+
+def test_reserved_keyword_field_names_backtick_quoted() -> None:
+    # `model`/`is` are TypeSpec keywords and must be backtick-quoted; `value`
+    # isn't, so it stays bare. The quoting survives the @field decorator.
+    assert _generate(_KEYWORD_XSD, proto_compat=True) == (
+        'import "@typespec/protobuf";\n'
+        "using Protobuf;\n"
+        "\n"
+        '@package({name: "demo"})\n'
+        "namespace Demo;\n"
+        "\n"
+        "model Thing {\n"
+        "  @field(1) `model`: string;\n"
+        "  @field(2) `is`?: string;\n"
+        "  @field(3) value: string;\n"
+        "}"
+    )
+
+
+# An enum whose value carries characters that must be escaped in a TypeSpec
+# string literal (a double quote and a backslash).
+_ESCAPE_ENUM_XSD = r"""
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="quote">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value='say "hi"' />
+      <xs:enumeration value="back\slash" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="quote" type="quote" />
+</xs:schema>
+"""
+
+
+def test_enum_string_values_escaped() -> None:
+    # Double quotes and backslashes in the xml_value are escaped so the emitted
+    # TypeSpec string literal stays valid.
+    assert _generate(_ESCAPE_ENUM_XSD) == (
+        "namespace Demo;\n"
+        "\n"
+        "enum Quote {\n"
+        '  QUOTE_UNSPECIFIED: "",\n'
+        '  QUOTE_SAY_HI: "say \\"hi\\"",\n'
+        '  QUOTE_BACK_SLASH: "back\\\\slash",\n'
+        "}"
+    )

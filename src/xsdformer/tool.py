@@ -91,13 +91,13 @@ def xsd_command(  # noqa: C901, PLR0913
 
     if proto_out:
         namespace = proto_package or pathlib.Path(proto_out).stem
-        with open(proto_out, "w") as f:
+        with open(proto_out, "w", encoding="utf-8") as f:
             for line in generator.generate(namespace, type_defs):
                 f.write(line + "\n")
 
     if typespec_out:
         namespace = proto_package or pathlib.Path(typespec_out).stem
-        with open(typespec_out, "w") as f:
+        with open(typespec_out, "w", encoding="utf-8") as f:
             for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
                 f.write(line + "\n")
 
@@ -105,7 +105,7 @@ def xsd_command(  # noqa: C901, PLR0913
         if not py_module:
             raise click.UsageError("--py_module is required when using --py_out")
         namespace = pathlib.Path(xsd_file).stem
-        with open(py_out, "w") as f:
+        with open(py_out, "w", encoding="utf-8") as f:
             for line in xml_converter.generate(namespace, type_defs, py_module):
                 f.write(line + "\n")
 
@@ -119,7 +119,7 @@ def xsd_command(  # noqa: C901, PLR0913
             main_message,
             preserving_proto_field_name=preserving_proto_field_name,
         )
-        with open(json_schema_out, "w") as f:
+        with open(json_schema_out, "w", encoding="utf-8") as f:
             f.write(schema)
 
 
@@ -167,7 +167,7 @@ def proto(  # noqa: PLR0913
         definitions_only=definitions_only,
     )
     if json_schema_out:
-        with open(json_schema_out, "w") as f:
+        with open(json_schema_out, "w", encoding="utf-8") as f:
             f.write(schema)
     else:
         print(schema, flush=True)
@@ -237,13 +237,13 @@ def dtd_command(  # noqa: C901, PLR0913
 
     if proto_out:
         namespace = proto_package or pathlib.Path(proto_out).stem
-        with open(proto_out, "w") as f:
+        with open(proto_out, "w", encoding="utf-8") as f:
             for line in generator.generate(namespace, type_defs):
                 f.write(line + "\n")
 
     if typespec_out:
         namespace = proto_package or pathlib.Path(typespec_out).stem
-        with open(typespec_out, "w") as f:
+        with open(typespec_out, "w", encoding="utf-8") as f:
             for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
                 f.write(line + "\n")
 
@@ -251,7 +251,7 @@ def dtd_command(  # noqa: C901, PLR0913
         if not py_module:
             raise click.UsageError("--py-module is required when using --py-out")
         namespace = pathlib.Path(dtd_file).stem
-        with open(py_out, "w") as f:
+        with open(py_out, "w", encoding="utf-8") as f:
             for line in xml_converter.generate(namespace, type_defs, py_module):
                 f.write(line + "\n")
 
@@ -265,7 +265,7 @@ def dtd_command(  # noqa: C901, PLR0913
             main_message,
             preserving_proto_field_name=preserving_proto_field_name,
         )
-        with open(json_schema_out, "w") as f:
+        with open(json_schema_out, "w", encoding="utf-8") as f:
             f.write(schema)
 
 
