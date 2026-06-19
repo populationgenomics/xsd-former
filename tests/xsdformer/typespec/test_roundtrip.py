@@ -15,7 +15,9 @@ from google.protobuf import descriptor_pb2
 
 from tests.xsdformer.conftest import _BOOK_XSD
 from tests.xsdformer.typespec import _tsp
+from xsdformer.dtd import dtd
 from xsdformer.protobuf import generator as proto_generator
+from xsdformer.transforms import TransformConfig, apply_transforms
 from xsdformer.typespec import generator as typespec_generator
 from xsdformer.xsd import text, xsd
 
@@ -89,10 +91,7 @@ def test_string_valued_enum_is_rejected(tmp_path: pathlib.Path) -> None:
     assert "unconvertible-enum" in str(exc_info.value)
 
 
-_PACKAGE = "book"
-
-
-def _norm_type_name(type_name: str) -> str:
+def _norm_type_name(type_name: str, package: str) -> str:
     """Canonicalizes a descriptor `type_name` for cross-path comparison.
 
     Drops the leading `.package.` and joins the remaining components with `_`, so
@@ -100,11 +99,11 @@ def _norm_type_name(type_name: str) -> str:
     (`.book.Parent_Child`) compare equal — the nested-vs-hoisted placement that
     ADR 0001 deems cosmetic.
     """
-    name = type_name.removeprefix(f".{_PACKAGE}.")
+    name = type_name.removeprefix(f".{package}.")
     return name.replace(".", "_")
 
 
-def _normalize(desc: descriptor_pb2.FileDescriptorSet) -> dict:
+def _normalize(desc: descriptor_pb2.FileDescriptorSet, package: str) -> dict:
     """Reduces a descriptor set to its wire/semantic essentials (ADR 0001).
 
     Captures field numbers, types, repeated-ness, and enum numbers — flattening
@@ -142,7 +141,7 @@ def _normalize(desc: descriptor_pb2.FileDescriptorSet) -> dict:
     def walk_message(msg_desc: descriptor_pb2.DescriptorProto, path: tuple[str, ...]) -> None:
         key = "_".join(path)
         messages[key] = {
-            f.name: (f.number, f.type, _norm_type_name(f.type_name), f.label == f.LABEL_REPEATED)
+            f.name: (f.number, f.type, _norm_type_name(f.type_name, package), f.label == f.LABEL_REPEATED)
             for f in msg_desc.field
         }
         for nested in msg_desc.nested_type:
@@ -166,19 +165,49 @@ def _normalize(desc: descriptor_pb2.FileDescriptorSet) -> dict:
     return {"messages": messages, "enums": enums}
 
 
-def test_book_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
-    """`xsd->proto` ≡ `xsd->tsp->proto` at the wire/semantic level (ADR 0001)."""
-    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
-
+def _assert_round_trips(
+    type_defs: tuple[xsd.TypeDefinition, ...],
+    package: str,
+    tmp_path: pathlib.Path,
+) -> None:
+    """Asserts `xsd->proto` ≡ `xsd->tsp->proto` at the wire/semantic level."""
     tsp_dir, direct_dir, roundtrip_dir = (tmp_path / "tsp", tmp_path / "direct", tmp_path / "roundtrip")
     for d in (tsp_dir, direct_dir, roundtrip_dir):
         d.mkdir()
 
-    direct_proto = "\n".join(proto_generator.generate(_PACKAGE, type_defs))
-    tsp_source = "\n".join(typespec_generator.generate(_PACKAGE, type_defs, proto_compat=True))
+    direct_proto = "\n".join(proto_generator.generate(package, type_defs))
+    tsp_source = "\n".join(typespec_generator.generate(package, type_defs, proto_compat=True))
     via_tsp_proto = _tsp.compile_tsp_to_proto(tsp_source, tsp_dir)
 
     direct_desc = _tsp.proto_to_descriptor_set(direct_proto, direct_dir)
     via_tsp_desc = _tsp.proto_to_descriptor_set(via_tsp_proto, roundtrip_dir)
 
-    assert _normalize(direct_desc) == _normalize(via_tsp_desc)
+    assert _normalize(direct_desc, package) == _normalize(via_tsp_desc, package)
+
+
+def test_book_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
+    """`xsd->proto` ≡ `xsd->tsp->proto` at the wire/semantic level (ADR 0001)."""
+    _assert_round_trips(xsd.process_xsd(io.StringIO(_BOOK_XSD)), "book", tmp_path)
+
+
+# Real-world schemas (ADR 0001 slice 7). Frozen copies of the canonical NCBI
+# ClinVar XSD and PubMed DTD, processed with the repo's production transform
+# configs — the same pipeline `examples/` uses. These exercise the proto-compat
+# round-trip over patterns the book fixture lacks: `xs:date`/`Timestamp`, deep
+# nesting, and nested enums whose values collide at proto's package scope.
+_SCHEMAS_DIR = pathlib.Path(__file__).parent / "schemas"
+_REPO_ROOT = pathlib.Path(__file__).parents[3]
+
+
+def test_clinvar_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
+    """ClinVar `xsd->proto` ≡ `xsd->tsp->proto` (ADR 0001 slice 7)."""
+    config = TransformConfig.from_yaml(_REPO_ROOT / "clinvar_transforms.yaml")
+    type_defs = apply_transforms(xsd.process_xsd(str(_SCHEMAS_DIR / "ClinVar_VCV.xsd")), config)
+    _assert_round_trips(type_defs, "clinvar", tmp_path)
+
+
+def test_pubmed_dtd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
+    """PubMed `dtd->proto` ≡ `dtd->tsp->proto` (ADR 0001 slice 7)."""
+    config = TransformConfig.from_yaml(_REPO_ROOT / "pubmed_transforms.yaml")
+    type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / "pubmed.dtd")), config)
+    _assert_round_trips(type_defs, "pubmed", tmp_path)
