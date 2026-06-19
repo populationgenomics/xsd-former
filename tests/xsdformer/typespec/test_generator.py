@@ -32,8 +32,8 @@ _SCALAR_XSD = """
 """
 
 
-def _generate(xsd_str: str, namespace: str = "demo") -> str:
-    type_defs = xsd.process_xsd(io.StringIO(xsd_str))
+def _generate(xsd_str: str, namespace: str = "demo", config: xsd.Config | None = None) -> str:
+    type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
     return "\n".join(generator.generate(namespace, type_defs))
 
 
@@ -207,4 +207,33 @@ def test_choice_flattened_to_optional_golden() -> None:
     # and `phone` become optional even though each is individually required.
     assert _generate(_CHOICE_XSD) == (
         "namespace Demo;\n\nmodel Contact {\n  label: string;\n  email: string?;\n  phone: string?;\n}"
+    )
+
+
+# A repeated key/value element promoted to a map via a map-override config.
+_MAP_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="entry">
+    <xs:attribute name="key" type="xs:string" use="required" />
+    <xs:attribute name="value" type="xs:string" use="required" />
+  </xs:complexType>
+  <xs:complexType name="catalog">
+    <xs:sequence>
+      <xs:element name="entry" type="entry" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="catalog" type="catalog" />
+</xs:schema>
+"""
+
+_MAP_CONFIG = xsd.Config(
+    map_overrides=(xsd.MapOverrideConfig(map_type=("Entry",), key_field="key", value_field="value"),),
+)
+
+
+def test_map_field_becomes_record_golden() -> None:
+    # The `Entry` map type itself emits nothing; the field surfaces as a
+    # string-keyed `Record<V>` with no `[]`/`?` (required-but-possibly-empty).
+    assert _generate(_MAP_XSD, config=_MAP_CONFIG) == (
+        "namespace Demo;\n\nmodel Catalog {\n  entry: Record<string>;\n}"
     )

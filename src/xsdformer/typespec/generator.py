@@ -1,10 +1,11 @@
-"""TypeSpec (`.tsp`) emitter — slices 2-4 (ADR 0001).
+"""TypeSpec (`.tsp`) emitter — slices 2-5 (ADR 0001).
 
 Emits a single namespace of flat `model`s with scalar fields and cardinality,
 plus string-valued `enum`s and JSDoc-style doc-comments, sourced from the same
 IR as the protobuf generator. Nested (enclosed) types are hoisted to the
-top-level namespace as `Parent_Child`, and `Choice` members flatten to optional
-properties. Maps (slice 5) and `--proto-compat` (slice 6) are not yet handled.
+top-level namespace as `Parent_Child`, `Choice` members flatten to optional
+properties, and map-typed fields surface as `Record<V>`. `--proto-compat`
+(slice 6) is not yet handled.
 """
 
 import functools
@@ -54,10 +55,15 @@ def _type_name(type_def: xsd.TypeDefinition) -> str:
 
 
 def _field_type(field_def: xsd.Field) -> str:
-    """The TypeSpec type for a field, without cardinality."""
+    """The TypeSpec type for a field, including any map/collection shape."""
     proto_type = field_def.proto_type
     if isinstance(proto_type, xsd.AtomicType):
         return _TSP_SCALAR[proto_type]
+    if isinstance(proto_type, xsd.MapType):
+        # A proto map<K, V> -> `Record<V>` (string-keyed). proto-JSON stringifies
+        # every map key, so a string-keyed Record is JSON-correct for any proto
+        # map; non-string proto key types are deferred (ADR 0001).
+        return f"Record<{_TSP_SCALAR[proto_type.value_type]}>"
     # A reference to another (possibly hoisted) type.
     return _type_name(proto_type)
 
@@ -116,7 +122,7 @@ class TypeSpecGenerator:
 
     @_definition.register
     def _(self, map_def: xsd.MapType) -> Iterable[str]:
-        del map_def  # Top-level maps emit nothing (slice 5).
+        del map_def  # Top-level maps emit nothing; they surface as `Record<V>`.
         yield from iter([])
 
     def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
@@ -140,7 +146,11 @@ class TypeSpecGenerator:
         if field_def.documentation:
             yield from text.render_doc_comment(field_def.documentation)
         type_str = _field_type(field_def)
-        if field_def.is_repeated:
+        if isinstance(field_def.proto_type, xsd.MapType):
+            # `Record<V>` already carries collection shape: a map is required-but-
+            # possibly-empty (like repeated -> `T[]`), so no `[]` or `?` suffix.
+            yield f"{field_def.name}: {type_str};"
+        elif field_def.is_repeated:
             yield f"{field_def.name}: {type_str}[];"
         elif force_optional or field_def.computed_occurs[0] == 0:
             yield f"{field_def.name}: {type_str}?;"
