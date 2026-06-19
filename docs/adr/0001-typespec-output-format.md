@@ -138,8 +138,12 @@ Vertical, independently landable, each its own commit.
    member first) and `render_doc_comment` (`text.py`) promoting XSD
    documentation to JSDoc-style `/** … */` comments on models, fields, and
    enums. Backbone golden tests in `test_generator.py`.
-4. **Nesting + Choice.** `Parent_Child` hoisting and `Choice`→optional-property
-   flattening.
+4. **Nesting + Choice.** ✅ Done. Enclosed types are hoisted to the top-level
+   namespace under their `Parent_Child` path-joined name (`_type_name`; `generate`
+   no longer skips enclosed types the way the proto/JSON-Schema generators do),
+   and `Choice` members flatten to optional properties (`_iter_message_fields`
+   tracks `Choice` enclosure, forcing `T?` regardless of a branch's own minimum).
+   Backbone golden tests in `test_generator.py`.
 5. **Maps.** `Record<ValueType>`.
 6. **proto-compat mode.** `--proto-compat` flag, imports/`using`, `@package`,
    `@field`, enum handling per slice 1's result; full normalized-descriptor
