@@ -125,10 +125,14 @@ Vertical, independently landable, each its own commit.
    "value"` (and bare members) — it requires explicit integers with a zero first
    member. Slice 6's `--proto-compat` enums therefore use integer values; default
    mode keeps string values.
-2. **Walking skeleton.** `TypeSpecGenerator` over the `IGenerator` protocol:
-   namespace + flat `Message` with scalar fields (snake_case) and cardinality.
-   Wire `--typespec-out` into `tool.py`. Golden/structural tests. No enums,
-   nesting, maps, or proto-compat yet.
+2. **Walking skeleton.** ✅ Done. `TypeSpecGenerator`
+   (`src/xsdformer/typespec/generator.py`) over the `IGenerator` protocol:
+   namespace (PascalCased per dotted component) + flat `model`s with scalar
+   fields (snake_case, reused from the IR) and cardinality (`T`/`T?`/`T[]`).
+   `--typespec-out` wired into `tool.py`. Backbone golden tests in
+   `tests/xsdformer/typespec/test_generator.py`. `Enumeration`/`MapType`
+   definitions emit nothing (deferred to slices 3/5); no nesting, `Choice`, or
+   proto-compat yet.
 3. **Enums + docs.** Option-(b) enum emission and `render_doc_comment`.
 4. **Nesting + Choice.** `Parent_Child` hoisting and `Choice`→optional-property
    flattening.
