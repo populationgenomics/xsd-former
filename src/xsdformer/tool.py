@@ -183,6 +183,12 @@ def proto(  # noqa: PLR0913
     type=str,
 )
 @click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
+@click.option("--typespec-out", type=click.Path(), help="Output TypeSpec (.tsp) file.")
+@click.option(
+    "--proto-compat",
+    is_flag=True,
+    help="Emit @typespec/protobuf decorations in the .tsp (requires --typespec-out).",
+)
 @click.option(
     "--main-message",
     help="Main message to use as the root for the JSON schema.",
@@ -203,12 +209,14 @@ def proto(  # noqa: PLR0913
     type=click.Path(exists=True),
     help="YAML file specifying IR transforms to apply.",
 )
-def dtd_command(  # noqa: PLR0913
+def dtd_command(  # noqa: C901, PLR0913
     dtd_file: str,
     proto_out: str,
     py_out: str,
     py_module: str,
     json_schema_out: str,
+    typespec_out: str,
+    proto_compat: bool,
     main_message: str,
     preserving_proto_field_name: bool,
     proto_package: str,
@@ -216,9 +224,12 @@ def dtd_command(  # noqa: PLR0913
 ) -> None:
     """Converts a DTD file to a Protobuf definition and/or a Python XML converter."""
 
+    if proto_compat and not typespec_out:
+        raise click.UsageError("--proto-compat requires --typespec-out")
+
     type_defs = _maybe_transform(dtd.process_dtd(dtd_file), transforms)
 
-    if not proto_out and not py_out and not json_schema_out:
+    if not proto_out and not py_out and not json_schema_out and not typespec_out:
         namespace = proto_package or pathlib.Path(dtd_file).stem
         for line in generator.generate(namespace, type_defs):
             print(line, flush=True)
@@ -228,6 +239,12 @@ def dtd_command(  # noqa: PLR0913
         namespace = proto_package or pathlib.Path(proto_out).stem
         with open(proto_out, "w") as f:
             for line in generator.generate(namespace, type_defs):
+                f.write(line + "\n")
+
+    if typespec_out:
+        namespace = proto_package or pathlib.Path(typespec_out).stem
+        with open(typespec_out, "w") as f:
+            for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
                 f.write(line + "\n")
 
     if py_out:
