@@ -1,8 +1,9 @@
-"""Backbone (pure-Python) tests for the TypeSpec generator — slices 2-3 (ADR 0001).
+"""Backbone (pure-Python) tests for the TypeSpec generator — slices 2-4 (ADR 0001).
 
 Golden/structural assertions on the emitted `.tsp`: a namespace of flat `model`s
-with scalar fields, cardinality, string-valued enums, and doc-comments. No Node
-toolchain required.
+with scalar fields, cardinality, string-valued enums, doc-comments, hoisted
+nested types (`Parent_Child`), and `Choice`-flattened optional properties. No
+Node toolchain required.
 """
 
 import io
@@ -141,4 +142,69 @@ def test_doc_comments_golden() -> None:
         "  name: string;\n"
         "  role: Role;\n"
         "}"
+    )
+
+
+# An element with an inline (anonymous) complexType: a nested type that must be
+# hoisted to the top-level namespace as `Parent_Child`.
+_NESTED_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="library">
+    <xs:sequence>
+      <xs:element name="book">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="title" type="xs:string" />
+            <xs:element name="author" type="xs:string" minOccurs="0" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="library" type="library" />
+</xs:schema>
+"""
+
+
+def test_nested_type_hoisted_golden() -> None:
+    # The anonymous `book` type is hoisted to `Library_Book` and the parent
+    # references it by that name. The nested type, being a dependency, is
+    # emitted first.
+    assert _generate(_NESTED_XSD) == (
+        "namespace Demo;\n"
+        "\n"
+        "model Library_Book {\n"
+        "  title: string;\n"
+        "  author: string?;\n"
+        "}\n"
+        "\n"
+        "model Library {\n"
+        "  book: Library_Book;\n"
+        "}"
+    )
+
+
+# A choice nested within a sequence: its members flatten to optional properties,
+# while the sibling sequence field keeps its own cardinality.
+_CHOICE_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="contact">
+    <xs:sequence>
+      <xs:element name="label" type="xs:string" />
+      <xs:choice>
+        <xs:element name="email" type="xs:string" />
+        <xs:element name="phone" type="xs:string" />
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="contact" type="contact" />
+</xs:schema>
+"""
+
+
+def test_choice_flattened_to_optional_golden() -> None:
+    # `label` (outside the choice) stays required; the choice branches `email`
+    # and `phone` become optional even though each is individually required.
+    assert _generate(_CHOICE_XSD) == (
+        "namespace Demo;\n\nmodel Contact {\n  label: string;\n  email: string?;\n  phone: string?;\n}"
     )
