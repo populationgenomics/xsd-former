@@ -8,6 +8,7 @@ from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
 from xsdformer.transforms import BuildConfig, TransformConfig, apply_transforms
+from xsdformer.typespec import generator as typespec_generator
 from xsdformer.xsd import xsd
 
 
@@ -36,6 +37,7 @@ def cli() -> None:
     type=str,
 )
 @click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
+@click.option("--typespec-out", type=click.Path(), help="Output TypeSpec (.tsp) file.")
 @click.option(
     "--main-message",
     help="Main message to use as the root for the JSON schema.",
@@ -56,12 +58,13 @@ def cli() -> None:
     type=click.Path(exists=True),
     help="YAML file specifying IR transforms to apply.",
 )
-def xsd_command(  # noqa: PLR0913
+def xsd_command(  # noqa: C901, PLR0913
     xsd_file: str,
     proto_out: str,
     py_out: str,
     py_module: str,
     json_schema_out: str,
+    typespec_out: str,
     main_message: str,
     preserving_proto_field_name: bool,
     proto_package: str,
@@ -71,7 +74,7 @@ def xsd_command(  # noqa: PLR0913
 
     type_defs = _maybe_transform(xsd.process_xsd(xsd_file), transforms)
 
-    if not proto_out and not py_out and not json_schema_out:
+    if not proto_out and not py_out and not json_schema_out and not typespec_out:
         namespace = proto_package or pathlib.Path(xsd_file).stem
         for line in generator.generate(namespace, type_defs):
             print(line, flush=True)
@@ -81,6 +84,12 @@ def xsd_command(  # noqa: PLR0913
         namespace = proto_package or pathlib.Path(proto_out).stem
         with open(proto_out, "w") as f:
             for line in generator.generate(namespace, type_defs):
+                f.write(line + "\n")
+
+    if typespec_out:
+        namespace = proto_package or pathlib.Path(typespec_out).stem
+        with open(typespec_out, "w") as f:
+            for line in typespec_generator.generate(namespace, type_defs):
                 f.write(line + "\n")
 
     if py_out:
