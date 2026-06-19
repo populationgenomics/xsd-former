@@ -1,9 +1,9 @@
-"""TypeSpec (`.tsp`) emitter — slice 2 walking skeleton (ADR 0001).
+"""TypeSpec (`.tsp`) emitter — slices 2-3 (ADR 0001).
 
 Emits a single namespace of flat `model`s with scalar fields and cardinality,
-sourced from the same IR as the protobuf generator. Enums (slice 3), nesting
-and `Choice` (slice 4), maps (slice 5), and `--proto-compat` (slice 6) are not
-yet handled; their `TypeDefinition`s currently emit nothing.
+plus string-valued `enum`s and JSDoc-style doc-comments, sourced from the same
+IR as the protobuf generator. Nesting and `Choice` (slice 4), maps (slice 5),
+and `--proto-compat` (slice 6) are not yet handled.
 """
 
 import functools
@@ -81,15 +81,33 @@ class TypeSpecGenerator:
 
     @_definition.register
     def _(self, enum_def: xsd.Enumeration) -> Iterable[str]:
-        del enum_def  # Enums: slice 3.
-        yield from iter([])
+        yield from self.enum(enum_def)
 
     @_definition.register
     def _(self, map_def: xsd.MapType) -> Iterable[str]:
         del map_def  # Top-level maps emit nothing (slice 5).
         yield from iter([])
 
+    def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
+        # Default mode: string-valued members so a single artifact serves
+        # pydantic/zod. Member name = proto value name (`EnumField.name`); value
+        # = `xml_value` (the synthesized zero member has none, so `""`).
+        # `--proto-compat` (slice 6) will instead emit integer values.
+        yield ""
+        if enum_def.documentation:
+            yield from text.render_doc_comment(enum_def.documentation)
+        yield f"enum {enum_def.name} {{"
+        yield from text.indent(self._enum_members(enum_def))
+        yield "}"
+
+    def _enum_members(self, enum_def: xsd.Enumeration) -> Iterable[str]:
+        for field_def in enum_def.field_iter():
+            value = "" if field_def.xml_value is None else field_def.xml_value
+            yield f'{field_def.name}: "{value}",'
+
     def field(self, field_def: xsd.Field) -> Iterable[str]:
+        if field_def.documentation:
+            yield from text.render_doc_comment(field_def.documentation)
         type_str = _field_type(field_def)
         if field_def.is_repeated:
             yield f"{field_def.name}: {type_str}[];"
@@ -100,6 +118,8 @@ class TypeSpecGenerator:
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
         yield ""
+        if msg_def.documentation:
+            yield from text.render_doc_comment(msg_def.documentation)
         yield f"model {msg_def.name} {{"
         emitted: set[str | None] = set()
         for field_def in msg_def.get_fields():

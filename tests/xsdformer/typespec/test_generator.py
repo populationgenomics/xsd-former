@@ -1,7 +1,8 @@
-"""Backbone (pure-Python) tests for the TypeSpec generator — slice 2 (ADR 0001).
+"""Backbone (pure-Python) tests for the TypeSpec generator — slices 2-3 (ADR 0001).
 
 Golden/structural assertions on the emitted `.tsp`: a namespace of flat `model`s
-with scalar fields and cardinality. No Node toolchain required.
+with scalar fields, cardinality, string-valued enums, and doc-comments. No Node
+toolchain required.
 """
 
 import io
@@ -61,3 +62,83 @@ def test_namespace_pascal_cased() -> None:
 def test_dotted_namespace_pascal_cased_per_component() -> None:
     out = _generate(_SCALAR_XSD, namespace="org.my_package.v1")
     assert out.startswith("namespace Org.MyPackage.V1;\n")
+
+
+# A named simpleType enumeration plus a message that references it.
+_ENUM_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="role">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="author" />
+      <xs:enumeration value="editor" />
+      <xs:enumeration value="reviewer" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="person">
+    <xs:sequence>
+      <xs:element name="role" type="role" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="person" type="person" />
+</xs:schema>
+"""
+
+
+def test_enum_string_valued_golden() -> None:
+    # Member name = proto value name; value = xml_value; synthesized "" zero first.
+    assert _generate(_ENUM_XSD) == (
+        "namespace Demo;\n"
+        "\n"
+        "enum Role {\n"
+        '  ROLE_UNSPECIFIED: "",\n'
+        '  ROLE_AUTHOR: "author",\n'
+        '  ROLE_EDITOR: "editor",\n'
+        '  ROLE_REVIEWER: "reviewer",\n'
+        "}\n"
+        "\n"
+        "model Person {\n"
+        "  role: Role;\n"
+        "}"
+    )
+
+
+# Documentation on a complexType, an element, and a simpleType enumeration.
+_DOC_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="role">
+    <xs:annotation><xs:documentation>The contributor's role.</xs:documentation></xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="author" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="person">
+    <xs:annotation><xs:documentation>A contributor record.</xs:documentation></xs:annotation>
+    <xs:sequence>
+      <xs:element name="name" type="xs:string">
+        <xs:annotation><xs:documentation>The display name.</xs:documentation></xs:annotation>
+      </xs:element>
+      <xs:element name="role" type="role" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="person" type="person" />
+</xs:schema>
+"""
+
+
+def test_doc_comments_golden() -> None:
+    assert _generate(_DOC_XSD) == (
+        "namespace Demo;\n"
+        "\n"
+        "/** The contributor's role. */\n"
+        "enum Role {\n"
+        '  ROLE_UNSPECIFIED: "",\n'
+        '  ROLE_AUTHOR: "author",\n'
+        "}\n"
+        "\n"
+        "/** A contributor record. */\n"
+        "model Person {\n"
+        "  /** The display name. */\n"
+        "  name: string;\n"
+        "  role: Role;\n"
+        "}"
+    )

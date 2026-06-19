@@ -92,3 +92,25 @@ def indent(text: Iterable[str], *, indent: str = "  ") -> Iterator[str]:
 def render_comment(comment: str) -> Iterable[str]:
     for line in comment.split("\n"):
         yield f"// {line}"
+
+
+def render_doc_comment(doc: str) -> Iterable[str]:
+    """Renders a JSDoc-style `/** ... */` doc-comment.
+
+    TypeSpec emitters promote these to schema descriptions. Single-line docs are
+    rendered compactly (`/** text */`); multi-line docs use the block form.
+
+    Args:
+      doc: The documentation text.
+
+    Returns:
+      The doc-comment lines.
+    """
+    lines = doc.split("\n")
+    if len(lines) == 1:
+        yield f"/** {lines[0]} */"
+        return
+    yield "/**"
+    for line in lines:
+        yield f" * {line}"
+    yield " */"
