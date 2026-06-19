@@ -32,9 +32,15 @@ _SCALAR_XSD = """
 """
 
 
-def _generate(xsd_str: str, namespace: str = "demo", config: xsd.Config | None = None) -> str:
+def _generate(
+    xsd_str: str,
+    namespace: str = "demo",
+    config: xsd.Config | None = None,
+    *,
+    proto_compat: bool = False,
+) -> str:
     type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
-    return "\n".join(generator.generate(namespace, type_defs))
+    return "\n".join(generator.generate(namespace, type_defs, proto_compat=proto_compat))
 
 
 def test_scalar_model_golden() -> None:
@@ -43,9 +49,9 @@ def test_scalar_model_golden() -> None:
         "\n"
         "model Record {\n"
         "  id: string;\n"
-        "  ref: string?;\n"
+        "  ref?: string;\n"
         "  title: string;\n"
-        "  comment: string?;\n"
+        "  comment?: string;\n"
         "  tag: string[];\n"
         "  count: int32;\n"
         "  ratio: float64;\n"
@@ -175,7 +181,7 @@ def test_nested_type_hoisted_golden() -> None:
         "\n"
         "model Library_Book {\n"
         "  title: string;\n"
-        "  author: string?;\n"
+        "  author?: string;\n"
         "}\n"
         "\n"
         "model Library {\n"
@@ -206,7 +212,7 @@ def test_choice_flattened_to_optional_golden() -> None:
     # `label` (outside the choice) stays required; the choice branches `email`
     # and `phone` become optional even though each is individually required.
     assert _generate(_CHOICE_XSD) == (
-        "namespace Demo;\n\nmodel Contact {\n  label: string;\n  email: string?;\n  phone: string?;\n}"
+        "namespace Demo;\n\nmodel Contact {\n  label: string;\n  email?: string;\n  phone?: string;\n}"
     )
 
 
@@ -236,4 +242,52 @@ def test_map_field_becomes_record_golden() -> None:
     # string-keyed `Record<V>` with no `[]`/`?` (required-but-possibly-empty).
     assert _generate(_MAP_XSD, config=_MAP_CONFIG) == (
         "namespace Demo;\n\nmodel Catalog {\n  entry: Record<string>;\n}"
+    )
+
+
+def test_proto_compat_golden() -> None:
+    # proto-compat adds the @typespec/protobuf imports/`using`, `@package`,
+    # `@field(N)`, and integer-valued enums (zero member first). Member names and
+    # numbers come from the IR, matching what `xsd->proto` emits.
+    assert _generate(_ENUM_XSD, proto_compat=True) == (
+        'import "@typespec/protobuf";\n'
+        "using Protobuf;\n"
+        "\n"
+        '@package({name: "demo"})\n'
+        "namespace Demo;\n"
+        "\n"
+        "enum Role {\n"
+        "  ROLE_UNSPECIFIED: 0,\n"
+        "  ROLE_AUTHOR: 1,\n"
+        "  ROLE_EDITOR: 2,\n"
+        "  ROLE_REVIEWER: 3,\n"
+        "}\n"
+        "\n"
+        "model Person {\n"
+        "  @field(1) role: Role;\n"
+        "}"
+    )
+
+
+def test_proto_compat_optional_field_golden() -> None:
+    # Optional fields keep the `name?: T` marker under proto-compat, after the
+    # `@field(N)` decorator.
+    assert _generate(_SCALAR_XSD, proto_compat=True) == (
+        'import "@typespec/protobuf";\n'
+        "using Protobuf;\n"
+        "\n"
+        '@package({name: "demo"})\n'
+        "namespace Demo;\n"
+        "\n"
+        "model Record {\n"
+        "  @field(1) id: string;\n"
+        "  @field(2) ref?: string;\n"
+        "  @field(3) title: string;\n"
+        "  @field(4) comment?: string;\n"
+        "  @field(5) tag: string[];\n"
+        "  @field(6) count: int32;\n"
+        "  @field(7) ratio: float64;\n"
+        "  @field(8) active: boolean;\n"
+        "  @field(9) created: utcDateTime;\n"
+        "}"
     )

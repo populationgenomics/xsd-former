@@ -73,8 +73,9 @@ regression check, not a production path. Proto-compatibility is opt-in.
   strings) — proto-JSON's string encoding of 64-bit ints is bridged by the
   converter; JS loses precision above 2^53 but real IDs (e.g. PMIDs) are well
   under that.
-- **Cardinality** (`computed_occurs`): `(1,1)` → `T`; `(0,1)` → `T?`; repeated →
-  `T[]` (required-but-possibly-empty, i.e. pydantic `list[T] = []`).
+- **Cardinality** (`computed_occurs`): `(1,1)` → `name: T`; `(0,1)` → `name?: T`
+  (optionality marks the property name in TypeSpec, not the type); repeated →
+  `name: T[]` (required-but-possibly-empty, i.e. pydantic `list[T] = []`).
 - **Documentation:** `/** … */` doc-comments (new `render_doc_comment` in
   `text.py`), which emitters promote to descriptions automatically.
 
@@ -149,8 +150,17 @@ Vertical, independently landable, each its own commit.
    `[]`/`?` suffix since the map is required-but-possibly-empty. Top-level
    `MapType` definitions emit nothing. Backbone golden test in
    `test_generator.py`.
-6. **proto-compat mode.** `--proto-compat` flag, imports/`using`, `@package`,
-   `@field`, enum handling per slice 1's result; full normalized-descriptor
-   round-trip across the book fixture.
+6. **proto-compat mode.** ✅ Done. `--proto-compat` flag (`UsageError` without
+   `--typespec-out`) threads through `tool.py` to `TypeSpecGenerator`, adding
+   `import "@typespec/protobuf"; using Protobuf;`, `@package({name})` on the
+   namespace, `@field(N)` on every field, and integer-valued enums (member names
+   preserved, numbers = the IR's, zero member first) per slice 1's result.
+   Surfaced and fixed a latent bug: TypeSpec optionality is `name?: T`, not the
+   `T?` suffix the earlier (never-compiled) slices emitted. Gated round-trip
+   `test_book_xsd_proto_round_trips_via_tsp` asserts `xsd→proto` ≡
+   `xsd→tsp→proto` over the book fixture via a wire/semantic descriptor
+   normalizer (field numbers/types/repeated-ness, enum numbers; discards
+   package, ordering, `oneof` grouping, proto3-optional markers). Backbone
+   golden tests in `test_generator.py`.
 7. **Real schemas + docs.** Run over `clinvar`/`pubmed`; update README; ensure CI
    installs the Node toolchain for the gated tests.
