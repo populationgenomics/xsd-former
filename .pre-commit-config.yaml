@@ -46,4 +46,17 @@ repos:
             --install-types,
             --non-interactive,
           ]
-        additional_dependencies: [types-PyYAML==6.0.4, types-toml]
+        # Runtime libraries whose real types we want mypy to check against.
+        # Without these the isolated hook env sees only `Any` (via
+        # --ignore-missing-imports), hiding genuine type errors. grpcio-tools is
+        # omitted deliberately: it is only ever invoked as a subprocess, never
+        # imported for typing.
+        additional_dependencies:
+          - types-PyYAML==6.0.4
+          - types-toml
+          - xmlschema==4.2.0
+          - elementpath==5.0.4
+          - lxml==6.0.2
+          - protobuf==6.33.0
+          - click==8.3.0
+          - jinja2==3.1.6
