@@ -144,7 +144,11 @@ Vertical, independently landable, each its own commit.
    and `Choice` members flatten to optional properties (`_iter_message_fields`
    tracks `Choice` enclosure, forcing `T?` regardless of a branch's own minimum).
    Backbone golden tests in `test_generator.py`.
-5. **Maps.** `Record<ValueType>`.
+5. **Maps.** ✅ Done. A field whose `proto_type` is a `MapType` emits
+   `Record<ValueType>` (string-keyed; value scalar via `_TSP_SCALAR`), with no
+   `[]`/`?` suffix since the map is required-but-possibly-empty. Top-level
+   `MapType` definitions emit nothing. Backbone golden test in
+   `test_generator.py`.
 6. **proto-compat mode.** `--proto-compat` flag, imports/`using`, `@package`,
    `@field`, enum handling per slice 1's result; full normalized-descriptor
    round-trip across the book fixture.
