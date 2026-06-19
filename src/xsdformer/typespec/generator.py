@@ -173,10 +173,29 @@ class TypeSpecGenerator:
     def _enum_members(self, enum_def: xsd.Enumeration) -> Iterable[str]:
         for field_def in enum_def.field_iter():
             if self._proto_compat:
-                yield f"{field_def.name}: {field_def.num},"
+                yield f"{self._proto_member_name(enum_def, field_def)}: {field_def.num},"
             else:
                 value = "" if field_def.xml_value is None else field_def.xml_value
                 yield f'{field_def.name}: "{value}",'
+
+    @staticmethod
+    def _proto_member_name(enum_def: xsd.Enumeration, field_def: xsd.EnumField) -> str:
+        """Enum member name for proto-compat, prefixed with the full hoisted path.
+
+        Proto enum values are C++-scoped to the *enclosing* scope, not the enum.
+        The protobuf generator nests each enum inside its message, so a bare
+        `<LOCAL>_<VALUE>` name (already what `EnumField.name` carries) is
+        collision-free there. TypeSpec hoists every enum to the namespace,
+        dropping that scoping — so two hoisted enums that share a local name
+        (e.g. nested `Sample.Origin` and a top-level `Origin`, both bearing
+        `ORIGIN_*`) would collide at package scope. Re-prefixing with the parent
+        path components (`SAMPLE_ORIGIN_GERMLINE`) restores uniqueness, mirroring
+        proto's own type-name-prefix idiom. Default mode is unaffected: TypeSpec
+        enum members aren't C++-scoped, and the converter keys off the bare proto
+        value name (ADR 0001). The round-trip normalizer strips this prefix.
+        """
+        parent_prefix = "_".join(text.snake_case(part).upper() for part in enum_def.path[:-1])
+        return f"{parent_prefix}_{field_def.name}" if parent_prefix else field_def.name
 
     def field(self, field_def: xsd.Field, *, force_optional: bool = False) -> Iterable[str]:
         if field_def.documentation:

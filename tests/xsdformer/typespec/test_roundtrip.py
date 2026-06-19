@@ -17,7 +17,7 @@ from tests.xsdformer.conftest import _BOOK_XSD
 from tests.xsdformer.typespec import _tsp
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.typespec import generator as typespec_generator
-from xsdformer.xsd import xsd
+from xsdformer.xsd import text, xsd
 
 pytestmark = pytest.mark.skipif(
     not _tsp.tsp_available(),
@@ -116,7 +116,28 @@ def _normalize(desc: descriptor_pb2.FileDescriptorSet) -> dict:
     enums: dict[str, list] = {}
 
     def walk_enum(enum_desc: descriptor_pb2.EnumDescriptorProto, path: tuple[str, ...]) -> None:
-        enums["_".join(path)] = sorted((v.name, v.number) for v in enum_desc.value)
+        # Canonicalize each member to its bare value suffix (`GERMLINE`), dropping
+        # the enum-name prefix that both sides carry but in different forms: tsp
+        # hoists enums to the namespace and prefixes members with the *full* path
+        # (`SAMPLE_ORIGIN_GERMLINE`) to dodge proto's package-scoped enum-value
+        # collisions, while the protobuf generator nests the enum and keeps only
+        # the *local* prefix (`ORIGIN_GERMLINE`). Splitting the joined key on `_`
+        # recovers the path components either way (`pascal_case` strips
+        # underscores, so every `_` is a path delimiter); the full prefix is all
+        # components screamed, the local prefix just the last. Try the full prefix
+        # first so a local name that contains its parent (e.g. `Issn`/`IssnType`)
+        # isn't mis-stripped.
+        key = "_".join(path)
+        components = key.split("_")
+        full_prefix = "_".join(text.snake_case(c).upper() for c in components) + "_"
+        local_prefix = text.snake_case(components[-1]).upper() + "_"
+
+        def suffix(name: str) -> str:
+            if name.startswith(full_prefix):
+                return name[len(full_prefix) :]
+            return name.removeprefix(local_prefix)
+
+        enums[key] = sorted((suffix(v.name), v.number) for v in enum_desc.value)
 
     def walk_message(msg_desc: descriptor_pb2.DescriptorProto, path: tuple[str, ...]) -> None:
         key = "_".join(path)
@@ -134,6 +155,14 @@ def _normalize(desc: descriptor_pb2.FileDescriptorSet) -> dict:
         walk_message(msg, (msg.name,))
     for enum in file_desc.enum_type:
         walk_enum(enum, (enum.name,))
+
+    # `@typespec/protobuf` is reachability-based: it emits only enums referenced
+    # by a field. The protobuf generator emits every declared type, including dead
+    # enums (e.g. clinvar's `ChromosomeStr`). A type referenced by nothing carries
+    # no data, so it is outside the wire/semantic invariant — restrict the enum
+    # comparison to enums some field actually references.
+    referenced = {field[2] for fields in messages.values() for field in fields.values()}
+    enums = {k: v for k, v in enums.items() if k in referenced}
     return {"messages": messages, "enums": enums}
 
 

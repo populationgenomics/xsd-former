@@ -293,3 +293,66 @@ def test_proto_compat_optional_field_golden() -> None:
         "  @field(9) created: WellKnown.Timestamp;\n"
         "}"
     )
+
+
+# An inline enum nested in a complexType: hoisted to `Sample_Origin`, exercising
+# the proto-compat enum-member re-prefixing.
+_NESTED_ENUM_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="sample">
+    <xs:sequence>
+      <xs:element name="origin">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="germline" />
+            <xs:enumeration value="somatic" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="sample" type="sample" />
+</xs:schema>
+"""
+
+
+def test_nested_enum_default_keeps_local_member_names() -> None:
+    # Default mode: the hoisted enum keeps the bare proto value name
+    # (`ORIGIN_*`) — TypeSpec enum members aren't C++-scoped, so no collision,
+    # and the proto<->pydantic converter keys off this name (ADR 0001).
+    assert _generate(_NESTED_ENUM_XSD) == (
+        "namespace Demo;\n"
+        "\n"
+        "enum Sample_Origin {\n"
+        '  ORIGIN_UNSPECIFIED: "",\n'
+        '  ORIGIN_GERMLINE: "germline",\n'
+        '  ORIGIN_SOMATIC: "somatic",\n'
+        "}\n"
+        "\n"
+        "model Sample {\n"
+        "  origin: Sample_Origin;\n"
+        "}"
+    )
+
+
+def test_proto_compat_nested_enum_reprefixes_members() -> None:
+    # proto-compat: members are re-prefixed with the full hoisted path
+    # (`SAMPLE_ORIGIN_*`) so they stay unique at proto's package scope, where the
+    # protobuf generator would instead nest the enum inside `Sample`.
+    assert _generate(_NESTED_ENUM_XSD, proto_compat=True) == (
+        'import "@typespec/protobuf";\n'
+        "using Protobuf;\n"
+        "\n"
+        '@package({name: "demo"})\n'
+        "namespace Demo;\n"
+        "\n"
+        "enum Sample_Origin {\n"
+        "  SAMPLE_ORIGIN_UNSPECIFIED: 0,\n"
+        "  SAMPLE_ORIGIN_GERMLINE: 1,\n"
+        "  SAMPLE_ORIGIN_SOMATIC: 2,\n"
+        "}\n"
+        "\n"
+        "model Sample {\n"
+        "  @field(1) origin: Sample_Origin;\n"
+        "}"
+    )
