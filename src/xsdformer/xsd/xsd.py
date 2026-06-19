@@ -8,7 +8,7 @@ import itertools
 import pathlib
 import re
 from collections.abc import Iterator, Sequence
-from typing import IO, Any, Protocol, TypeAlias
+from typing import IO, Any, Protocol, TypeAlias, cast
 
 import elementpath
 import xmlschema
@@ -124,7 +124,7 @@ _PROTO_STR_LUT = {
 }
 
 
-_PROTO_ATOMIC_TYPE = {
+_PROTO_ATOMIC_TYPE: dict[type, AtomicType] = {
     elementpath.datatypes.proxies.StringProxy: AtomicType.STRING,
     elementpath.datatypes.string.Id: AtomicType.ID,
     elementpath.datatypes.uri.AnyURI: AtomicType.URI,
@@ -475,7 +475,7 @@ def _generate_attributes(
 
 @functools.singledispatch
 def _process_content(
-    t: xmlschema.XsdType,
+    t: xmlschema.XsdComponent,
     type_defs: dict[xmlschema.XsdType, TypeDefinition],
 ) -> FieldDefinition:
     raise NotImplementedError(f"not implemented: {t=}")
@@ -668,19 +668,19 @@ def _get_xsd_dependencies(component: xmlschema.XsdComponent) -> set[_BaseXsdType
 
     match component:
         case xmlschema.validators.XsdUnion():
-            for t in component.member_types:
-                deps.update(_get_xsd_dependencies(t))
+            for member in component.member_types:
+                deps.update(_get_xsd_dependencies(member))
         case xmlschema.validators.elements.XsdElement():
             deps.update(_get_xsd_dependencies(component.type))
         case xmlschema.validators.attributes.XsdAttribute():
             deps.update(_get_xsd_dependencies(component.type))
         case xmlschema.validators.attributes.XsdAttributeGroup():
-            for t in component.values():
-                deps.update(_get_xsd_dependencies(t))
+            for attr in component.values():
+                deps.update(_get_xsd_dependencies(attr))
         case xmlschema.validators.groups.XsdGroup():
-            for t in component.content:
-                deps.update(_get_xsd_dependencies(t))
-        case xmlschema.XsdType():
+            for child in component.content:
+                deps.update(_get_xsd_dependencies(child))
+        case complex_types.XsdComplexType() | simple_types.XsdSimpleType():
             deps.add(component)
         case _:
             pass
@@ -711,8 +711,10 @@ def _get_xsd_type_dependencies(t: xmlschema.XsdType) -> set[_BaseXsdType]:
 def _gather_xsd_types(
     schema: xmlschema.XMLSchema,
 ) -> dict[_BaseXsdType, set[_BaseXsdType]]:
-    all_types: set[xmlschema.XsdType] = set(schema.types.values())
-    all_types.update(e.type for e in schema.elements.values())
+    # Every concrete schema type is complex or simple, though the schema exposes
+    # them through the abstract `XsdType`.
+    all_types: set[_BaseXsdType] = {cast("_BaseXsdType", t) for t in schema.types.values()}
+    all_types.update(cast("_BaseXsdType", e.type) for e in schema.elements.values())
     all_types = {x for x in all_types if _include_type(x)}
 
     type_defs = {}
@@ -799,7 +801,7 @@ def process_xsd(  # noqa: C901
 
     for map_override in config.map_overrides:
         if map_type := path_to_type.get(map_override.map_type):
-            t = inv_type_defs[map_type]
+            xsd_type = inv_type_defs[map_type]
             key_field, val_field = find_map_fields(map_type, map_override)
 
             if not isinstance(key_field.proto_type, AtomicType):
@@ -817,8 +819,8 @@ def process_xsd(  # noqa: C901
                 value_source=val_field.get_source(),
             )
             rewriter.rewrite(map_type, new_type_def)
-            type_defs[t] = new_type_def
-            inv_type_defs[new_type_def] = t
+            type_defs[xsd_type] = new_type_def
+            inv_type_defs[new_type_def] = xsd_type
             del inv_type_defs[map_type]
 
     return tuple(type_defs[t] for t in itertools.chain.from_iterable(definition_order) if t in type_defs)
