@@ -271,7 +271,9 @@ def test_proto_compat_golden() -> None:
 
 def test_proto_compat_optional_field_golden() -> None:
     # Optional fields keep the `name?: T` marker under proto-compat, after the
-    # `@field(N)` decorator.
+    # `@field(N)` decorator. `xs:date` maps to `WellKnown.Timestamp` (not the
+    # native `utcDateTime`, which `@typespec/protobuf` cannot lower to a proto
+    # scalar) so it matches the protobuf generator's `google.protobuf.Timestamp`.
     assert _generate(_SCALAR_XSD, proto_compat=True) == (
         'import "@typespec/protobuf";\n'
         "using Protobuf;\n"
@@ -288,6 +290,6 @@ def test_proto_compat_optional_field_golden() -> None:
         "  @field(6) count: int32;\n"
         "  @field(7) ratio: float64;\n"
         "  @field(8) active: boolean;\n"
-        "  @field(9) created: utcDateTime;\n"
+        "  @field(9) created: WellKnown.Timestamp;\n"
         "}"
     )

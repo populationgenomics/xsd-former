@@ -59,16 +59,30 @@ def _type_name(type_def: xsd.TypeDefinition) -> str:
     return "_".join(type_def.path)
 
 
-def _field_type(field_def: xsd.Field) -> str:
+def _scalar(atomic: xsd.AtomicType, *, proto_compat: bool) -> str:
+    """The TypeSpec scalar for an `AtomicType`, mode-aware.
+
+    Default mode uses TypeSpec-native scalars (`_TSP_SCALAR`). Proto-compat mode
+    overrides `DATE`: `@typespec/protobuf` has no proto mapping for the native
+    `utcDateTime` scalar (`unsupported-field-type`), so it must reference the
+    well-known `google.protobuf.Timestamp` model instead — the same proto type
+    the protobuf generator emits, keeping `xsd->proto` ≡ `xsd->tsp->proto`.
+    """
+    if proto_compat and atomic is xsd.AtomicType.DATE:
+        return "WellKnown.Timestamp"
+    return _TSP_SCALAR[atomic]
+
+
+def _field_type(field_def: xsd.Field, *, proto_compat: bool) -> str:
     """The TypeSpec type for a field, including any map/collection shape."""
     proto_type = field_def.proto_type
     if isinstance(proto_type, xsd.AtomicType):
-        return _TSP_SCALAR[proto_type]
+        return _scalar(proto_type, proto_compat=proto_compat)
     if isinstance(proto_type, xsd.MapType):
         # A proto map<K, V> -> `Record<V>` (string-keyed). proto-JSON stringifies
         # every map key, so a string-keyed Record is JSON-correct for any proto
         # map; non-string proto key types are deferred (ADR 0001).
-        return f"Record<{_TSP_SCALAR[proto_type.value_type]}>"
+        return f"Record<{_scalar(proto_type.value_type, proto_compat=proto_compat)}>"
     # A reference to another (possibly hoisted) type.
     return _type_name(proto_type)
 
@@ -167,7 +181,7 @@ class TypeSpecGenerator:
     def field(self, field_def: xsd.Field, *, force_optional: bool = False) -> Iterable[str]:
         if field_def.documentation:
             yield from text.render_doc_comment(field_def.documentation)
-        type_str = _field_type(field_def)
+        type_str = _field_type(field_def, proto_compat=self._proto_compat)
         # `--proto-compat`: `@field(N)` pins the proto field number to the IR's,
         # so `tsp->proto` reproduces `xsd->proto`'s wire layout.
         prefix = f"@field({field_def.num}) " if self._proto_compat else ""
