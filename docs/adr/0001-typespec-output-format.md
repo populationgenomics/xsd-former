@@ -61,7 +61,15 @@ regression check, not a production path. Proto-compatibility is opt-in.
 - **Nested (enclosed) types:** hoisted to the top-level namespace, named
   `Parent_Child` — PascalCase components joined by `_`. Collision-free by
   construction (`pascal_case` strips underscores), so the separator is an
-  unambiguous, reversible path delimiter.
+  unambiguous, reversible path delimiter. For *enums*, hoisting has a
+  proto-compat wrinkle: proto enum **values** are C++-scoped to the enclosing
+  scope, not the enum, so the protobuf generator's message-nested enums keep bare
+  local-prefixed value names (`ORIGIN_GERMLINE`) collision-free, but two hoisted
+  enums sharing a local name would collide at package scope. So `--proto-compat`
+  re-prefixes enum members with the full hoisted path (`SAMPLE_ORIGIN_GERMLINE`),
+  mirroring proto's own type-name-prefix idiom. Default mode keeps the bare proto
+  value name (TypeSpec enum members aren't C++-scoped, and the proto↔pydantic
+  converter keys off it).
 - **Maps:** a field whose `proto_type` is a `MapType` becomes `Record<ValueType>`
   (string-keyed — proto-JSON stringifies all map keys, so this is JSON-correct for
   every proto map). A top-level `MapType` emits nothing. Non-string proto key
@@ -69,7 +77,10 @@ regression check, not a production path. Proto-compatibility is opt-in.
 - **Scalars** (`AtomicType` → TypeSpec): `ID`/`STRING`/`URI`/`SIMPLEANY`/
   `COMPLEXANY` → `string`; `INT8…UINT64` → native `int8`…`uint64`; `FLOAT` →
   `float32`; `DOUBLE` → `float64`; `BOOL` → `boolean`; `BYTES` → `bytes`; `DATE`
-  → `utcDateTime`. `int64`/`uint64` stay native integers (JSON numbers, not
+  → `utcDateTime` (default) / `WellKnown.Timestamp` (proto-compat —
+  `@typespec/protobuf` has no proto lowering for the native `utcDateTime`, and
+  the well-known model matches the protobuf generator's
+  `google.protobuf.Timestamp`). `int64`/`uint64` stay native integers (JSON numbers, not
   strings) — proto-JSON's string encoding of 64-bit ints is bridged by the
   converter; JS loses precision above 2^53 but real IDs (e.g. PMIDs) are well
   under that.
@@ -107,6 +118,12 @@ regression check, not a production path. Proto-compatibility is opt-in.
 - The default `.tsp` intentionally diverges from the existing descriptor-based
   JSON Schema generator (readable enum values vs SCREAMING `value.name`). That is
   acceptable and expected under this design.
+- The proto-compat round-trip check covers only *reachable* types.
+  `@typespec/protobuf` emits a type into proto only if a field references it,
+  whereas the protobuf generator emits every declared type (including dead enums
+  such as clinvar's `ChromosomeStr`). Unreferenced types carry no data, so the
+  round-trip normalizer restricts its enum comparison to field-referenced enums —
+  the wire/semantic invariant is about data the schema describes.
 - One open risk, **resolved by slice 1**: `@typespec/protobuf` (compiler 1.13.0,
   protobuf emitter 0.83.0) does *not* accept string-valued enum members, and does
   *not* auto-number bare members — it requires every member to carry an explicit
@@ -162,5 +179,19 @@ Vertical, independently landable, each its own commit.
    normalizer (field numbers/types/repeated-ness, enum numbers; discards
    package, ordering, `oneof` grouping, proto3-optional markers). Backbone
    golden tests in `test_generator.py`.
-7. **Real schemas + docs.** Run over `clinvar`/`pubmed`; update README; ensure CI
-   installs the Node toolchain for the gated tests.
+7. **Real schemas + docs.** ✅ Done. Ran the generator over the canonical NCBI
+   ClinVar XSD and PubMed DTD (the DTD path gained `--typespec-out`/
+   `--proto-compat`, mirroring the xsd subcommand). This surfaced and fixed two
+   bugs the book fixture couldn't reach: (i) `xs:date` emitted native
+   `utcDateTime`, which `@typespec/protobuf` can't lower — proto-compat now maps
+   `DATE` → `WellKnown.Timestamp`; (ii) hoisting nested enums collided their
+   values at proto's package scope — proto-compat now re-prefixes enum members
+   with the full hoisted path. Both schemas are committed as fixtures
+   (`tests/xsdformer/typespec/schemas/`) with gated round-trip tests
+   (`test_clinvar_xsd_proto_round_trips_via_tsp`,
+   `test_pubmed_dtd_proto_round_trips_via_tsp`) applying the production transform
+   configs; the normalizer now strips the enum prefix to a bare value suffix and
+   compares only field-referenced enums (`@typespec/protobuf` is
+   reachability-based; the protobuf generator emits dead enums too). README gained
+   a TypeSpec section; a new `test.yaml` CI workflow installs the Node/TypeSpec
+   toolchain so the gated tests run.
