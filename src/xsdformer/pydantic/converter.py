@@ -27,7 +27,8 @@ beside a compiled `*_pb2`, so (unlike the clean-dialect models module) it is a
 import keyword
 from collections.abc import Iterable, Iterator
 
-from xsdformer.pydantic.generator import _attr_name, _type_name
+from xsdformer.pydantic._naming import attr_name as _attr_name
+from xsdformer.pydantic._naming import type_name as _type_name
 from xsdformer.transforms import TransformHint
 from xsdformer.xsd import text, xsd
 
@@ -207,8 +208,8 @@ class PydanticConverterGenerator:
         if isinstance(proto_type, xsd.AtomicType):
             return [f"{acc}.extend(model.{attr})"]
         if isinstance(proto_type, xsd.Enumeration):
-            return [f"{acc}.extend([{self._proto_ref(proto_type.path)}.Value(v.name) for v in model.{attr}])"]
-        return [f"{acc}.extend([{_type_name(proto_type)}_to_proto(v) for v in model.{attr}])"]
+            return [f"{acc}.extend({self._proto_ref(proto_type.path)}.Value(v.name) for v in model.{attr})"]
+        return [f"{acc}.extend({_type_name(proto_type)}_to_proto(v) for v in model.{attr})"]
 
     def _to_singular_stmt(self, field_def: xsd.Field, name: str, attr: str) -> str:
         acc = _pget(name)
@@ -246,7 +247,9 @@ class PydanticConverterGenerator:
         yield f"    proto = {self._proto_ref(msg_def.path)}()"
         for group in oneof_groups:
             attrs = [_attr_name(f.name) for f in group]
-            joined = ", ".join(attrs)
+            # Diagnose with the proto/XML field names, not the keyword-aliased
+            # attribute names (`class_`): the user sees the former in JSON/proto.
+            joined = ", ".join(_field_name(f) for f in group)
             args = ", ".join(f"model.{a}" for a in attrs)
             yield f"    if sum(x is not None for x in ({args})) > 1:"
             yield f'        raise ValueError("at most one of {joined} may be set in {type_name}")'
