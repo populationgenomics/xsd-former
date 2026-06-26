@@ -7,8 +7,11 @@ repos:
       - id: check-yaml
         exclude: '\.*conda/.*'
       - id: end-of-file-fixer
+        # Vendored schemas (NLM DTD, ClinVar XSD) and real efetch record fixtures
+        # are kept byte-faithful to their upstream form; don't normalize them.
+        exclude: '^tests/xsdformer/(typespec/schemas|pydantic/records)/'
       - id: trailing-whitespace
-        exclude: '\.txt$|\.tsv$'
+        exclude: '\.txt$|\.tsv$|^tests/xsdformer/(typespec/schemas|pydantic/records)/'
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: detect-private-key
@@ -60,3 +63,4 @@ repos:
           - protobuf==6.33.0
           - click==8.3.0
           - jinja2==3.1.6
+          - pydantic==2.13.4
