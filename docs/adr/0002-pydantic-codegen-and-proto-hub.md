@@ -220,7 +220,20 @@ Vertical, independently landable, each its own commit.
    (`tests/xsdformer/test_build.py`): file-tree/pyproject/`__init__` assertions plus
    a subprocess package-import check and a live `proto→pydantic→proto` round-trip
    over the book fixture (`pydantic` is now a dev dependency).
-5. **Equivalence gate (gated, Node + dmcg).** Induced-JSON-Schema comparison
-   against the tsp bundle; themis-style regen toolchain.
+5. **Equivalence gate (gated, Node + dmcg).** ✅ Done. `tests/xsdformer/pydantic/
+   test_equivalence.py` asserts the IR-generated pydantic's induced JSON Schema
+   (`model_json_schema()`) equals the default-mode tsp compiled by
+   `@typespec/json-schema` (new `_tsp.compile_tsp_to_json_schema`, `emitAllModels`
+   + `int64-strategy=number` to keep 64-bit ints native per ADR 0001). Both sides
+   reduce to a canonical `$defs` map (`_equivalence.py`): refs localized (#4084),
+   `title`/`description`/`default`/`$id`/`$schema` and integer-width
+   (`format`/`minimum`/`maximum`) dropped, pydantic's `anyOf: [T, null]`
+   nullability unwrapped, and array-/map-typed fields excluded from `required`
+   (`T[]` required-but-empty ≡ `list[T] = []`). Gated on
+   `_tsp.json_schema_available()`; green over book/ClinVar/PubMed under the
+   production transforms. `datamodel-code-generator` (new dev dep) is a
+   freshness/sanity check (`test_datamodel_codegen_sanity` — dmcg consumes the
+   contract and the models import), not the thing diffed against. CI's existing
+   `npm install` now also pulls `@typespec/json-schema`.
 6. **Real schemas + `pubmed-proto`.** Regenerate the full `../pubmed-proto` suite;
    round-trip tests over real PubMed records under the production transform config.
