@@ -244,8 +244,7 @@ def register_field(emitted: dict[str | None, "Field"], field_def: "Field", owner
     if prev is not None:
         if prev.proto_type is not field_def.proto_type or prev.is_repeated != field_def.is_repeated:
             raise ValueError(
-                f"{owner}: field {field_def.name!r} recurs with a conflicting "
-                "type/cardinality across Choice branches",
+                f"{owner}: field {field_def.name!r} recurs with a conflicting type/cardinality across Choice branches",
             )
         return False
     emitted[field_def.name] = field_def
