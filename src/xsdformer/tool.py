@@ -7,6 +7,7 @@ from xsdformer.dtd import dtd
 from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
+from xsdformer.pydantic import generator as pydantic_generator
 from xsdformer.transforms import BuildConfig, TransformConfig, apply_transforms
 from xsdformer.typespec import generator as typespec_generator
 from xsdformer.xsd import xsd
@@ -38,6 +39,7 @@ def cli() -> None:
 )
 @click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
 @click.option("--typespec-out", type=click.Path(), help="Output TypeSpec (.tsp) file.")
+@click.option("--pydantic-out", type=click.Path(), help="Output pydantic models (.py) file.")
 @click.option(
     "--proto-compat",
     is_flag=True,
@@ -63,13 +65,14 @@ def cli() -> None:
     type=click.Path(exists=True),
     help="YAML file specifying IR transforms to apply.",
 )
-def xsd_command(  # noqa: C901, PLR0913
+def xsd_command(  # noqa: C901, PLR0912, PLR0913
     xsd_file: str,
     proto_out: str,
     py_out: str,
     py_module: str,
     json_schema_out: str,
     typespec_out: str,
+    pydantic_out: str,
     proto_compat: bool,
     main_message: str,
     preserving_proto_field_name: bool,
@@ -83,7 +86,7 @@ def xsd_command(  # noqa: C901, PLR0913
 
     type_defs = _maybe_transform(xsd.process_xsd(xsd_file), transforms)
 
-    if not proto_out and not py_out and not json_schema_out and not typespec_out:
+    if not proto_out and not py_out and not json_schema_out and not typespec_out and not pydantic_out:
         namespace = proto_package or pathlib.Path(xsd_file).stem
         for line in generator.generate(namespace, type_defs):
             print(line, flush=True)
@@ -99,6 +102,12 @@ def xsd_command(  # noqa: C901, PLR0913
         namespace = proto_package or pathlib.Path(typespec_out).stem
         with open(typespec_out, "w", encoding="utf-8") as f:
             for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
+                f.write(line + "\n")
+
+    if pydantic_out:
+        namespace = proto_package or pathlib.Path(pydantic_out).stem
+        with open(pydantic_out, "w", encoding="utf-8") as f:
+            for line in pydantic_generator.generate(namespace, type_defs):
                 f.write(line + "\n")
 
     if py_out:
@@ -184,6 +193,7 @@ def proto(  # noqa: PLR0913
 )
 @click.option("--json-schema-out", type=click.Path(), help="Output JSON schema file.")
 @click.option("--typespec-out", type=click.Path(), help="Output TypeSpec (.tsp) file.")
+@click.option("--pydantic-out", type=click.Path(), help="Output pydantic models (.py) file.")
 @click.option(
     "--proto-compat",
     is_flag=True,
@@ -209,13 +219,14 @@ def proto(  # noqa: PLR0913
     type=click.Path(exists=True),
     help="YAML file specifying IR transforms to apply.",
 )
-def dtd_command(  # noqa: C901, PLR0913
+def dtd_command(  # noqa: C901, PLR0912, PLR0913
     dtd_file: str,
     proto_out: str,
     py_out: str,
     py_module: str,
     json_schema_out: str,
     typespec_out: str,
+    pydantic_out: str,
     proto_compat: bool,
     main_message: str,
     preserving_proto_field_name: bool,
@@ -229,7 +240,7 @@ def dtd_command(  # noqa: C901, PLR0913
 
     type_defs = _maybe_transform(dtd.process_dtd(dtd_file), transforms)
 
-    if not proto_out and not py_out and not json_schema_out and not typespec_out:
+    if not proto_out and not py_out and not json_schema_out and not typespec_out and not pydantic_out:
         namespace = proto_package or pathlib.Path(dtd_file).stem
         for line in generator.generate(namespace, type_defs):
             print(line, flush=True)
@@ -245,6 +256,12 @@ def dtd_command(  # noqa: C901, PLR0913
         namespace = proto_package or pathlib.Path(typespec_out).stem
         with open(typespec_out, "w", encoding="utf-8") as f:
             for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
+                f.write(line + "\n")
+
+    if pydantic_out:
+        namespace = proto_package or pathlib.Path(pydantic_out).stem
+        with open(pydantic_out, "w", encoding="utf-8") as f:
+            for line in pydantic_generator.generate(namespace, type_defs):
                 f.write(line + "\n")
 
     if py_out:
