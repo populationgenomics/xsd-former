@@ -9,6 +9,8 @@ semantic-equivalence gate against the tsp oracle is slice 5.
 
 import io
 
+import pytest
+
 from xsdformer.pydantic import generator
 from xsdformer.xsd import xsd
 
@@ -372,6 +374,54 @@ def test_enum_string_values_escaped_golden() -> None:
         '    QUOTE_SAY_HI = "say \\"hi\\""\n'
         '    QUOTE_BACK_SLASH = "back\\\\slash"'
     )
+
+
+def _leaf(name: str, proto_type: xsd.AtomicType) -> xsd.Elem:
+    elem = xsd.Elem(
+        documentation=None,
+        name=name,
+        occurs=(1, 1),
+        proto_type=proto_type,
+        default=None,
+        source=xsd.XMLElemSource(elem=name),
+    )
+    elem.computed_occurs = (1, 1)
+    return elem
+
+
+def test_conflicting_choice_branches_raise() -> None:
+    # Two Choice branches sharing a name but resolving to different types can't be
+    # expressed in valid XSD (the EDC constraint), but a rename transform could
+    # synthesize it. The "first wins" dedup would silently drop the second's type;
+    # the generators raise instead of emitting a model that loses schema shape.
+    message = xsd.Message(
+        documentation=None,
+        name="Rec",
+        content=(
+            xsd.Choice(
+                documentation=None,
+                occurs=(1, 1),
+                content=(
+                    _leaf("x", xsd.AtomicType.STRING),
+                    _leaf("x", xsd.AtomicType.INT32),
+                ),
+            ),
+        ),
+    )
+    with pytest.raises(ValueError, match="conflicting type"):
+        "\n".join(generator.generate("demo", (message,)))
+
+
+def test_duplicate_same_shape_field_is_deduped() -> None:
+    # Same name *and* same shape is harmless — dedup silently, no raise.
+    same = (_leaf("x", xsd.AtomicType.STRING), _leaf("x", xsd.AtomicType.STRING))
+    message = xsd.Message(
+        documentation=None,
+        name="Rec",
+        content=(xsd.Choice(documentation=None, occurs=(1, 1), content=same),),
+    )
+    code = "\n".join(generator.generate("demo", (message,)))
+    assert code.count("x:") == 1
 
 
 def test_all_fixtures_compile() -> None:

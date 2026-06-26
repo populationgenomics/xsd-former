@@ -226,6 +226,32 @@ class Field(FieldDefinition, abc.ABC):
     def proto_type_str(self, path: tuple[str, ...]) -> str: ...
 
 
+def register_field(emitted: dict[str | None, "Field"], field_def: "Field", owner: str) -> bool:
+    """Tracks a leaf field for duplicate-name detection within a message `owner`.
+
+    The generators dedup repeated field names ("first wins"), which is harmless
+    when a name recurs with the same shape. But two Choice branches sharing a name
+    with a *different* type or repeatedness would be silently shadowed — the
+    second's shape lost. This raises on that genuine conflict rather than let a
+    generator emit a model that can't represent the schema.
+
+    Mutates `emitted` and returns True if `field_def` is a new name to emit, or
+    False if it's a harmless duplicate to skip. Shared by the protobuf-adjacent
+    emitters (TypeSpec, pydantic models, proto<->pydantic converter) so they agree
+    on which schemas are representable — the ADR's cross-emitter invariant.
+    """
+    prev = emitted.get(field_def.name)
+    if prev is not None:
+        if prev.proto_type is not field_def.proto_type or prev.is_repeated != field_def.is_repeated:
+            raise ValueError(
+                f"{owner}: field {field_def.name!r} recurs with a conflicting "
+                "type/cardinality across Choice branches",
+            )
+        return False
+    emitted[field_def.name] = field_def
+    return True
+
+
 def get_fields_occurs(
     defn: Definition,
     occurs: Occurs,

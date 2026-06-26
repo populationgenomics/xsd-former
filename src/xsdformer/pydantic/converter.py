@@ -68,7 +68,7 @@ def _leaf_records(
     """
     records: list[tuple[xsd.Field, bool, bool]] = []
     oneof_groups: list[list[xsd.Field]] = []
-    emitted: set[str | None] = set()
+    emitted: dict[str | None, xsd.Field] = {}
 
     def _walk(content: Iterable[xsd.FieldDefinition], *, in_choice: bool, in_oneof: bool) -> None:
         for field_def in content:
@@ -98,9 +98,8 @@ def _leaf_records(
                 case xsd.Field():
                     if field_def.transform_hint is TransformHint.DROPPED:
                         continue
-                    if field_def.name in emitted:
+                    if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
                         continue
-                    emitted.add(field_def.name)
                     records.append((field_def, in_choice, in_oneof))
 
     _walk(msg_def.content, in_choice=False, in_oneof=False)

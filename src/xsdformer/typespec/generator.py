@@ -126,6 +126,21 @@ def _escape_field_name(name: str | None) -> str | None:
     return f"`{name}`" if name in _TSP_RESERVED else name
 
 
+_FIRST_PRINTABLE = 0x20  # Code points below this are C0 control characters.
+
+
+def _tsp_string(value: str) -> str:
+    """A fully-escaped TypeSpec double-quoted string literal for `value`.
+
+    Escapes backslash/quote and every control character so the literal is always
+    valid TypeSpec. Control chars use TypeSpec's `\\u{hex}` form — JSON's bare
+    `\\uXXXX` is not valid TypeSpec, so `json.dumps` can't be used here.
+    """
+    simple = {"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r", "\t": "\\t"}
+    out = [simple.get(ch) or (f"\\u{{{ord(ch):x}}}" if ord(ch) < _FIRST_PRINTABLE else ch) for ch in value]
+    return '"' + "".join(out) + '"'
+
+
 def _namespace_name(namespace: str) -> str:
     """Renders a (possibly dotted) package as a TypeSpec namespace identifier."""
     return ".".join(text.pascal_case(part) for part in namespace.split("."))
@@ -204,7 +219,6 @@ class TypeSpecGenerator:
         return []
 
     def begin_namespace(self, namespace: str) -> Iterable[str]:
-        self._namespace = namespace
         if self._proto_compat:
             # `@package` carries the raw (possibly dotted) name through to proto's
             # `package`, matching the protobuf generator's resolution; the TypeSpec
@@ -258,8 +272,7 @@ class TypeSpecGenerator:
                 yield f"{self._proto_member_name(enum_def, field_def)}: {field_def.num},"
             else:
                 value = "" if field_def.xml_value is None else field_def.xml_value
-                escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-                yield f'{field_def.name}: "{escaped}",'
+                yield f"{field_def.name}: {_tsp_string(value)},"
 
     @staticmethod
     def _proto_member_name(enum_def: xsd.Enumeration, field_def: xsd.EnumField) -> str:
@@ -306,13 +319,12 @@ class TypeSpecGenerator:
         if msg_def.documentation:
             yield from text.render_doc_comment(msg_def.documentation)
         yield f"model {_type_name(msg_def)} {{"
-        emitted: set[str | None] = set()
+        emitted: dict[str | None, xsd.Field] = {}
         for field_def, in_choice in _iter_message_fields(msg_def.content):
             if field_def.transform_hint is TransformHint.DROPPED:
                 continue
-            if field_def.name in emitted:
+            if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
                 continue
-            emitted.add(field_def.name)
             yield from text.indent(self.field(field_def, force_optional=in_choice))
         yield "}"
 
