@@ -212,8 +212,14 @@ Vertical, independently landable, each its own commit.
    than one branch of a proto `oneof` is set; `proto→pydantic` needs no check.
    Backbone golden + `compile()` tests (`tests/xsdformer/pydantic/test_converter.py`);
    no pydantic runtime needed yet.
-4. **build integration.** Emit models + converter into the package, add `pydantic`
-   dep, re-export from `__init__`; build unconditional.
+4. **build integration.** ✅ Done. `build_package` emits `models.py`
+   (`PydanticGenerator`) and `pydantic_converter.py` (`PydanticConverterGenerator`,
+   wired to `{package}.{namespace}_pb2` and `{package}.models`) beside the proto
+   artifacts, unconditionally. `pydantic>=2` added to the generated package's
+   `dependencies`, and both modules re-exported from `__init__`. Tests
+   (`tests/xsdformer/test_build.py`): file-tree/pyproject/`__init__` assertions plus
+   a subprocess package-import check and a live `proto→pydantic→proto` round-trip
+   over the book fixture (`pydantic` is now a dev dependency).
 5. **Equivalence gate (gated, Node + dmcg).** Induced-JSON-Schema comparison
    against the tsp bundle; themis-style regen toolchain.
 6. **Real schemas + `pubmed-proto`.** Regenerate the full `../pubmed-proto` suite;

@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.py import xml_converter
+from xsdformer.pydantic import converter as pydantic_converter
+from xsdformer.pydantic import generator as pydantic_generator
 
 if TYPE_CHECKING:
     from xsdformer.xsd import xsd
@@ -20,7 +22,7 @@ name = "{package_name}"
 version = "{version}"
 description = "Generated protobuf package for {namespace}"
 requires-python = ">=3.11"
-dependencies = ["lxml", "protobuf>=6.32.1"]
+dependencies = ["lxml", "protobuf>=6.32.1", "pydantic>=2"]
 
 [build-system]
 requires = ["hatchling"]
@@ -35,6 +37,8 @@ packages = ["{package_name}"]
 
 _INIT_TEMPLATE = """\
 from {package_name} import {namespace}_pb2 as {namespace}_pb2
+from {package_name} import models as models
+from {package_name} import pydantic_converter as pydantic_converter
 from {package_name} import xml_converter as xml_converter
 """
 
@@ -91,6 +95,29 @@ def _write_converter(
             f.write(line + "\n")
 
 
+def _write_pydantic_models(
+    namespace: str,
+    type_defs: tuple[xsd.TypeDefinition, ...],
+    package_dir: pathlib.Path,
+) -> None:
+    with open(package_dir / "models.py", "w") as f:
+        for line in pydantic_generator.generate(namespace, type_defs):
+            f.write(line + "\n")
+
+
+def _write_pydantic_converter(
+    namespace: str,
+    type_defs: tuple[xsd.TypeDefinition, ...],
+    package_name: str,
+    package_dir: pathlib.Path,
+) -> None:
+    proto_module = f"{package_name}.{namespace}_pb2"
+    models_module = f"{package_name}.models"
+    with open(package_dir / "pydantic_converter.py", "w") as f:
+        for line in pydantic_converter.generate(namespace, type_defs, proto_module, models_module):
+            f.write(line + "\n")
+
+
 def _write_pyproject(
     namespace: str,
     package_name: str,
@@ -130,6 +157,10 @@ def build_package(  # noqa: PLR0913
 
     # Generate the XML converter.
     _write_converter(namespace, type_defs, package_name, package_dir)
+
+    # Generate the pydantic models and the proto <-> pydantic converter.
+    _write_pydantic_models(namespace, type_defs, package_dir)
+    _write_pydantic_converter(namespace, type_defs, package_name, package_dir)
 
     # Write package metadata files.
     (package_dir / "__init__.py").write_text(
