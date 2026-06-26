@@ -235,5 +235,15 @@ Vertical, independently landable, each its own commit.
    freshness/sanity check (`test_datamodel_codegen_sanity` — dmcg consumes the
    contract and the models import), not the thing diffed against. CI's existing
    `npm install` now also pulls `@typespec/json-schema`.
-6. **Real schemas + `pubmed-proto`.** Regenerate the full `../pubmed-proto` suite;
-   round-trip tests over real PubMed records under the production transform config.
+6. **Real schemas + `pubmed-proto`.** ✅ Done. `../pubmed-proto`'s `make generate`
+   now emits the full suite (`models.py` + `pydantic_converter.py` beside the proto
+   artifacts) — no Makefile change needed; `xsdformer build` (slice 4) already does
+   so unconditionally, and `generated/` is a gitignored build artifact. The
+   acceptance gate lives in `tests/xsdformer/pydantic/test_roundtrip.py`: it builds
+   the pubmed suite from `tests/.../schemas/pubmed.dtd` under `pubmed_transforms.yaml`
+   via `build_package`, then over real NLM PubMed records (`records/*.xml`, `efetch`
+   output) asserts `XML→proto→pydantic→proto` is identical in the proto and
+   `proto→pydantic→JSON→pydantic` round-trips in pydantic — exercising the whole
+   generated suite (XML converter, compiled `*_pb2`, models, proto↔pydantic
+   converter) end to end. Each record round-trips in a subprocess to isolate the
+   global descriptor-pool registration, matching the slice-4 build checks.
