@@ -76,7 +76,7 @@ readable-JSON **contract**, not a Python converter.
 
 **proto is the hub.** Every representation converts only to/from proto:
 
-```
+```text
 XML ──parse──▶ proto ◀──convert──▶ pydantic
                 (hub)
 ```
@@ -223,8 +223,8 @@ Vertical, independently landable, each its own commit.
 5. **Equivalence gate (gated, Node + dmcg).** ✅ Done. `tests/xsdformer/pydantic/
    test_equivalence.py` asserts the IR-generated pydantic's induced JSON Schema
    (`model_json_schema()`) equals the default-mode tsp compiled by
-   `@typespec/json-schema` (new `_tsp.compile_tsp_to_json_schema`, `emitAllModels`
-   + `int64-strategy=number` to keep 64-bit ints native per ADR 0001). Both sides
+   `@typespec/json-schema` (new `_tsp.compile_tsp_to_json_schema`, `emitAllModels` +
+   `int64-strategy=number` to keep 64-bit ints native per ADR 0001). Both sides
    reduce to a canonical `$defs` map (`_equivalence.py`): refs localized (#4084),
    `title`/`description`/`default`/`$id`/`$schema` and integer-width
    (`format`/`minimum`/`maximum`) dropped, pydantic's `anyOf: [T, null]`
