@@ -200,10 +200,18 @@ Vertical, independently landable, each its own commit.
    members. Descriptor- and text-level tests on the book fixture; the slice-7
    tsp→proto round-trip gate (book/ClinVar/PubMed) stays green — its normalizer
    already discards proto3-optional markers (only `LABEL_REPEATED` is compared).
-3. **proto↔pydantic converter.** Generate `pydantic_converter.py`
-   (proto→pydantic, pydantic→proto): presence via `HasField`, enum by `.name`,
-   `Timestamp`↔`datetime`, maps, repeated, nested↔hoisted bridge, Choice
-   multi-branch raise. Backbone tests on the book fixture.
+3. **proto↔pydantic converter.** ✅ Done. `src/xsdformer/pydantic/converter.py`
+   emits `pydantic_converter.py`: a `*_from_proto`/`*_to_proto` pair per message,
+   driven by the same IR signals as the pydantic generator (cardinality, Choice
+   flattening, keyword aliasing) and the protobuf generator (`oneof` formation,
+   proto3 `optional` presence). Optional scalars/enums round-trip via `HasField`
+   (R1); enums key by member name (`Model[Proto.Name(v)]` / `Proto.Value(.name)`,
+   no remap); `Timestamp`↔`datetime` via `ToDatetime`/`FromDatetime`; maps→`dict`,
+   repeated→`list`; nested proto `Parent.Child`↔hoisted `Parent_Child`; keyword
+   proto fields reached via `getattr`/`setattr`. `pydantic→proto` raises when more
+   than one branch of a proto `oneof` is set; `proto→pydantic` needs no check.
+   Backbone golden + `compile()` tests (`tests/xsdformer/pydantic/test_converter.py`);
+   no pydantic runtime needed yet.
 4. **build integration.** Emit models + converter into the package, add `pydantic`
    dep, re-export from `__init__`; build unconditional.
 5. **Equivalence gate (gated, Node + dmcg).** Induced-JSON-Schema comparison
