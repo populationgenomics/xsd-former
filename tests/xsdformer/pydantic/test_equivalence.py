@@ -27,6 +27,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import uuid
 from typing import TYPE_CHECKING
 
 import pytest
@@ -56,15 +57,18 @@ def _load_module(code: str, name: str, tmp_path: pathlib.Path) -> types.ModuleTy
     """Load generated pydantic source as an importable module."""
     path = tmp_path / f"{name}.py"
     path.write_text(code)
-    spec = importlib.util.spec_from_file_location(name, path)
+    # Register under a per-call-unique name. With `from __future__ import
+    # annotations`, pydantic resolves forward references (hoisted nested types
+    # reference each other in any order) lazily against the module's globals,
+    # which it finds via `sys.modules[__module__]` — so the module must stay in
+    # `sys.modules`. A uuid suffix keeps two same-namespace loads (e.g. across
+    # tests in one session) from shadowing each other there.
+    unique = f"{name}_{uuid.uuid4().hex}"
+    spec = importlib.util.spec_from_file_location(unique, path)
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    # Stay in `sys.modules`: with `from __future__ import annotations`, pydantic
-    # resolves forward references (hoisted nested types reference each other in
-    # any order) lazily against the module's globals, which it finds via
-    # `sys.modules[__module__]`. Unique names keep tests from colliding.
-    sys.modules[name] = module
+    sys.modules[unique] = module
     spec.loader.exec_module(module)
     return module
 
