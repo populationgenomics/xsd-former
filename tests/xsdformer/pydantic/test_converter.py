@@ -123,7 +123,7 @@ def test_enum_converter_golden() -> None:
         "def Person_to_proto(model):\n"
         "    proto = demo_pb2.Person()\n"
         "    proto.role = demo_pb2.Role.Value(model.role.name)\n"
-        "    proto.tags.extend([demo_pb2.Role.Value(v.name) for v in model.tags])\n"
+        "    proto.tags.extend(demo_pb2.Role.Value(v.name) for v in model.tags)\n"
         "    return proto"
     )
 

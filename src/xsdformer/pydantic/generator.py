@@ -27,9 +27,10 @@ slice-3 converter can construct by attribute name. This mirrors what
 """
 
 import functools
-import keyword
 from collections.abc import Iterable, Iterator
 
+from xsdformer.pydantic._naming import attr_name as _attr_name
+from xsdformer.pydantic._naming import type_name as _type_name
 from xsdformer.transforms import TransformHint
 from xsdformer.xsd import xsd
 
@@ -54,23 +55,6 @@ _PY_SCALAR = {
     xsd.AtomicType.BYTES: "bytes",
     xsd.AtomicType.DATE: "datetime",
 }
-
-
-def _type_name(type_def: xsd.TypeDefinition) -> str:
-    """The hoisted module-scope name for a type definition.
-
-    Nested (enclosed) types are hoisted to module scope as `Parent_Child` — the
-    PascalCase path components joined by `_`. Top-level types have a one-element
-    path, so this is just their name.
-    """
-    return "_".join(type_def.path)
-
-
-def _attr_name(name: str | None) -> str | None:
-    """The attribute name for a field, suffixed if it collides with a keyword."""
-    if name is not None and keyword.iskeyword(name):
-        return name + "_"
-    return name
 
 
 def _field_type(field_def: xsd.Field) -> str:
