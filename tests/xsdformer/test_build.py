@@ -98,6 +98,8 @@ def test_generated_file_tree(built_package: tuple[pathlib.Path, pathlib.Path]) -
         "book_pb2.py",
         "book_pb2.pyi",
         "xml_converter.py",
+        "models.py",
+        "pydantic_converter.py",
         "py.typed",
     }
     actual_files = {f.name for f in package_dir.iterdir() if f.is_file()}
@@ -111,6 +113,7 @@ def test_pyproject_toml(built_package: tuple[pathlib.Path, pathlib.Path]) -> Non
     assert 'version = "1.2.3"' in pyproject
     assert '"book_proto/book.proto" = "book_proto/book.proto"' in pyproject
     assert "hatchling" in pyproject
+    assert "pydantic>=2" in pyproject
     assert "defusedxml" not in pyproject
 
 
@@ -119,6 +122,8 @@ def test_init_py(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     init = (package_dir / "__init__.py").read_text()
     assert "book_pb2" in init
     assert "xml_converter" in init
+    assert "models" in init
+    assert "pydantic_converter" in init
 
 
 def test_proto_file_content(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
@@ -150,6 +155,53 @@ def test_pb2_importable(built_package: tuple[pathlib.Path, pathlib.Path]) -> Non
 import sys
 sys.path.insert(0, {str(out_dir)!r})
 import book_proto.book_pb2
+"""
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_package_importable(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
+    # Importing the package re-exports models + pydantic_converter, which in turn
+    # imports the compiled *_pb2 and models — exercising the whole generated suite.
+    out_dir, _ = built_package
+    script = f"""
+import sys
+sys.path.insert(0, {str(out_dir)!r})
+import book_proto
+book_proto.models
+book_proto.pydantic_converter
+book_proto.pydantic_converter.Book_from_proto
+book_proto.pydantic_converter.Book_to_proto
+"""
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_proto_pydantic_roundtrip(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
+    # A live proto -> pydantic -> proto round-trip over the generated suite.
+    out_dir, _ = built_package
+    script = f"""
+import sys
+sys.path.insert(0, {str(out_dir)!r})
+from book_proto import book_pb2, pydantic_converter
+
+proto = book_pb2.Book(id="b1", title="T", isbn="123")
+proto.authors.author.add().name = "Ann"
+model = pydantic_converter.Book_from_proto(proto)
+assert model.id == "b1"
+assert model.title == "T"
+assert model.authors.author[0].name == "Ann"
+assert pydantic_converter.Book_to_proto(model) == proto
 """
     result = subprocess.run(  # noqa: S603
         [sys.executable, "-c", script],

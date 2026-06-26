@@ -16,6 +16,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "jsonschema",
+    "pydantic>=2",
     "pytest>=8.4.1",
     "ruff",
 ]
