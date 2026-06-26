@@ -20,7 +20,10 @@ jobs:
 
     - uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        # @typespec/compiler >=1.13 requires Node >=22 (imports `glob` from
+        # `fs/promises`, added in Node 22). On Node 20 the toolchain crashes at
+        # runtime instead of skipping, failing the gated tsp tests.
+        node-version: '22'
 
     # Enables the skipif-gated Node tests: the xsd->tsp->proto round-trip
     # (`_tsp.tsp_available()`) and the pydantic equivalence gate
