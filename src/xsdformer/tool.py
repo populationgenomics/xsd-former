@@ -1,4 +1,6 @@
+import dataclasses
 import pathlib
+from collections.abc import Iterable
 
 import click
 
@@ -21,6 +23,98 @@ def _maybe_transform(
         config = TransformConfig.from_yaml(pathlib.Path(transforms))
         return apply_transforms(type_defs, config)
     return type_defs
+
+
+@dataclasses.dataclass(frozen=True)
+class _Outputs:
+    """The output targets shared by the `xsd` and `dtd` commands."""
+
+    proto_out: str | None
+    py_out: str | None
+    py_module: str | None
+    json_schema_out: str | None
+    typespec_out: str | None
+    pydantic_out: str | None
+    proto_compat: bool
+    main_message: str | None
+    preserving_proto_field_name: bool
+    proto_package: str | None
+
+
+def _write_lines(path: str, lines: Iterable[str]) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        for line in lines:
+            f.write(line + "\n")
+
+
+def _emit_stdout(type_defs: tuple[xsd.TypeDefinition, ...], input_path: str, out: _Outputs) -> None:
+    namespace = out.proto_package or pathlib.Path(input_path).stem
+    for line in generator.generate(namespace, type_defs):
+        print(line, flush=True)
+
+
+def _emit_proto(type_defs: tuple[xsd.TypeDefinition, ...], proto_out: str, out: _Outputs) -> None:
+    namespace = out.proto_package or pathlib.Path(proto_out).stem
+    _write_lines(proto_out, generator.generate(namespace, type_defs))
+
+
+def _emit_typespec(type_defs: tuple[xsd.TypeDefinition, ...], typespec_out: str, out: _Outputs) -> None:
+    namespace = out.proto_package or pathlib.Path(typespec_out).stem
+    _write_lines(typespec_out, typespec_generator.generate(namespace, type_defs, proto_compat=out.proto_compat))
+
+
+def _emit_pydantic(type_defs: tuple[xsd.TypeDefinition, ...], pydantic_out: str, out: _Outputs) -> None:
+    namespace = out.proto_package or pathlib.Path(pydantic_out).stem
+    _write_lines(pydantic_out, pydantic_generator.generate(namespace, type_defs))
+
+
+def _emit_py_converter(type_defs: tuple[xsd.TypeDefinition, ...], py_out: str, input_path: str, out: _Outputs) -> None:
+    if not out.py_module:
+        raise click.UsageError("--py-module is required when using --py-out")
+    namespace = pathlib.Path(input_path).stem
+    _write_lines(py_out, xml_converter.generate(namespace, type_defs, out.py_module))
+
+
+def _emit_json_schema(type_defs: tuple[xsd.TypeDefinition, ...], json_schema_out: str, out: _Outputs) -> None:
+    if not out.main_message:
+        raise click.UsageError("--main-message is required when using --json-schema-out")
+    namespace = pathlib.Path(json_schema_out).stem
+    schema = jsonschema_generator.generate(
+        namespace,
+        type_defs,
+        out.main_message,
+        preserving_proto_field_name=out.preserving_proto_field_name,
+    )
+    with open(json_schema_out, "w", encoding="utf-8") as f:
+        f.write(schema)
+
+
+def _emit_outputs(
+    type_defs: tuple[xsd.TypeDefinition, ...],
+    input_path: str,
+    out: _Outputs,
+) -> None:
+    """Drives the requested generators — the shared body of `xsd` and `dtd`.
+
+    The two commands differ only in their parser (`process_xsd` vs `process_dtd`);
+    once they hand over the IR, output emission is identical. Each output target
+    is its own emitter so adding a format is a one-line change here.
+    """
+    if out.proto_compat and not out.typespec_out:
+        raise click.UsageError("--proto-compat requires --typespec-out")
+    if not any((out.proto_out, out.py_out, out.json_schema_out, out.typespec_out, out.pydantic_out)):
+        _emit_stdout(type_defs, input_path, out)
+        return
+    if out.proto_out:
+        _emit_proto(type_defs, out.proto_out, out)
+    if out.typespec_out:
+        _emit_typespec(type_defs, out.typespec_out, out)
+    if out.pydantic_out:
+        _emit_pydantic(type_defs, out.pydantic_out, out)
+    if out.py_out:
+        _emit_py_converter(type_defs, out.py_out, input_path, out)
+    if out.json_schema_out:
+        _emit_json_schema(type_defs, out.json_schema_out, out)
 
 
 @click.group()
@@ -65,7 +159,7 @@ def cli() -> None:
     type=click.Path(exists=True),
     help="YAML file specifying IR transforms to apply.",
 )
-def xsd_command(  # noqa: C901, PLR0912, PLR0913
+def xsd_command(  # noqa: PLR0913
     xsd_file: str,
     proto_out: str,
     py_out: str,
@@ -80,56 +174,23 @@ def xsd_command(  # noqa: C901, PLR0912, PLR0913
     transforms: str | None,
 ) -> None:
     """Converts an XSD file to a Protobuf definition and/or a Python XML converter."""
-
-    if proto_compat and not typespec_out:
-        raise click.UsageError("--proto-compat requires --typespec-out")
-
     type_defs = _maybe_transform(xsd.process_xsd(xsd_file), transforms)
-
-    if not proto_out and not py_out and not json_schema_out and not typespec_out and not pydantic_out:
-        namespace = proto_package or pathlib.Path(xsd_file).stem
-        for line in generator.generate(namespace, type_defs):
-            print(line, flush=True)
-        return
-
-    if proto_out:
-        namespace = proto_package or pathlib.Path(proto_out).stem
-        with open(proto_out, "w", encoding="utf-8") as f:
-            for line in generator.generate(namespace, type_defs):
-                f.write(line + "\n")
-
-    if typespec_out:
-        namespace = proto_package or pathlib.Path(typespec_out).stem
-        with open(typespec_out, "w", encoding="utf-8") as f:
-            for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
-                f.write(line + "\n")
-
-    if pydantic_out:
-        namespace = proto_package or pathlib.Path(pydantic_out).stem
-        with open(pydantic_out, "w", encoding="utf-8") as f:
-            for line in pydantic_generator.generate(namespace, type_defs):
-                f.write(line + "\n")
-
-    if py_out:
-        if not py_module:
-            raise click.UsageError("--py_module is required when using --py_out")
-        namespace = pathlib.Path(xsd_file).stem
-        with open(py_out, "w", encoding="utf-8") as f:
-            for line in xml_converter.generate(namespace, type_defs, py_module):
-                f.write(line + "\n")
-
-    if json_schema_out:
-        if not main_message:
-            raise click.UsageError("--main_message is required when using --json_schema_out")
-        namespace = pathlib.Path(json_schema_out).stem
-        schema = jsonschema_generator.generate(
-            namespace,
-            type_defs,
-            main_message,
+    _emit_outputs(
+        type_defs,
+        xsd_file,
+        _Outputs(
+            proto_out=proto_out,
+            py_out=py_out,
+            py_module=py_module,
+            json_schema_out=json_schema_out,
+            typespec_out=typespec_out,
+            pydantic_out=pydantic_out,
+            proto_compat=proto_compat,
+            main_message=main_message,
             preserving_proto_field_name=preserving_proto_field_name,
-        )
-        with open(json_schema_out, "w", encoding="utf-8") as f:
-            f.write(schema)
+            proto_package=proto_package,
+        ),
+    )
 
 
 @cli.command()
@@ -219,7 +280,7 @@ def proto(  # noqa: PLR0913
     type=click.Path(exists=True),
     help="YAML file specifying IR transforms to apply.",
 )
-def dtd_command(  # noqa: C901, PLR0912, PLR0913
+def dtd_command(  # noqa: PLR0913
     dtd_file: str,
     proto_out: str,
     py_out: str,
@@ -234,56 +295,23 @@ def dtd_command(  # noqa: C901, PLR0912, PLR0913
     transforms: str | None,
 ) -> None:
     """Converts a DTD file to a Protobuf definition and/or a Python XML converter."""
-
-    if proto_compat and not typespec_out:
-        raise click.UsageError("--proto-compat requires --typespec-out")
-
     type_defs = _maybe_transform(dtd.process_dtd(dtd_file), transforms)
-
-    if not proto_out and not py_out and not json_schema_out and not typespec_out and not pydantic_out:
-        namespace = proto_package or pathlib.Path(dtd_file).stem
-        for line in generator.generate(namespace, type_defs):
-            print(line, flush=True)
-        return
-
-    if proto_out:
-        namespace = proto_package or pathlib.Path(proto_out).stem
-        with open(proto_out, "w", encoding="utf-8") as f:
-            for line in generator.generate(namespace, type_defs):
-                f.write(line + "\n")
-
-    if typespec_out:
-        namespace = proto_package or pathlib.Path(typespec_out).stem
-        with open(typespec_out, "w", encoding="utf-8") as f:
-            for line in typespec_generator.generate(namespace, type_defs, proto_compat=proto_compat):
-                f.write(line + "\n")
-
-    if pydantic_out:
-        namespace = proto_package or pathlib.Path(pydantic_out).stem
-        with open(pydantic_out, "w", encoding="utf-8") as f:
-            for line in pydantic_generator.generate(namespace, type_defs):
-                f.write(line + "\n")
-
-    if py_out:
-        if not py_module:
-            raise click.UsageError("--py-module is required when using --py-out")
-        namespace = pathlib.Path(dtd_file).stem
-        with open(py_out, "w", encoding="utf-8") as f:
-            for line in xml_converter.generate(namespace, type_defs, py_module):
-                f.write(line + "\n")
-
-    if json_schema_out:
-        if not main_message:
-            raise click.UsageError("--main-message is required when using --json-schema-out")
-        namespace = pathlib.Path(json_schema_out).stem
-        schema = jsonschema_generator.generate(
-            namespace,
-            type_defs,
-            main_message,
+    _emit_outputs(
+        type_defs,
+        dtd_file,
+        _Outputs(
+            proto_out=proto_out,
+            py_out=py_out,
+            py_module=py_module,
+            json_schema_out=json_schema_out,
+            typespec_out=typespec_out,
+            pydantic_out=pydantic_out,
+            proto_compat=proto_compat,
+            main_message=main_message,
             preserving_proto_field_name=preserving_proto_field_name,
-        )
-        with open(json_schema_out, "w", encoding="utf-8") as f:
-            f.write(schema)
+            proto_package=proto_package,
+        ),
+    )
 
 
 @cli.command("build")
