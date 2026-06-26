@@ -187,13 +187,12 @@ class PydanticGenerator:
         yield f"class {_type_name(msg_def)}(BaseModel):"
         field_lines: list[str] = []
         has_alias = False
-        emitted: set[str | None] = set()
+        emitted: dict[str | None, xsd.Field] = {}
         for field_def, in_choice in _iter_message_fields(msg_def.content):
             if field_def.transform_hint is TransformHint.DROPPED:
                 continue
-            if field_def.name in emitted:
+            if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
                 continue
-            emitted.add(field_def.name)
             line, used_alias = self._field(field_def, force_optional=in_choice)
             has_alias = has_alias or used_alias
             field_lines.append(line)
