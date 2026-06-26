@@ -22,8 +22,11 @@ jobs:
       with:
         node-version: '20'
 
-    # Enables the skipif-gated xsd->tsp->proto round-trip tests; without it,
-    # `_tsp.tsp_available()` is false and those tests skip.
+    # Enables the skipif-gated Node tests: the xsd->tsp->proto round-trip
+    # (`_tsp.tsp_available()`) and the pydantic equivalence gate
+    # (`_tsp.json_schema_available()`, via `@typespec/json-schema`). Without it
+    # both skip. `datamodel-code-generator` (the gate's sanity check) comes from
+    # `uv sync --dev`.
     - name: Install TypeSpec toolchain
       working-directory: tests/xsdformer/typespec/tsp_project
       run: npm install

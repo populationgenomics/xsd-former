@@ -5,6 +5,7 @@
   "description": "TypeSpec toolchain for the gated xsd->tsp->proto round-trip tests. Run `npm install` here to enable them; otherwise the tests skip.",
   "dependencies": {
     "@typespec/compiler": "1.13.0",
+    "@typespec/json-schema": "1.13.0",
     "@typespec/protobuf": "0.83.0"
   }
 }
