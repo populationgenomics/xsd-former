@@ -7,6 +7,30 @@ from xsdformer.transforms import TransformHint
 from xsdformer.xsd import text, xsd
 
 
+def _needs_proto3_optional(field_def: xsd.Field) -> bool:
+    """Whether a singular field needs the proto3 `optional` keyword (ADR 0002 R1).
+
+    proto3 gives singular scalar and enum fields no field presence: an absent
+    value is indistinguishable from the type default (`""`/`0`/`false`/the zero
+    enum member). The dialect renders a `(0,1)` field as pydantic `T | None`, so
+    without a hasbit a `pydantic→proto→pydantic` round-trip collapses `None` into
+    the default. Emitting `optional` gives `HasField`/`ClearField`, making the
+    round-trip lossless.
+
+    Left alone, because they already carry presence or have no `None`:
+    message-typed fields (including `xs:date`→`Timestamp`), maps, and repeated
+    fields. Fields inside a proto `oneof` likewise get presence from the oneof and
+    cannot carry `optional` (a proto3 syntax error), so the caller suppresses it.
+    """
+    if field_def.is_repeated or field_def.computed_occurs[0] != 0:
+        return False
+    proto_type = field_def.proto_type
+    if isinstance(proto_type, xsd.AtomicType):
+        # AtomicType.DATE maps to google.protobuf.Timestamp, a message with presence.
+        return proto_type is not xsd.AtomicType.DATE
+    return isinstance(proto_type, xsd.Enumeration)
+
+
 class ProtobufGenerator:
     def header(self) -> Iterable[str]:
         return ['syntax = "proto3";', 'import "google/protobuf/timestamp.proto";']
@@ -97,7 +121,6 @@ class ProtobufGenerator:
 
     @_message_field.register
     def _(self, field_def: xsd.Field, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
-        del in_oneof
         if field_def.transform_hint is TransformHint.DROPPED:
             return
         if field_def.name in self._emitted_fields:
@@ -106,7 +129,8 @@ class ProtobufGenerator:
         if field_def.documentation:
             yield from text.render_comment(field_def.documentation)
         type_str = field_def.proto_type_str(path)
-        yield f"{type_str} {field_def.name} = {field_def.num};"
+        optional = "optional " if not in_oneof and _needs_proto3_optional(field_def) else ""
+        yield f"{optional}{type_str} {field_def.name} = {field_def.num};"
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
         saved = getattr(self, "_emitted_fields", None)

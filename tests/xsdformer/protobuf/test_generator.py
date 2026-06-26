@@ -1,15 +1,57 @@
+import io
 import types
 from collections.abc import Iterable
 
 from google.protobuf import descriptor_pb2
 
 from tests.xsdformer import conftest
+from xsdformer.protobuf import generator
+from xsdformer.xsd import xsd
 
 
 def test_generate_protobufs(book_pb2: types.ModuleType) -> None:
     assert hasattr(book_pb2, "Book")
     assert hasattr(book_pb2, "Author")
     assert hasattr(book_pb2.Role, "ROLE_AUTHOR")
+
+
+def test_proto3_optional_on_singular_scalars_and_enums() -> None:
+    """`(0,1)` singular scalar/enum fields get the proto3 `optional` keyword (ADR 0002 R1)."""
+    type_defs = xsd.process_xsd(io.StringIO(conftest._BOOK_XSD))
+    proto_text = "\n".join(generator.generate("book", type_defs))
+
+    # Optional scalar element, optional `anyType` (-> string), and optional enum
+    # attribute all gain presence.
+    assert "optional string comment = " in proto_text
+    assert "optional string metadata = " in proto_text
+    assert "optional Status status = " in proto_text
+
+    # Required scalars, the required ID attribute, and the repeated enum element
+    # stay bare: presence would be redundant (required) or wrong (repeated).
+    assert "optional string title" not in proto_text
+    assert "optional string isbn" not in proto_text
+    assert "optional string id" not in proto_text
+    assert "optional repeated" not in proto_text
+    assert "repeated Role role = " in proto_text
+
+
+def test_proto3_optional_marked_in_descriptor(
+    pb2_module_factory: conftest.Pb2ModuleFactory,
+) -> None:
+    """The emitted `optional` survives compilation as descriptor field presence."""
+    _, desc_path = pb2_module_factory(conftest._BOOK_XSD, namespace="book")
+    desc = descriptor_pb2.FileDescriptorSet()
+    desc.ParseFromString(desc_path.read_bytes())
+    (file_desc,) = desc.file
+    (book_msg,) = (m for m in file_desc.message_type if m.name == "Book")
+    presence = {f.name: f.proto3_optional for f in book_msg.field}
+
+    assert presence["comment"] is True
+    assert presence["metadata"] is True
+    assert presence["status"] is True
+    assert presence["title"] is False
+    assert presence["isbn"] is False
+    assert presence["id"] is False
 
 
 def _find_location(

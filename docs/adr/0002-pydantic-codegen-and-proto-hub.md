@@ -105,11 +105,16 @@ A new generated `pydantic_converter.py` (emitted into the package beside
 ### R1 — optional-scalar presence
 
 The protobuf generator will emit the proto3 `optional` keyword for `(0,1)`
-**singular scalar** fields (message fields and repeated/maps are unaffected —
-they already have presence or have no None). Without it, proto3 cannot
-distinguish absent from default (`""`/`0`/`false`), so `pydantic→proto→pydantic`
-would collapse `None` on an optional scalar. `optional` gives `HasField`/
-`ClearField`, making proto↔pydantic lossless for the dialect's `T | None` fields.
+**singular scalar and enum** fields. proto3 gives these no field presence:
+absent is indistinguishable from default (`""`/`0`/`false`/the zero enum
+member), so `pydantic→proto→pydantic` would collapse `None` on a `T | None`
+field. `optional` gives `HasField`/`ClearField`, making proto↔pydantic lossless.
+Enums are included for the same reason as scalars — the dialect renders an
+optional enum as `MyEnum | None`, which needs a hasbit to round-trip. Left alone:
+message-typed fields (including `xs:date`→`Timestamp`), maps, and repeated fields
+— they already carry presence or have no None. Fields inside a proto `oneof` get
+presence from the oneof and cannot carry `optional` (a proto3 syntax error), so
+it is suppressed there.
 
 Cost is negligible: wire-identical except when a field is *explicitly* set to its
 default (then ~1–2 bytes to preserve presence); one hasbit per field in memory; a
@@ -189,8 +194,12 @@ Vertical, independently landable, each its own commit.
    used. `--pydantic-out` writes the models module (`xsd`/`dtd` commands).
    Backbone golden tests + a `compile()` syntax gate (`tests/xsdformer/pydantic/`);
    no pydantic runtime needed yet.
-2. **R1 — proto3 `optional`.** Emit `optional` for `(0,1)` singular scalars in
-   `ProtobufGenerator`; confirm the slice-6 round-trip gate stays green.
+2. **R1 — proto3 `optional`.** ✅ Done. `ProtobufGenerator` emits `optional` for
+   `(0,1)` singular scalar and enum fields (`_needs_proto3_optional`): excludes
+   message-typed fields (incl. `xs:date`→`Timestamp`), maps, repeated, and `oneof`
+   members. Descriptor- and text-level tests on the book fixture; the slice-7
+   tsp→proto round-trip gate (book/ClinVar/PubMed) stays green — its normalizer
+   already discards proto3-optional markers (only `LABEL_REPEATED` is compared).
 3. **proto↔pydantic converter.** Generate `pydantic_converter.py`
    (proto→pydantic, pydantic→proto): presence via `HasField`, enum by `.name`,
    `Timestamp`↔`datetime`, maps, repeated, nested↔hoisted bridge, Choice
