@@ -65,6 +65,11 @@ class Author:
     email: str | None = None
 
 
+def _resolve_asset(config_path: pathlib.Path, value: str | None) -> pathlib.Path | None:
+    """Resolves a build-config asset path (readme/license file) relative to the config file."""
+    return (config_path.parent / value).resolve() if value else None
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class BuildConfig:
     namespace: str
@@ -82,6 +87,10 @@ class BuildConfig:
     classifiers: tuple[str, ...] = ()
     authors: tuple[Author, ...] = ()
     urls: tuple[tuple[str, str], ...] = ()  # ordered (label, url) pairs.
+    # Asset files copied into the generated tree and referenced from pyproject.
+    # Resolved relative to the config file. Unset -> not emitted.
+    readme: pathlib.Path | None = None
+    license_file: pathlib.Path | None = None
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> BuildConfig | None:
@@ -102,6 +111,8 @@ class BuildConfig:
             classifiers=tuple(build.get('classifiers', [])),
             authors=tuple(Author(name=a['name'], email=a.get('email')) for a in build.get('authors', [])),
             urls=tuple((label, url) for label, url in (build.get('urls') or {}).items()),
+            readme=_resolve_asset(path, build.get('readme')),
+            license_file=_resolve_asset(path, build.get('license_file')),
         )
 
 

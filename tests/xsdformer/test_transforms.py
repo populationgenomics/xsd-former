@@ -833,3 +833,15 @@ class TestBuildConfigFromYaml:
         assert cfg.urls == ()
         assert cfg.keywords == ()
         assert cfg.classifiers == ()
+        assert cfg.readme is None
+        assert cfg.license_file is None
+
+    def test_resolves_asset_paths_relative_to_config(self, tmp_path: pathlib.Path) -> None:
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text(
+            'build:\n  namespace: book\n  package_name: book_proto\n  readme: README.md\n  license_file: LICENSE\n',
+        )
+        cfg = BuildConfig.from_yaml(yaml_path)
+        assert cfg is not None
+        assert cfg.readme == tmp_path / 'README.md'
+        assert cfg.license_file == tmp_path / 'LICENSE'

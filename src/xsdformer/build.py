@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import pathlib
+import shutil
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -132,7 +133,9 @@ def _write_pyproject(
     out_dir: pathlib.Path,
     *,
     description: str | None = None,
+    readme: str | None = None,
     license_expr: str | None = None,
+    license_files: Sequence[str] = (),
     keywords: Sequence[str] = (),
     classifiers: Sequence[str] = (),
     authors: Sequence[transforms.Author] = (),
@@ -145,8 +148,12 @@ def _write_pyproject(
         f'description = {_toml_str(description or f"Generated protobuf package for {namespace}")}',
         'requires-python = ">=3.11"',
     ]
+    if readme:
+        project.append(f'readme = {_toml_str(readme)}')
     if license_expr:
         project.append(f'license = {_toml_str(license_expr)}')
+    if license_files:
+        project.append(f'license-files = [{", ".join(_toml_str(f) for f in license_files)}]')
     if keywords:
         project.append(f'keywords = [{", ".join(_toml_str(k) for k in keywords)}]')
     if authors:
@@ -183,7 +190,9 @@ def build_package(
     wheel_out: pathlib.Path | None = None,
     *,
     description: str | None = None,
+    readme: pathlib.Path | None = None,
     license_expr: str | None = None,
+    license_file: pathlib.Path | None = None,
     keywords: Sequence[str] = (),
     classifiers: Sequence[str] = (),
     authors: Sequence[transforms.Author] = (),
@@ -194,7 +203,9 @@ def build_package(
     `package_name` names the importable module directory; `distribution_name` is
     the PyPI/distribution name (`[project] name`), defaulting to `package_name`.
     The remaining keyword arguments are optional `[project]` metadata; each is
-    emitted only when set, so the default output stays minimal.
+    emitted only when set, so the default output stays minimal. `readme` and
+    `license_file`, when given, are copied into the build root and referenced by
+    `readme` / `license-files`.
 
     Returns the package directory path.
     """
@@ -222,6 +233,17 @@ def build_package(
         _INIT_TEMPLATE.format(package_name=package_name, namespace=namespace),
     )
     (package_dir / 'py.typed').write_text('')
+
+    # Copy readme/license into the build root so hatchling can resolve them.
+    readme_name = None
+    if readme is not None:
+        readme_name = readme.name
+        shutil.copyfile(readme, out_dir / readme_name)
+    license_files: tuple[str, ...] = ()
+    if license_file is not None:
+        shutil.copyfile(license_file, out_dir / license_file.name)
+        license_files = (license_file.name,)
+
     _write_pyproject(
         namespace,
         package_name,
@@ -229,7 +251,9 @@ def build_package(
         version,
         out_dir,
         description=description,
+        readme=readme_name,
         license_expr=license_expr,
+        license_files=license_files,
         keywords=keywords,
         classifiers=classifiers,
         authors=authors,

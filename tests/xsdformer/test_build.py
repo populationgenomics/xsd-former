@@ -163,6 +163,32 @@ def test_pyproject_metadata(tmp_path: pathlib.Path) -> None:
     assert data['project']['urls']['Repository'] == 'https://github.com/populationgenomics/example'
 
 
+def test_pyproject_readme_and_license_file(tmp_path: pathlib.Path) -> None:
+    """readme/license_file are copied into the build root and referenced in pyproject."""
+    readme = tmp_path / 'README.md'
+    readme.write_text('# Doc\n')
+    license_path = tmp_path / 'LICENSE'
+    license_path.write_text('MIT license text\n')
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='book_proto',
+        version='1.0.0',
+        out_dir=out_dir,
+        license_expr='MIT',
+        readme=readme,
+        license_file=license_path,
+    )
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    assert data['project']['readme'] == 'README.md'
+    assert data['project']['license-files'] == ['LICENSE']
+    assert (out_dir / 'README.md').read_text() == '# Doc\n'
+    assert (out_dir / 'LICENSE').read_text() == 'MIT license text\n'
+
+
 def test_pyproject_distribution_name(tmp_path: pathlib.Path) -> None:
     """distribution_name sets [project] name; package_name still names the module dir."""
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))

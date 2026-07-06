@@ -335,6 +335,8 @@ def dtd_command(
 @click.option('--version', type=str, default=None, help='Package version (default: 0.1.0).')
 @click.option('--license', 'license_expr', type=str, help='SPDX license expression, e.g. MIT (overrides config).')
 @click.option('--description', type=str, help='Package description (overrides config).')
+@click.option('--readme', type=click.Path(exists=True), help='README file to bundle (overrides config).')
+@click.option('--license-file', type=click.Path(exists=True), help='LICENSE file to bundle (overrides config).')
 @click.option(
     '--out-dir',
     type=click.Path(),
@@ -363,6 +365,8 @@ def build_command(
     version: str | None,
     license_expr: str | None,
     description: str | None,
+    readme: str | None,
+    license_file: str | None,
     out_dir: str,
     run_build: bool,
     wheel_out: str | None,
@@ -382,6 +386,10 @@ def build_command(
     resolved_version = version or (build_cfg.version if build_cfg else '0.1.0')
     resolved_description = description or (build_cfg.description if build_cfg else None)
     resolved_license = license_expr or (build_cfg.license_expr if build_cfg else None)
+    resolved_readme = pathlib.Path(readme) if readme else (build_cfg.readme if build_cfg else None)
+    resolved_license_file = (
+        pathlib.Path(license_file) if license_file else (build_cfg.license_file if build_cfg else None)
+    )
     # List/table metadata (keywords, classifiers, authors, urls) is config-only.
     resolved_keywords = build_cfg.keywords if build_cfg else ()
     resolved_classifiers = build_cfg.classifiers if build_cfg else ()
@@ -413,7 +421,9 @@ def build_command(
         run_build=run_build,
         wheel_out=pathlib.Path(wheel_out) if wheel_out else None,
         description=resolved_description,
+        readme=resolved_readme,
         license_expr=resolved_license,
+        license_file=resolved_license_file,
         keywords=resolved_keywords,
         classifiers=resolved_classifiers,
         authors=resolved_authors,
