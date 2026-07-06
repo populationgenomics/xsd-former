@@ -15,7 +15,7 @@ from xsdformer.xsd import xsd
 
 _PYPROJECT_TEMPLATE = """\
 [project]
-name = "{package_name}"
+name = "{distribution_name}"
 version = "{version}"
 description = "Generated protobuf package for {namespace}"
 requires-python = ">=3.11"
@@ -118,11 +118,13 @@ def _write_pydantic_converter(
 def _write_pyproject(
     namespace: str,
     package_name: str,
+    distribution_name: str,
     version: str,
     out_dir: pathlib.Path,
 ) -> None:
     content = _PYPROJECT_TEMPLATE.format(
         package_name=package_name,
+        distribution_name=distribution_name,
         namespace=namespace,
         version=version,
     )
@@ -133,6 +135,7 @@ def build_package(
     type_defs: tuple[xsd.TypeDefinition, ...],
     namespace: str,
     package_name: str,
+    distribution_name: str | None = None,
     version: str = '0.1.0',
     out_dir: pathlib.Path | None = None,
     run_build: bool = False,
@@ -140,8 +143,13 @@ def build_package(
 ) -> pathlib.Path:
     """Generates a pip-installable source tree (and optionally builds a wheel).
 
+    `package_name` names the importable module directory; `distribution_name` is
+    the PyPI/distribution name (`[project] name`), defaulting to `package_name`.
+
     Returns the package directory path.
     """
+    if distribution_name is None:
+        distribution_name = package_name
     if out_dir is None:
         out_dir = pathlib.Path('.')
     out_dir = out_dir.resolve()
@@ -164,7 +172,7 @@ def build_package(
         _INIT_TEMPLATE.format(package_name=package_name, namespace=namespace),
     )
     (package_dir / 'py.typed').write_text('')
-    _write_pyproject(namespace, package_name, version, out_dir)
+    _write_pyproject(namespace, package_name, distribution_name, version, out_dir)
 
     if run_build:
         build_cmd = [sys.executable, '-m', 'build', '--wheel']

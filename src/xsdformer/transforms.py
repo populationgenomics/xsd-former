@@ -61,6 +61,10 @@ class MapFieldConfig:
 class BuildConfig:
     namespace: str
     package_name: str
+    # PyPI/distribution name for the generated package. Distinct from
+    # `package_name`, which names the importable module directory (and so cannot
+    # contain hyphens). Defaults to `package_name` when unset.
+    distribution_name: str | None = None
     version: str = '0.1.0'
 
     @classmethod
@@ -74,6 +78,7 @@ class BuildConfig:
         return cls(
             namespace=build['namespace'],
             package_name=build['package_name'],
+            distribution_name=build.get('distribution_name'),
             version=build.get('version', '0.1.0'),
         )
 

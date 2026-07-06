@@ -326,7 +326,12 @@ def dtd_command(
     help='Transform config YAML (provides build: section too).',
 )
 @click.option('--namespace', type=str, help='Proto namespace (overrides config).')
-@click.option('--package-name', type=str, help='Python package name (overrides config).')
+@click.option('--package-name', type=str, help='Python import package name (overrides config).')
+@click.option(
+    '--distribution-name',
+    type=str,
+    help='PyPI/distribution name (overrides config; defaults to the package name).',
+)
 @click.option('--version', type=str, default=None, help='Package version (default: 0.1.0).')
 @click.option(
     '--out-dir',
@@ -352,6 +357,7 @@ def build_command(
     transforms_path: str | None,
     namespace: str | None,
     package_name: str | None,
+    distribution_name: str | None,
     version: str | None,
     out_dir: str,
     run_build: bool,
@@ -368,6 +374,7 @@ def build_command(
     # CLI options override config.
     resolved_namespace = namespace or (build_cfg.namespace if build_cfg else None)
     resolved_package_name = package_name or (build_cfg.package_name if build_cfg else None)
+    resolved_distribution_name = distribution_name or (build_cfg.distribution_name if build_cfg else None)
     resolved_version = version or (build_cfg.version if build_cfg else '0.1.0')
 
     if not resolved_namespace:
@@ -389,6 +396,7 @@ def build_command(
         type_defs=type_defs,
         namespace=resolved_namespace,
         package_name=resolved_package_name,
+        distribution_name=resolved_distribution_name,
         version=resolved_version,
         out_dir=pathlib.Path(out_dir),
         run_build=run_build,

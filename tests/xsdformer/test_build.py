@@ -117,6 +117,26 @@ def test_pyproject_toml(built_package: tuple[pathlib.Path, pathlib.Path]) -> Non
     assert 'defusedxml' not in pyproject
 
 
+def test_pyproject_distribution_name(tmp_path: pathlib.Path) -> None:
+    """distribution_name sets [project] name; package_name still names the module dir."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    package_dir = build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='pubmed_proto',
+        distribution_name='pubmed-proto',
+        version='1.1.0',
+        out_dir=out_dir,
+    )
+    pyproject = (out_dir / 'pyproject.toml').read_text()
+    assert 'name = "pubmed-proto"' in pyproject  # PyPI/distribution name
+    assert 'packages = ["pubmed_proto"]' in pyproject  # importable module dir
+    assert '"pubmed_proto/book.proto" = "pubmed_proto/book.proto"' in pyproject
+    assert package_dir == out_dir / 'pubmed_proto'
+
+
 def test_init_py(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     _, package_dir = built_package
     init = (package_dir / '__init__.py').read_text()
