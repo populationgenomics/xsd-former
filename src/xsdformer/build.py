@@ -3,24 +3,23 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import pathlib
 import subprocess
 import sys
+from collections.abc import Sequence
 
+from xsdformer import transforms
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.py import xml_converter
 from xsdformer.pydantic import converter as pydantic_converter
 from xsdformer.pydantic import generator as pydantic_generator
 from xsdformer.xsd import xsd
 
-_PYPROJECT_TEMPLATE = """\
-[project]
-name = "{distribution_name}"
-version = "{version}"
-description = "Generated protobuf package for {namespace}"
-requires-python = ">=3.11"
-dependencies = ["lxml", "protobuf>=6.32.1", "pydantic>=2"]
-
+# The static tail of the generated pyproject.toml. The [project] table is
+# assembled separately (see _write_pyproject) because its optional fields and
+# TOML arrays/tables don't format cleanly from one static string.
+_BUILD_SYSTEM_TEMPLATE = """\
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -115,19 +114,61 @@ def _write_pydantic_converter(
             f.write(line + '\n')
 
 
+def _toml_str(value: str) -> str:
+    r"""A TOML basic string for `value`.
+
+    JSON string syntax is a subset of TOML basic-string syntax (same escapes,
+    `\uXXXX` for control/non-ASCII), so `json.dumps` yields a correctly-quoted
+    TOML string for any value — avoiding hand-rolled quoting bugs.
+    """
+    return json.dumps(value)
+
+
 def _write_pyproject(
     namespace: str,
     package_name: str,
     distribution_name: str,
     version: str,
     out_dir: pathlib.Path,
+    *,
+    description: str | None = None,
+    license_expr: str | None = None,
+    keywords: Sequence[str] = (),
+    classifiers: Sequence[str] = (),
+    authors: Sequence[transforms.Author] = (),
+    urls: Sequence[tuple[str, str]] = (),
 ) -> None:
-    content = _PYPROJECT_TEMPLATE.format(
-        package_name=package_name,
-        distribution_name=distribution_name,
-        namespace=namespace,
-        version=version,
-    )
+    project = [
+        '[project]',
+        f'name = {_toml_str(distribution_name)}',
+        f'version = {_toml_str(version)}',
+        f'description = {_toml_str(description or f"Generated protobuf package for {namespace}")}',
+        'requires-python = ">=3.11"',
+    ]
+    if license_expr:
+        project.append(f'license = {_toml_str(license_expr)}')
+    if keywords:
+        project.append(f'keywords = [{", ".join(_toml_str(k) for k in keywords)}]')
+    if authors:
+        project.append('authors = [')
+        for author in authors:
+            fields = f'name = {_toml_str(author.name)}'
+            if author.email:
+                fields += f', email = {_toml_str(author.email)}'
+            project.append(f'  {{ {fields} }},')
+        project.append(']')
+    if classifiers:
+        project.append('classifiers = [')
+        project.extend(f'  {_toml_str(c)},' for c in classifiers)
+        project.append(']')
+    project.append('dependencies = ["lxml", "protobuf>=6.32.1", "pydantic>=2"]')
+    if urls:
+        project.append('')
+        project.append('[project.urls]')
+        project.extend(f'{_toml_str(label)} = {_toml_str(url)}' for label, url in urls)
+
+    build_system = _BUILD_SYSTEM_TEMPLATE.format(package_name=package_name, namespace=namespace)
+    content = '\n'.join(project) + '\n\n' + build_system
     (out_dir / 'pyproject.toml').write_text(content)
 
 
@@ -140,11 +181,20 @@ def build_package(
     out_dir: pathlib.Path | None = None,
     run_build: bool = False,
     wheel_out: pathlib.Path | None = None,
+    *,
+    description: str | None = None,
+    license_expr: str | None = None,
+    keywords: Sequence[str] = (),
+    classifiers: Sequence[str] = (),
+    authors: Sequence[transforms.Author] = (),
+    urls: Sequence[tuple[str, str]] = (),
 ) -> pathlib.Path:
     """Generates a pip-installable source tree (and optionally builds a wheel).
 
     `package_name` names the importable module directory; `distribution_name` is
     the PyPI/distribution name (`[project] name`), defaulting to `package_name`.
+    The remaining keyword arguments are optional `[project]` metadata; each is
+    emitted only when set, so the default output stays minimal.
 
     Returns the package directory path.
     """
@@ -172,7 +222,19 @@ def build_package(
         _INIT_TEMPLATE.format(package_name=package_name, namespace=namespace),
     )
     (package_dir / 'py.typed').write_text('')
-    _write_pyproject(namespace, package_name, distribution_name, version, out_dir)
+    _write_pyproject(
+        namespace,
+        package_name,
+        distribution_name,
+        version,
+        out_dir,
+        description=description,
+        license_expr=license_expr,
+        keywords=keywords,
+        classifiers=classifiers,
+        authors=authors,
+        urls=urls,
+    )
 
     if run_build:
         build_cmd = [sys.executable, '-m', 'build', '--wheel']

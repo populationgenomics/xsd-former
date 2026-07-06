@@ -57,6 +57,14 @@ class MapFieldConfig:
     value: str  # field name of the map value within the inner message
 
 
+@dataclasses.dataclass(frozen=True)
+class Author:
+    """A `[project] authors` entry."""
+
+    name: str
+    email: str | None = None
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class BuildConfig:
     namespace: str
@@ -66,6 +74,14 @@ class BuildConfig:
     # contain hyphens). Defaults to `package_name` when unset.
     distribution_name: str | None = None
     version: str = '0.1.0'
+    # Optional [project] metadata for the generated package. All unset by
+    # default, preserving the minimal-metadata output.
+    description: str | None = None
+    license_expr: str | None = None  # SPDX expression, e.g. "MIT" (PEP 639).
+    keywords: tuple[str, ...] = ()
+    classifiers: tuple[str, ...] = ()
+    authors: tuple[Author, ...] = ()
+    urls: tuple[tuple[str, str], ...] = ()  # ordered (label, url) pairs.
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> BuildConfig | None:
@@ -80,6 +96,12 @@ class BuildConfig:
             package_name=build['package_name'],
             distribution_name=build.get('distribution_name'),
             version=build.get('version', '0.1.0'),
+            description=build.get('description'),
+            license_expr=build.get('license'),
+            keywords=tuple(build.get('keywords', [])),
+            classifiers=tuple(build.get('classifiers', [])),
+            authors=tuple(Author(name=a['name'], email=a.get('email')) for a in build.get('authors', [])),
+            urls=tuple((label, url) for label, url in (build.get('urls') or {}).items()),
         )
 
 

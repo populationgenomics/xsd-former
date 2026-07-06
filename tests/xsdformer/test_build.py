@@ -5,10 +5,12 @@ from __future__ import annotations
 import io
 import subprocess
 import sys
+import tomllib
 from typing import TYPE_CHECKING
 
 import pytest
 
+from xsdformer import transforms
 from xsdformer.build import build_package
 from xsdformer.xsd import xsd
 
@@ -115,6 +117,50 @@ def test_pyproject_toml(built_package: tuple[pathlib.Path, pathlib.Path]) -> Non
     assert 'hatchling' in pyproject
     assert 'pydantic>=2' in pyproject
     assert 'defusedxml' not in pyproject
+
+
+def test_pyproject_minimal_omits_optional_metadata(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
+    """With no metadata configured, the optional [project] fields are absent."""
+    out_dir, _ = built_package
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    project = data['project']
+    assert 'license' not in project
+    assert 'classifiers' not in project
+    assert 'authors' not in project
+    assert 'keywords' not in project
+    assert 'urls' not in project
+
+
+def test_pyproject_metadata(tmp_path: pathlib.Path) -> None:
+    """Configured [project] metadata is emitted, and the result is valid TOML."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='book_proto',
+        version='1.0.0',
+        out_dir=out_dir,
+        description='Book protobufs',
+        license_expr='MIT',
+        keywords=['book', 'proto'],
+        classifiers=['Programming Language :: Python :: 3', 'Typing :: Typed'],
+        authors=[
+            transforms.Author(name='Centre for Population Genomics'),
+            transforms.Author(name='A', email='a@b.org'),
+        ],
+        urls=[('Repository', 'https://github.com/populationgenomics/example')],
+    )
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())  # must parse as TOML
+    project = data['project']
+    assert project['description'] == 'Book protobufs'
+    assert project['license'] == 'MIT'
+    assert project['keywords'] == ['book', 'proto']
+    assert 'Typing :: Typed' in project['classifiers']
+    assert {'name': 'Centre for Population Genomics'} in project['authors']
+    assert {'name': 'A', 'email': 'a@b.org'} in project['authors']
+    assert data['project']['urls']['Repository'] == 'https://github.com/populationgenomics/example'
 
 
 def test_pyproject_distribution_name(tmp_path: pathlib.Path) -> None:

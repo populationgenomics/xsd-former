@@ -16,6 +16,8 @@ from xsdformer.protobuf import generator as proto_gen
 from xsdformer.py import xml_converter
 from xsdformer.py.xml_converter import _parse_date_element, _serialize_markdown
 from xsdformer.transforms import (
+    Author,
+    BuildConfig,
     CoercedToTimestampInfo,
     FlattenedListInfo,
     InlinedWrapperInfo,
@@ -787,3 +789,47 @@ class TestMaps:
         config = TransformConfig(maps={'Entry': MapFieldConfig(key='key', value='value')})
         with pytest.raises(ValueError, match='atomic type'):
             apply_transforms(defs, config)
+
+
+class TestBuildConfigFromYaml:
+    def test_reads_project_metadata(self, tmp_path: pathlib.Path) -> None:
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text(
+            'build:\n'
+            '  namespace: pubmed\n'
+            '  package_name: pubmed_proto\n'
+            '  distribution_name: pubmed-proto\n'
+            '  license: MIT\n'
+            '  authors:\n'
+            '    - name: Centre for Population Genomics\n'
+            '    - name: A\n'
+            '      email: a@b.org\n'
+            '  urls:\n'
+            '    Repository: https://github.com/populationgenomics/pubmed-proto\n'
+            '  keywords: [pubmed, proto]\n'
+            '  classifiers:\n'
+            '    - "Typing :: Typed"\n',
+        )
+        cfg = BuildConfig.from_yaml(yaml_path)
+        assert cfg is not None
+        assert cfg.package_name == 'pubmed_proto'
+        assert cfg.distribution_name == 'pubmed-proto'
+        assert cfg.license_expr == 'MIT'
+        assert cfg.authors == (
+            Author(name='Centre for Population Genomics'),
+            Author(name='A', email='a@b.org'),
+        )
+        assert cfg.urls == (('Repository', 'https://github.com/populationgenomics/pubmed-proto'),)
+        assert cfg.keywords == ('pubmed', 'proto')
+        assert cfg.classifiers == ('Typing :: Typed',)
+
+    def test_defaults_when_metadata_absent(self, tmp_path: pathlib.Path) -> None:
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text('build:\n  namespace: book\n  package_name: book_proto\n')
+        cfg = BuildConfig.from_yaml(yaml_path)
+        assert cfg is not None
+        assert cfg.license_expr is None
+        assert cfg.authors == ()
+        assert cfg.urls == ()
+        assert cfg.keywords == ()
+        assert cfg.classifiers == ()

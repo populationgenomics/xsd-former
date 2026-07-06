@@ -333,6 +333,8 @@ def dtd_command(
     help='PyPI/distribution name (overrides config; defaults to the package name).',
 )
 @click.option('--version', type=str, default=None, help='Package version (default: 0.1.0).')
+@click.option('--license', 'license_expr', type=str, help='SPDX license expression, e.g. MIT (overrides config).')
+@click.option('--description', type=str, help='Package description (overrides config).')
 @click.option(
     '--out-dir',
     type=click.Path(),
@@ -359,6 +361,8 @@ def build_command(
     package_name: str | None,
     distribution_name: str | None,
     version: str | None,
+    license_expr: str | None,
+    description: str | None,
     out_dir: str,
     run_build: bool,
     wheel_out: str | None,
@@ -376,6 +380,13 @@ def build_command(
     resolved_package_name = package_name or (build_cfg.package_name if build_cfg else None)
     resolved_distribution_name = distribution_name or (build_cfg.distribution_name if build_cfg else None)
     resolved_version = version or (build_cfg.version if build_cfg else '0.1.0')
+    resolved_description = description or (build_cfg.description if build_cfg else None)
+    resolved_license = license_expr or (build_cfg.license_expr if build_cfg else None)
+    # List/table metadata (keywords, classifiers, authors, urls) is config-only.
+    resolved_keywords = build_cfg.keywords if build_cfg else ()
+    resolved_classifiers = build_cfg.classifiers if build_cfg else ()
+    resolved_authors = build_cfg.authors if build_cfg else ()
+    resolved_urls = build_cfg.urls if build_cfg else ()
 
     if not resolved_namespace:
         resolved_namespace = schema_path.stem
@@ -401,6 +412,12 @@ def build_command(
         out_dir=pathlib.Path(out_dir),
         run_build=run_build,
         wheel_out=pathlib.Path(wheel_out) if wheel_out else None,
+        description=resolved_description,
+        license_expr=resolved_license,
+        keywords=resolved_keywords,
+        classifiers=resolved_classifiers,
+        authors=resolved_authors,
+        urls=resolved_urls,
     )
     click.echo(f'Generated package: {package_dir}')
 
