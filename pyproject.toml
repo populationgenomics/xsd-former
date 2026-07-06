@@ -1,17 +1,39 @@
 [project]
 name = "xsdformer"
 version = "1.0.0"
-description = "A tool to convert XSD to Protobuf definitions."
+description = "Generate Protobuf definitions, JSON Schema, and Python XML-to-protobuf converters from XSD and DTD schemas."
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Toby Sargeant" }]
+keywords = ["xsd", "dtd", "protobuf", "json-schema", "typespec", "code-generation", "xml", "clinvar", "bioc"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Code Generators",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Typing :: Typed",
+]
 dependencies = [
-    "click",
-    "grpcio-tools",
+    "click>=8.1",
+    "grpcio-tools>=1.60",
     "jinja2>=3.1.6",
-    "lxml",
+    "lxml>=5.0",
     "protobuf>=6.32.1",
     "pyyaml>=6.0.3",
-    "xmlschema",
+    "xmlschema>=4.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/populationgenomics/xsd-former"
+Issues = "https://github.com/populationgenomics/xsd-former/issues"
 
 [dependency-groups]
 dev = [
@@ -28,6 +50,9 @@ xsdformer = "xsdformer.tool:cli"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xsdformer"]
 
 [tool.ruff]
 line-length = 120
