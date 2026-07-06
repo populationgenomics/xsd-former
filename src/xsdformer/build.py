@@ -6,15 +6,12 @@ import importlib.util
 import pathlib
 import subprocess
 import sys
-from typing import TYPE_CHECKING
 
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.py import xml_converter
 from xsdformer.pydantic import converter as pydantic_converter
 from xsdformer.pydantic import generator as pydantic_generator
-
-if TYPE_CHECKING:
-    from xsdformer.xsd import xsd
+from xsdformer.xsd import xsd
 
 _PYPROJECT_TEMPLATE = """\
 [project]

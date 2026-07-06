@@ -13,10 +13,12 @@ names preserved, numbers = the IR's enum numbers, zero member first) — the for
 serve as the `xsd->proto` ≡ `xsd->tsp->proto` regression check.
 """
 
+from __future__ import annotations
+
 import functools
 from collections.abc import Iterable, Iterator
 
-from xsdformer.transforms import TransformHint
+from xsdformer import transforms
 from xsdformer.xsd import text, xsd
 
 # AtomicType -> TypeSpec scalar (ADR 0001 "Scalars"). Diverges from
@@ -320,7 +322,7 @@ class TypeSpecGenerator:
         yield f'model {_type_name(msg_def)} {{'
         emitted: dict[str | None, xsd.Field] = {}
         for field_def, in_choice in _iter_message_fields(msg_def.content):
-            if field_def.transform_hint is TransformHint.DROPPED:
+            if field_def.transform_hint is transforms.TransformHint.DROPPED:
                 continue
             if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
                 continue

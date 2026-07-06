@@ -1,16 +1,17 @@
+from __future__ import annotations
+
 import dataclasses
 import pathlib
 from collections.abc import Iterable
 
 import click
 
-from xsdformer.build import build_package
+from xsdformer import build
 from xsdformer.dtd import dtd
 from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
 from xsdformer.pydantic import generator as pydantic_generator
-from xsdformer.transforms import BuildConfig, TransformConfig, apply_transforms
 from xsdformer.typespec import generator as typespec_generator
 from xsdformer.xsd import xsd
 
@@ -20,8 +21,8 @@ def _maybe_transform(
     transforms: str | None,
 ) -> tuple[xsd.TypeDefinition, ...]:
     if transforms:
-        config = TransformConfig.from_yaml(pathlib.Path(transforms))
-        return apply_transforms(type_defs, config)
+        config = transforms.TransformConfig.from_yaml(pathlib.Path(transforms))
+        return transforms.apply_transforms(type_defs, config)
     return type_defs
 
 
@@ -357,9 +358,9 @@ def build_command(
     schema_path = pathlib.Path(schema_file)
 
     # Load build config from transforms YAML if provided.
-    build_cfg: BuildConfig | None = None
+    build_cfg: transforms.BuildConfig | None = None
     if transforms:
-        build_cfg = BuildConfig.from_yaml(pathlib.Path(transforms))
+        build_cfg = transforms.BuildConfig.from_yaml(pathlib.Path(transforms))
 
     # CLI options override config.
     resolved_namespace = namespace or (build_cfg.namespace if build_cfg else None)
@@ -378,10 +379,10 @@ def build_command(
     type_defs = dtd.process_dtd(str(schema_path)) if suffix == '.dtd' else xsd.process_xsd(str(schema_path))
 
     if transforms:
-        config = TransformConfig.from_yaml(pathlib.Path(transforms))
-        type_defs = apply_transforms(type_defs, config)
+        config = transforms.TransformConfig.from_yaml(pathlib.Path(transforms))
+        type_defs = transforms.apply_transforms(type_defs, config)
 
-    package_dir = build_package(
+    package_dir = build.build_package(
         type_defs=type_defs,
         namespace=resolved_namespace,
         package_name=resolved_package_name,

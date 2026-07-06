@@ -24,12 +24,13 @@ beside a compiled `*_pb2`, so (unlike the clean-dialect models module) it is a
 `build`-package artifact, not a `--*-out` target.
 """
 
+from __future__ import annotations
+
 import keyword
 from collections.abc import Iterable, Iterator
 
-from xsdformer.pydantic._naming import attr_name as _attr_name
-from xsdformer.pydantic._naming import type_name as _type_name
-from xsdformer.transforms import TransformHint
+from xsdformer import transforms
+from xsdformer.pydantic import _naming
 from xsdformer.xsd import text, xsd
 
 
@@ -86,7 +87,8 @@ def _leaf_records(
                         group = [
                             branch
                             for branch in field_def.content
-                            if isinstance(branch, xsd.Field) and branch.transform_hint is not TransformHint.DROPPED
+                            if isinstance(branch, xsd.Field)
+                            and branch.transform_hint is not transforms.TransformHint.DROPPED
                         ]
                         if len(group) > 1:
                             oneof_groups.append(group)
@@ -96,9 +98,9 @@ def _leaf_records(
                 case xsd.FieldContainer():  # Seq
                     _walk(field_def.content, in_choice=in_choice, in_oneof=in_oneof)
                 case xsd.Field():
-                    if field_def.transform_hint is TransformHint.DROPPED:
+                    if field_def.transform_hint is transforms.TransformHint.DROPPED:
                         continue
-                    if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
+                    if not xsd.register_field(emitted, field_def, _naming.type_name(msg_def)):
                         continue
                     records.append((field_def, in_choice, in_oneof))
 
@@ -144,7 +146,7 @@ class PydanticConverterGenerator:
         return f'{self._proto_mod}.' + '.'.join(path)
 
     def _models_ref(self, type_def: xsd.TypeDefinition) -> str:
-        return f'{self._models_mod}.{_type_name(type_def)}'
+        return f'{self._models_mod}.{_naming.type_name(type_def)}'
 
     def header(self) -> Iterable[str]:
         for pkg, mod in ((self._proto_pkg, self._proto_mod), (self._models_pkg, self._models_mod)):
@@ -159,7 +161,7 @@ class PydanticConverterGenerator:
             return f'{acc}.ToDatetime()' if proto_type is xsd.AtomicType.DATE else acc
         if isinstance(proto_type, xsd.Enumeration):
             return f'{self._models_ref(proto_type)}[{self._proto_ref(proto_type.path)}.Name({acc})]'
-        return f'{_type_name(proto_type)}_from_proto({acc})'
+        return f'{_naming.type_name(proto_type)}_from_proto({acc})'
 
     def _from_field(self, field_def: xsd.Field, kind: str, *, has_presence: bool) -> str:
         """The `proto -> pydantic` value expression for a whole field."""
@@ -184,7 +186,7 @@ class PydanticConverterGenerator:
     def _to_field(self, field_def: xsd.Field, kind: str) -> list[str]:
         """The `pydantic -> proto` statement(s) for a whole field."""
         name = _field_name(field_def)
-        attr = _attr_name(name)
+        attr = _naming.attr_name(name)
         acc = _pget(name)
         proto_type = field_def.proto_type
         match kind:
@@ -208,7 +210,7 @@ class PydanticConverterGenerator:
             return [f'{acc}.extend(model.{attr})']
         if isinstance(proto_type, xsd.Enumeration):
             return [f'{acc}.extend({self._proto_ref(proto_type.path)}.Value(v.name) for v in model.{attr})']
-        return [f'{acc}.extend({_type_name(proto_type)}_to_proto(v) for v in model.{attr})']
+        return [f'{acc}.extend({_naming.type_name(proto_type)}_to_proto(v) for v in model.{attr})']
 
     def _to_singular_stmt(self, field_def: xsd.Field, name: str, attr: str) -> str:
         acc = _pget(name)
@@ -219,10 +221,10 @@ class PydanticConverterGenerator:
             return _pset(name, f'{self._proto_ref(proto_type.path)}.Value(model.{attr}.name)')
         if isinstance(proto_type, xsd.AtomicType):
             return _pset(name, f'model.{attr}')
-        return f'{acc}.CopyFrom({_type_name(proto_type)}_to_proto(model.{attr}))'
+        return f'{acc}.CopyFrom({_naming.type_name(proto_type)}_to_proto(model.{attr}))'
 
     def from_proto(self, msg_def: xsd.Message, records: list[tuple[xsd.Field, bool, bool]]) -> Iterable[str]:
-        type_name = _type_name(msg_def)
+        type_name = _naming.type_name(msg_def)
         yield f'def {type_name}_from_proto(proto):'
         if not records:
             yield f'    return {self._models_ref(msg_def)}()'
@@ -232,7 +234,7 @@ class PydanticConverterGenerator:
             kind = _field_kind(field_def, in_choice=in_choice)
             has_presence = _has_presence(field_def, in_oneof=in_oneof)
             expr = self._from_field(field_def, kind, has_presence=has_presence)
-            yield f'        {_attr_name(field_def.name)}={expr},'
+            yield f'        {_naming.attr_name(field_def.name)}={expr},'
         yield '    )'
 
     def to_proto(
@@ -241,11 +243,11 @@ class PydanticConverterGenerator:
         records: list[tuple[xsd.Field, bool, bool]],
         oneof_groups: list[list[xsd.Field]],
     ) -> Iterable[str]:
-        type_name = _type_name(msg_def)
+        type_name = _naming.type_name(msg_def)
         yield f'def {type_name}_to_proto(model):'
         yield f'    proto = {self._proto_ref(msg_def.path)}()'
         for group in oneof_groups:
-            attrs = [_attr_name(f.name) for f in group]
+            attrs = [_naming.attr_name(f.name) for f in group]
             # Diagnose with the proto/XML field names, not the keyword-aliased
             # attribute names (`class_`): the user sees the former in JSON/proto.
             joined = ', '.join(_field_name(f) for f in group)

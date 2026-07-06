@@ -8,6 +8,8 @@ very models the generator emits), so the rules live here as the single source of
 truth rather than the converter reaching into the generator's internals.
 """
 
+from __future__ import annotations
+
 import keyword
 
 from xsdformer.xsd import xsd

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import collections
 import dataclasses
@@ -174,7 +176,7 @@ class Definition:
     documentation: str | None
     name: str | None
 
-    def get_fields(self) -> Iterator['Field']:
+    def get_fields(self) -> Iterator[Field]:
         for f, o in get_fields_occurs(self, occurs=(1, 1)):
             del o
             yield f
@@ -187,7 +189,7 @@ class FieldDefinition(Definition, abc.ABC):
 
 @dataclasses.dataclass(eq=False, kw_only=True)
 class TypeDefinition(Definition):
-    enclosing_type: tuple['TypeDefinition', 'Field'] | None = None
+    enclosing_type: tuple[TypeDefinition, Field] | None = None
 
     @property
     def path(self) -> tuple[str, ...]:
@@ -226,7 +228,7 @@ class Field(FieldDefinition, abc.ABC):
     def proto_type_str(self, path: tuple[str, ...]) -> str: ...
 
 
-def register_field(emitted: dict[str | None, 'Field'], field_def: 'Field', owner: str) -> bool:
+def register_field(emitted: dict[str | None, Field], field_def: Field, owner: str) -> bool:
     """Tracks a leaf field for duplicate-name detection within a message `owner`.
 
     The generators dedup repeated field names ("first wins"), which is harmless

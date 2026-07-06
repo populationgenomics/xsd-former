@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import TYPE_CHECKING, Any
+import pathlib
+from collections.abc import Sequence
+from typing import Any
 
 import yaml
 
 from xsdformer.xsd import xsd
-
-if TYPE_CHECKING:
-    import pathlib
-    from collections.abc import Sequence
 
 
 class TransformHint(enum.Enum):

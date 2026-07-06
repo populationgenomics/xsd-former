@@ -29,9 +29,8 @@ slice-3 converter can construct by attribute name. This mirrors what
 import functools
 from collections.abc import Iterable, Iterator
 
-from xsdformer.pydantic._naming import attr_name as _attr_name
-from xsdformer.pydantic._naming import type_name as _type_name
-from xsdformer.transforms import TransformHint
+from xsdformer import transforms
+from xsdformer.pydantic import _naming
 from xsdformer.xsd import xsd
 
 # AtomicType -> pydantic/Python type (ADR 0001 "Scalars", rendered for Python).
@@ -66,7 +65,7 @@ def _field_type(field_def: xsd.Field) -> str:
         # proto map<K, V> -> dict[str, V]; proto-JSON stringifies every map key,
         # so a string-keyed dict is JSON-correct for any proto map (ADR 0001).
         return f'dict[str, {_PY_SCALAR[proto_type.value_type]}]'
-    return _type_name(proto_type)
+    return _naming.type_name(proto_type)
 
 
 def _iter_message_fields(
@@ -171,7 +170,7 @@ class PydanticGenerator:
         return ()
 
     def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
-        yield f'class {_type_name(enum_def)}(str, Enum):'
+        yield f'class {_naming.type_name(enum_def)}(str, Enum):'
         body: list[str] = []
         if enum_def.documentation:
             body.append(_docstring(enum_def.documentation))
@@ -183,14 +182,14 @@ class PydanticGenerator:
         yield from _indent_body(body)
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
-        yield f'class {_type_name(msg_def)}(BaseModel):'
+        yield f'class {_naming.type_name(msg_def)}(BaseModel):'
         field_lines: list[str] = []
         has_alias = False
         emitted: dict[str | None, xsd.Field] = {}
         for field_def, in_choice in _iter_message_fields(msg_def.content):
-            if field_def.transform_hint is TransformHint.DROPPED:
+            if field_def.transform_hint is transforms.TransformHint.DROPPED:
                 continue
-            if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
+            if not xsd.register_field(emitted, field_def, _naming.type_name(msg_def)):
                 continue
             line, used_alias = self._field(field_def, force_optional=in_choice)
             has_alias = has_alias or used_alias
@@ -212,7 +211,7 @@ class PydanticGenerator:
 
     def _field(self, field_def: xsd.Field, *, force_optional: bool) -> tuple[str, bool]:
         """Renders one field; returns `(line, used_alias)`."""
-        attr = _attr_name(field_def.name)
+        attr = _naming.attr_name(field_def.name)
         alias = field_def.name if attr != field_def.name else None
         type_str = _field_type(field_def)
         proto_type = field_def.proto_type
@@ -250,14 +249,14 @@ def _scan(type_defs: tuple[xsd.TypeDefinition, ...]) -> dict[str, bool]:
         elif isinstance(type_def, xsd.Message):
             flags['needs_model'] = True
             for field_def, _ in _iter_message_fields(type_def.content):
-                if field_def.transform_hint is TransformHint.DROPPED:
+                if field_def.transform_hint is transforms.TransformHint.DROPPED:
                     continue
                 proto_type = field_def.proto_type
                 if proto_type is xsd.AtomicType.DATE:
                     flags['needs_datetime'] = True
                 if isinstance(proto_type, xsd.MapType) and proto_type.value_type is xsd.AtomicType.DATE:
                     flags['needs_datetime'] = True
-                if _attr_name(field_def.name) != field_def.name:
+                if _naming.attr_name(field_def.name) != field_def.name:
                     flags['needs_field'] = True
     return flags
 
