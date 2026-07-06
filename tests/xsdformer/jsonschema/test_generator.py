@@ -15,12 +15,12 @@ from xsdformer.xsd import xsd
 
 
 class _SchemaGenerator(Protocol):
-    def __call__(  # noqa: PLR0913
+    def __call__(
         self,
         proto_content: str,
         *,
-        main_message: str = "TestMessage",
-        namespace: str = "test",
+        main_message: str = 'TestMessage',
+        namespace: str = 'test',
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
         definitions_only: bool = False,
@@ -29,17 +29,17 @@ class _SchemaGenerator(Protocol):
 
 @pytest.fixture
 def generate_schema_from_proto_content() -> _SchemaGenerator:
-    def _generate(  # noqa: PLR0913
+    def _generate(
         proto_content: str,
         *,
-        main_message: str = "TestMessage",
-        namespace: str = "test",
+        main_message: str = 'TestMessage',
+        namespace: str = 'test',
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
         definitions_only: bool = False,
     ) -> dict[str, Any]:
         with tempfile.TemporaryDirectory() as tmpdir:
-            proto_path = pathlib.Path(tmpdir) / "test.proto"
+            proto_path = pathlib.Path(tmpdir) / 'test.proto'
             proto_path.write_text(proto_content)
 
             schema_str = generator.generate_from_proto(
@@ -77,29 +77,29 @@ _TEST_XSD = """
 
 def test_generate_schema_from_xsd() -> None:
     type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
-    schema_str = generator.generate("test", type_defs, "Person")
+    schema_str = generator.generate('test', type_defs, 'Person')
     schema = json.loads(schema_str)
 
     expected_schema = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "$ref": "#/definitions/test.Person",
-        "definitions": {
-            "test.Person": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "address": {"$ref": "#/definitions/test.Address"},
-                    "timestamp": {
-                        "type": "string",
-                        "format": "date-time",
+        '$schema': 'http://json-schema.org/draft-07/schema#',
+        '$ref': '#/definitions/test.Person',
+        'definitions': {
+            'test.Person': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'address': {'$ref': '#/definitions/test.Address'},
+                    'timestamp': {
+                        'type': 'string',
+                        'format': 'date-time',
                     },
                 },
             },
-            "test.Address": {
-                "type": "object",
-                "properties": {
-                    "street": {"type": "string"},
-                    "city": {"type": "string"},
+            'test.Address': {
+                'type': 'object',
+                'properties': {
+                    'street': {'type': 'string'},
+                    'city': {'type': 'string'},
                 },
             },
         },
@@ -110,28 +110,28 @@ def test_generate_schema_from_xsd() -> None:
 
 def test_generate_schema_definitions_only() -> None:
     type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
-    schema_str = generator.generate("test", type_defs, "Person", definitions_only=True)
+    schema_str = generator.generate('test', type_defs, 'Person', definitions_only=True)
     schema = json.loads(schema_str)
 
     expected_schema = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "definitions": {
-            "test.Person": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "address": {"$ref": "#/definitions/test.Address"},
-                    "timestamp": {
-                        "type": "string",
-                        "format": "date-time",
+        '$schema': 'http://json-schema.org/draft-07/schema#',
+        'definitions': {
+            'test.Person': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'address': {'$ref': '#/definitions/test.Address'},
+                    'timestamp': {
+                        'type': 'string',
+                        'format': 'date-time',
                     },
                 },
             },
-            "test.Address": {
-                "type": "object",
-                "properties": {
-                    "street": {"type": "string"},
-                    "city": {"type": "string"},
+            'test.Address': {
+                'type': 'object',
+                'properties': {
+                    'street': {'type': 'string'},
+                    'city': {'type': 'string'},
                 },
             },
         },
@@ -155,21 +155,21 @@ _PRESERVING_FIELD_NAME_XSD = """
 def test_generate_schema_with_preserving_proto_field_name() -> None:
     type_defs = xsd.process_xsd(io.StringIO(_PRESERVING_FIELD_NAME_XSD))
     schema_str = generator.generate(
-        "test_preserving",
+        'test_preserving',
         type_defs,
-        "TestMessage",
+        'TestMessage',
         preserving_proto_field_name=True,
     )
     schema = json.loads(schema_str)
 
     expected_schema = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "$ref": "#/definitions/test_preserving.TestMessage",
-        "definitions": {
-            "test_preserving.TestMessage": {
-                "type": "object",
-                "properties": {
-                    "some_field": {"type": "string"},
+        '$schema': 'http://json-schema.org/draft-07/schema#',
+        '$ref': '#/definitions/test_preserving.TestMessage',
+        'definitions': {
+            'test_preserving.TestMessage': {
+                'type': 'object',
+                'properties': {
+                    'some_field': {'type': 'string'},
                 },
             },
         },
@@ -195,34 +195,34 @@ def test_generate_from_proto(generate_schema_from_proto_content: _SchemaGenerato
     """
     schema = generate_schema_from_proto_content(
         _proto_content,
-        namespace="testpkg",
-        main_message="Person",
+        namespace='testpkg',
+        main_message='Person',
         preserving_proto_field_name=False,
     )
 
     # Assert the schema structure is correct
-    assert schema["$ref"] == "#/definitions/testpkg.Person"
-    person_def = schema["definitions"]["testpkg.Person"]
-    assert person_def["type"] == "object"
-    assert person_def["properties"]["name"] == {"type": "string"}
-    assert person_def["properties"]["id"] == {"type": "integer"}
-    assert person_def["properties"]["email"] == {"type": "string"}
-    assert person_def["properties"]["createdAt"] == {
-        "type": "string",
-        "format": "date-time",
+    assert schema['$ref'] == '#/definitions/testpkg.Person'
+    person_def = schema['definitions']['testpkg.Person']
+    assert person_def['type'] == 'object'
+    assert person_def['properties']['name'] == {'type': 'string'}
+    assert person_def['properties']['id'] == {'type': 'integer'}
+    assert person_def['properties']['email'] == {'type': 'string'}
+    assert person_def['properties']['createdAt'] == {
+        'type': 'string',
+        'format': 'date-time',
     }
 
     # Validate a correct payload against the schema
     person_instance = {
-        "name": "John Doe",
-        "id": 123,
-        "email": "john.doe@example.com",
-        "createdAt": "2024-01-01T00:00:00Z",
+        'name': 'John Doe',
+        'id': 123,
+        'email': 'john.doe@example.com',
+        'createdAt': '2024-01-01T00:00:00Z',
     }
     jsonschema.validate(instance=person_instance, schema=schema)
 
     # Assert that an incorrect payload fails validation
-    person_instance_invalid = {"name": "Jane Doe", "id": "not-an-integer"}
+    person_instance_invalid = {'name': 'Jane Doe', 'id': 'not-an-integer'}
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(instance=person_instance_invalid, schema=schema)
 
@@ -243,31 +243,31 @@ def test_generate_from_proto_include_all(generate_schema_from_proto_content: _Sc
         }
     """
 
-    schema_default = generate_schema_from_proto_content(_proto_content, namespace="testall", main_message="MessageA")
+    schema_default = generate_schema_from_proto_content(_proto_content, namespace='testall', main_message='MessageA')
 
-    assert "testall.MessageA" in schema_default["definitions"]
-    assert "testall.MessageB" not in schema_default["definitions"]
+    assert 'testall.MessageA' in schema_default['definitions']
+    assert 'testall.MessageB' not in schema_default['definitions']
 
     schema_all = generate_schema_from_proto_content(
         _proto_content,
-        namespace="testall",
-        main_message="MessageA",
+        namespace='testall',
+        main_message='MessageA',
         include_all=True,
     )
 
-    assert "testall.MessageA" in schema_all["definitions"]
-    assert "testall.MessageB" in schema_all["definitions"]
+    assert 'testall.MessageA' in schema_all['definitions']
+    assert 'testall.MessageB' in schema_all['definitions']
 
 
-@pytest.mark.parametrize("preserving_proto_field_name", [True, False])
+@pytest.mark.parametrize('preserving_proto_field_name', [True, False])
 def test_xsd_to_json_schema_e2e(
     pb2_module_factory: conftest.Pb2ModuleFactory,
     preserving_proto_field_name: bool,
 ) -> None:
     """An end-to-end test verifying a protobuf's JSON output against the JSON schema."""
     # 1. Get the type definitions from the test XSD
-    namespace = "person"
-    main_message = "Person"
+    namespace = 'person'
+    main_message = 'Person'
     type_defs = xsd.process_xsd(io.StringIO(_TEST_XSD))
 
     # 2. Generate the JSON Schema from the same XSD, using the parameter
@@ -282,8 +282,8 @@ def test_xsd_to_json_schema_e2e(
     # 3. Create a protobuf instance using a generated protobuf module
     person_pb2, _ = pb2_module_factory(_TEST_XSD, namespace=namespace)
     person_instance = person_pb2.Person(
-        name="John Doe",
-        address=person_pb2.Address(street="123 Main St", city="Anytown"),
+        name='John Doe',
+        address=person_pb2.Address(street='123 Main St', city='Anytown'),
     )
     person_instance.timestamp.FromDatetime(datetime.datetime.now(datetime.UTC))
 
@@ -313,19 +313,19 @@ _TRAILING_COMMENT_PROTO = """
 def test_trailing_comment_from_proto() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = pathlib.Path(tmpdir)
-        proto_path = tmp_path / "test.proto"
+        proto_path = tmp_path / 'test.proto'
         proto_path.write_text(_TRAILING_COMMENT_PROTO)
 
         schema_str = generator.generate_from_proto(
             proto_path=proto_path,
-            namespace="test",
-            main_message="TestMessage",
+            namespace='test',
+            main_message='TestMessage',
             preserving_proto_field_name=True,
         )
 
     schema = json.loads(schema_str)
-    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
-    assert field_schema["description"] == "This is a trailing comment."
+    field_schema = schema['definitions']['test.TestMessage']['properties']['a_field']
+    assert field_schema['description'] == 'This is a trailing comment.'
 
 
 _MIXED_COMMENTS_PROTO = """
@@ -344,21 +344,21 @@ _MIXED_COMMENTS_PROTO = """
 def test_mixed_comments_from_proto() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = pathlib.Path(tmpdir)
-        proto_path = tmp_path / "test.proto"
+        proto_path = tmp_path / 'test.proto'
         proto_path.write_text(_MIXED_COMMENTS_PROTO)
 
         schema_str = generator.generate_from_proto(
             proto_path=proto_path,
-            namespace="test",
-            main_message="TestMessage",
+            namespace='test',
+            main_message='TestMessage',
             preserving_proto_field_name=True,
         )
 
     schema = json.loads(schema_str)
-    a_field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
-    b_field_schema = schema["definitions"]["test.TestMessage"]["properties"]["b_field"]
-    assert a_field_schema["description"] == "This is a trailing comment for a_field."
-    assert b_field_schema["description"] == "This is a leading comment for b_field."
+    a_field_schema = schema['definitions']['test.TestMessage']['properties']['a_field']
+    b_field_schema = schema['definitions']['test.TestMessage']['properties']['b_field']
+    assert a_field_schema['description'] == 'This is a trailing comment for a_field.'
+    assert b_field_schema['description'] == 'This is a leading comment for b_field.'
 
 
 _FIELD_COMMENT_PREFERRED_XSD = """
@@ -388,14 +388,14 @@ _FIELD_COMMENT_PREFERRED_XSD = """
 def test_field_comment_preferred_over_type_comment() -> None:
     type_defs = xsd.process_xsd(io.StringIO(_FIELD_COMMENT_PREFERRED_XSD))
     schema_str = generator.generate(
-        "test",
+        'test',
         type_defs,
-        "TestMessage",
+        'TestMessage',
         preserving_proto_field_name=True,
     )
     schema = json.loads(schema_str)
-    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
-    assert field_schema["description"] == "This is a comment on the field."
+    field_schema = schema['definitions']['test.TestMessage']['properties']['a_field']
+    assert field_schema['description'] == 'This is a comment on the field.'
 
 
 _FIELD_COMMENT_PREFERRED_PROTO = """
@@ -419,8 +419,8 @@ def test_field_comment_preferred_over_type_comment_from_proto(
     generate_schema_from_proto_content: _SchemaGenerator,
 ) -> None:
     schema = generate_schema_from_proto_content(_FIELD_COMMENT_PREFERRED_PROTO)
-    field_schema = schema["definitions"]["test.TestMessage"]["properties"]["a_field"]
-    assert field_schema["description"] == "This is a comment on the field."
+    field_schema = schema['definitions']['test.TestMessage']['properties']['a_field']
+    assert field_schema['description'] == 'This is a comment on the field.'
 
 
 def test_generate_from_proto_definitions_only(
@@ -442,15 +442,15 @@ def test_generate_from_proto_definitions_only(
     """
     schema = generate_schema_from_proto_content(
         proto_content,
-        namespace="testall",
+        namespace='testall',
         main_message=None,
         include_all=True,
         definitions_only=True,
     )
 
-    assert "$ref" not in schema
-    assert "testall.MessageA" in schema["definitions"]
-    assert "testall.MessageB" in schema["definitions"]
+    assert '$ref' not in schema
+    assert 'testall.MessageA' in schema['definitions']
+    assert 'testall.MessageB' in schema['definitions']
 
 
 def test_generate_from_proto_with_enum(generate_schema_from_proto_content: _SchemaGenerator) -> None:
@@ -472,22 +472,22 @@ def test_generate_from_proto_with_enum(generate_schema_from_proto_content: _Sche
     """
     schema = generate_schema_from_proto_content(
         proto_content,
-        namespace="testenum",
-        main_message="MyMessage",
+        namespace='testenum',
+        main_message='MyMessage',
         preserving_proto_field_name=False,
     )
 
-    assert "testenum.MyEnum" in schema["definitions"]
-    assert schema["definitions"]["testenum.MyEnum"] == {"enum": ["UNKNOWN", "VALUE1", "VALUE2"]}
+    assert 'testenum.MyEnum' in schema['definitions']
+    assert schema['definitions']['testenum.MyEnum'] == {'enum': ['UNKNOWN', 'VALUE1', 'VALUE2']}
 
-    message_def = schema["definitions"]["testenum.MyMessage"]
-    assert message_def["properties"]["myEnum"] == {"$ref": "#/definitions/testenum.MyEnum"}
+    message_def = schema['definitions']['testenum.MyMessage']
+    assert message_def['properties']['myEnum'] == {'$ref': '#/definitions/testenum.MyEnum'}
 
     # Validate a correct payload against the schema
-    instance = {"myEnum": "VALUE1"}
+    instance = {'myEnum': 'VALUE1'}
     jsonschema.validate(instance=instance, schema=schema)
 
     # Assert that an incorrect payload fails validation
-    invalid_instance = {"myEnum": "INVALID_VALUE"}
+    invalid_instance = {'myEnum': 'INVALID_VALUE'}
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(instance=invalid_instance, schema=schema)

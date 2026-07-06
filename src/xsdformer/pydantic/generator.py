@@ -36,24 +36,24 @@ from xsdformer.xsd import xsd
 
 # AtomicType -> pydantic/Python type (ADR 0001 "Scalars", rendered for Python).
 _PY_SCALAR = {
-    xsd.AtomicType.ID: "str",
-    xsd.AtomicType.URI: "str",
-    xsd.AtomicType.STRING: "str",
-    xsd.AtomicType.SIMPLEANY: "str",
-    xsd.AtomicType.COMPLEXANY: "str",
-    xsd.AtomicType.INT8: "int",
-    xsd.AtomicType.UINT8: "int",
-    xsd.AtomicType.INT16: "int",
-    xsd.AtomicType.UINT16: "int",
-    xsd.AtomicType.INT32: "int",
-    xsd.AtomicType.UINT32: "int",
-    xsd.AtomicType.INT64: "int",
-    xsd.AtomicType.UINT64: "int",
-    xsd.AtomicType.FLOAT: "float",
-    xsd.AtomicType.DOUBLE: "float",
-    xsd.AtomicType.BOOL: "bool",
-    xsd.AtomicType.BYTES: "bytes",
-    xsd.AtomicType.DATE: "datetime",
+    xsd.AtomicType.ID: 'str',
+    xsd.AtomicType.URI: 'str',
+    xsd.AtomicType.STRING: 'str',
+    xsd.AtomicType.SIMPLEANY: 'str',
+    xsd.AtomicType.COMPLEXANY: 'str',
+    xsd.AtomicType.INT8: 'int',
+    xsd.AtomicType.UINT8: 'int',
+    xsd.AtomicType.INT16: 'int',
+    xsd.AtomicType.UINT16: 'int',
+    xsd.AtomicType.INT32: 'int',
+    xsd.AtomicType.UINT32: 'int',
+    xsd.AtomicType.INT64: 'int',
+    xsd.AtomicType.UINT64: 'int',
+    xsd.AtomicType.FLOAT: 'float',
+    xsd.AtomicType.DOUBLE: 'float',
+    xsd.AtomicType.BOOL: 'bool',
+    xsd.AtomicType.BYTES: 'bytes',
+    xsd.AtomicType.DATE: 'datetime',
 }
 
 
@@ -65,7 +65,7 @@ def _field_type(field_def: xsd.Field) -> str:
     if isinstance(proto_type, xsd.MapType):
         # proto map<K, V> -> dict[str, V]; proto-JSON stringifies every map key,
         # so a string-keyed dict is JSON-correct for any proto map (ADR 0001).
-        return f"dict[str, {_PY_SCALAR[proto_type.value_type]}]"
+        return f'dict[str, {_PY_SCALAR[proto_type.value_type]}]'
     return _type_name(proto_type)
 
 
@@ -74,8 +74,7 @@ def _iter_message_fields(
     *,
     in_choice: bool = False,
 ) -> Iterator[tuple[xsd.Field, bool]]:
-    """Walks a message's content tree, yielding each leaf field paired with
-    whether a `Choice` encloses it.
+    """Yield each leaf field of a message's content tree, paired with whether a `Choice` encloses it.
 
     `Choice` members flatten to optional fields (ADR 0002): a proto `oneof` and N
     optional fields are wire- and proto-JSON-identical, so flattening preserves
@@ -94,7 +93,7 @@ def _iter_message_fields(
 def _indent_body(lines: Iterable[str]) -> Iterator[str]:
     """Indents a class body by 4 spaces, leaving blank lines empty."""
     for line in lines:
-        yield f"    {line}" if line else ""
+        yield f'    {line}' if line else ''
 
 
 def _docstring(doc: str) -> str:
@@ -104,9 +103,9 @@ def _docstring(doc: str) -> str:
     always one line. Backslashes and any embedded triple-quote are escaped so the
     string literal stays valid; a trailing quote is separated from the closer.
     """
-    safe = doc.replace("\\", "\\\\").replace('"""', '\\"\\"\\"')
+    safe = doc.replace('\\', '\\\\').replace('"""', '\\"\\"\\"')
     if safe.endswith('"'):
-        safe += " "
+        safe += ' '
     return f'"""{safe}"""'
 
 
@@ -129,23 +128,23 @@ class PydanticGenerator:
         # hoisted forward references and the `T | None` union syntax need no
         # special handling. Imports follow isort grouping (future / stdlib /
         # third-party), each group only emitted when something in it is used.
-        lines = ["from __future__ import annotations"]
+        lines = ['from __future__ import annotations']
         stdlib = []
         if self._needs_datetime:
-            stdlib.append("from datetime import datetime")
+            stdlib.append('from datetime import datetime')
         if self._needs_enum:
-            stdlib.append("from enum import Enum")
+            stdlib.append('from enum import Enum')
         if stdlib:
-            lines.append("")
+            lines.append('')
             lines.extend(stdlib)
         pydantic_names = []
         if self._needs_model:
-            pydantic_names.append("BaseModel")
+            pydantic_names.append('BaseModel')
         if self._needs_field:
-            pydantic_names.extend(["ConfigDict", "Field"])
+            pydantic_names.extend(['ConfigDict', 'Field'])
         if pydantic_names:
-            lines.append("")
-            lines.append(f"from pydantic import {', '.join(pydantic_names)}")
+            lines.append('')
+            lines.append(f'from pydantic import {", ".join(pydantic_names)}')
         return lines
 
     def footer(self) -> Iterable[str]:
@@ -156,7 +155,7 @@ class PydanticGenerator:
 
     @functools.singledispatchmethod
     def _definition(self, type_def: xsd.TypeDefinition) -> Iterable[str]:
-        raise NotImplementedError(f"Not implemented for {type_def=}")
+        raise NotImplementedError(f'Not implemented for {type_def=}')
 
     @_definition.register
     def _(self, msg_def: xsd.Message) -> Iterable[str]:
@@ -172,19 +171,19 @@ class PydanticGenerator:
         return ()
 
     def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
-        yield f"class {_type_name(enum_def)}(str, Enum):"
+        yield f'class {_type_name(enum_def)}(str, Enum):'
         body: list[str] = []
         if enum_def.documentation:
             body.append(_docstring(enum_def.documentation))
-            body.append("")
+            body.append('')
         for field_def in enum_def.field_iter():
-            value = "" if field_def.xml_value is None else field_def.xml_value
-            escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+            value = '' if field_def.xml_value is None else field_def.xml_value
+            escaped = value.replace('\\', '\\\\').replace('"', '\\"')
             body.append(f'{field_def.name} = "{escaped}"')
         yield from _indent_body(body)
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
-        yield f"class {_type_name(msg_def)}(BaseModel):"
+        yield f'class {_type_name(msg_def)}(BaseModel):'
         field_lines: list[str] = []
         has_alias = False
         emitted: dict[str | None, xsd.Field] = {}
@@ -200,15 +199,15 @@ class PydanticGenerator:
         body: list[str] = []
         if msg_def.documentation:
             body.append(_docstring(msg_def.documentation))
-            body.append("")
+            body.append('')
         if has_alias:
             # `populate_by_name` lets the slice-3 converter construct by attribute
             # name even though aliased fields carry the original XML name.
-            body.append("model_config = ConfigDict(populate_by_name=True)")
-            body.append("")
+            body.append('model_config = ConfigDict(populate_by_name=True)')
+            body.append('')
         body.extend(field_lines)
         if not body:
-            body.append("pass")
+            body.append('pass')
         yield from _indent_body(body)
 
     def _field(self, field_def: xsd.Field, *, force_optional: bool) -> tuple[str, bool]:
@@ -219,47 +218,47 @@ class PydanticGenerator:
         proto_type = field_def.proto_type
 
         if isinstance(proto_type, xsd.MapType):
-            kind = "map"
+            kind = 'map'
         elif field_def.is_repeated:
-            kind = "repeated"
-            type_str = f"list[{type_str}]"
+            kind = 'repeated'
+            type_str = f'list[{type_str}]'
         elif force_optional or field_def.computed_occurs[0] == 0:
-            kind = "optional"
-            type_str = f"{type_str} | None"
+            kind = 'optional'
+            type_str = f'{type_str} | None'
         else:
-            kind = "required"
+            kind = 'required'
 
         if alias is None:
-            default = {"map": " = {}", "repeated": " = []", "optional": " = None", "required": ""}[kind]
-            return f"{attr}: {type_str}{default}", False
+            default = {'map': ' = {}', 'repeated': ' = []', 'optional': ' = None', 'required': ''}[kind]
+            return f'{attr}: {type_str}{default}', False
 
         field_call = {
-            "map": f'Field(default_factory=dict, alias="{alias}")',
-            "repeated": f'Field(default_factory=list, alias="{alias}")',
-            "optional": f'Field(default=None, alias="{alias}")',
-            "required": f'Field(alias="{alias}")',
+            'map': f'Field(default_factory=dict, alias="{alias}")',
+            'repeated': f'Field(default_factory=list, alias="{alias}")',
+            'optional': f'Field(default=None, alias="{alias}")',
+            'required': f'Field(alias="{alias}")',
         }[kind]
-        return f"{attr}: {type_str} = {field_call}", True
+        return f'{attr}: {type_str} = {field_call}', True
 
 
 def _scan(type_defs: tuple[xsd.TypeDefinition, ...]) -> dict[str, bool]:
     """Determines which imports the emitted module needs."""
-    flags = {"needs_enum": False, "needs_datetime": False, "needs_model": False, "needs_field": False}
+    flags = {'needs_enum': False, 'needs_datetime': False, 'needs_model': False, 'needs_field': False}
     for type_def in type_defs:
         if isinstance(type_def, xsd.Enumeration):
-            flags["needs_enum"] = True
+            flags['needs_enum'] = True
         elif isinstance(type_def, xsd.Message):
-            flags["needs_model"] = True
+            flags['needs_model'] = True
             for field_def, _ in _iter_message_fields(type_def.content):
                 if field_def.transform_hint is TransformHint.DROPPED:
                     continue
                 proto_type = field_def.proto_type
                 if proto_type is xsd.AtomicType.DATE:
-                    flags["needs_datetime"] = True
+                    flags['needs_datetime'] = True
                 if isinstance(proto_type, xsd.MapType) and proto_type.value_type is xsd.AtomicType.DATE:
-                    flags["needs_datetime"] = True
+                    flags['needs_datetime'] = True
                 if _attr_name(field_def.name) != field_def.name:
-                    flags["needs_field"] = True
+                    flags['needs_field'] = True
     return flags
 
 
@@ -278,6 +277,6 @@ def generate(
         body = list(gen.definition(type_def))
         if body:
             # Two blank lines between top-level definitions (PEP 8 / ruff).
-            yield ""
-            yield ""
+            yield ''
+            yield ''
             yield from body

@@ -48,8 +48,8 @@ def _relative_path(path: tuple[str, ...], relative_to: tuple[str, ...]) -> str:
         # Self-reference or identical path: use the last name component.
         return path[-1]
     if b[0] in a:
-        return "." + ".".join(path)
-    return ".".join(b)
+        return '.' + '.'.join(path)
+    return '.'.join(b)
 
 
 def _is_repeated(occurs: Occurs) -> bool:
@@ -103,24 +103,24 @@ class AtomicType(enum.Enum):
 
 
 _PROTO_STR_LUT = {
-    AtomicType.ID: "string",
-    AtomicType.URI: "string",
-    AtomicType.STRING: "string",
-    AtomicType.INT8: "int8",
-    AtomicType.UINT8: "uint8",
-    AtomicType.INT16: "int16",
-    AtomicType.UINT16: "uint16",
-    AtomicType.INT32: "int32",
-    AtomicType.UINT32: "uint32",
-    AtomicType.UINT64: "uint64",
-    AtomicType.INT64: "int64",
-    AtomicType.FLOAT: "float",
-    AtomicType.DOUBLE: "double",
-    AtomicType.BOOL: "bool",
-    AtomicType.BYTES: "bytes",
-    AtomicType.DATE: "google.protobuf.Timestamp",
-    AtomicType.SIMPLEANY: "string",
-    AtomicType.COMPLEXANY: "string",
+    AtomicType.ID: 'string',
+    AtomicType.URI: 'string',
+    AtomicType.STRING: 'string',
+    AtomicType.INT8: 'int8',
+    AtomicType.UINT8: 'uint8',
+    AtomicType.INT16: 'int16',
+    AtomicType.UINT16: 'uint16',
+    AtomicType.INT32: 'int32',
+    AtomicType.UINT32: 'uint32',
+    AtomicType.UINT64: 'uint64',
+    AtomicType.INT64: 'int64',
+    AtomicType.FLOAT: 'float',
+    AtomicType.DOUBLE: 'double',
+    AtomicType.BOOL: 'bool',
+    AtomicType.BYTES: 'bytes',
+    AtomicType.DATE: 'google.protobuf.Timestamp',
+    AtomicType.SIMPLEANY: 'string',
+    AtomicType.COMPLEXANY: 'string',
 }
 
 
@@ -174,7 +174,7 @@ class Definition:
     documentation: str | None
     name: str | None
 
-    def get_fields(self) -> Iterator["Field"]:
+    def get_fields(self) -> Iterator['Field']:
         for f, o in get_fields_occurs(self, occurs=(1, 1)):
             del o
             yield f
@@ -187,12 +187,12 @@ class FieldDefinition(Definition, abc.ABC):
 
 @dataclasses.dataclass(eq=False, kw_only=True)
 class TypeDefinition(Definition):
-    enclosing_type: tuple["TypeDefinition", "Field"] | None = None
+    enclosing_type: tuple['TypeDefinition', 'Field'] | None = None
 
     @property
     def path(self) -> tuple[str, ...]:
         if self.name is None:
-            raise RuntimeError(f"{self}: anonymous type has not been assigned a name.")
+            raise RuntimeError(f'{self}: anonymous type has not been assigned a name.')
         if not self.enclosing_type:
             return (self.name,)
         return (*self.enclosing_type[0].path, self.name)
@@ -207,7 +207,7 @@ class Field(FieldDefinition, abc.ABC):
 
     def _get_computed_occurs(self) -> Occurs:
         if self._computed_occurs is None:
-            raise RuntimeError("{self}: field occurrence has not been computed.")
+            raise RuntimeError('{self}: field occurrence has not been computed.')
         return self._computed_occurs
 
     def _set_computed_occurs(self, value: Occurs) -> None:
@@ -226,7 +226,7 @@ class Field(FieldDefinition, abc.ABC):
     def proto_type_str(self, path: tuple[str, ...]) -> str: ...
 
 
-def register_field(emitted: dict[str | None, "Field"], field_def: "Field", owner: str) -> bool:
+def register_field(emitted: dict[str | None, 'Field'], field_def: 'Field', owner: str) -> bool:
     """Tracks a leaf field for duplicate-name detection within a message `owner`.
 
     The generators dedup repeated field names ("first wins"), which is harmless
@@ -244,7 +244,7 @@ def register_field(emitted: dict[str | None, "Field"], field_def: "Field", owner
     if prev is not None:
         if prev.proto_type is not field_def.proto_type or prev.is_repeated != field_def.is_repeated:
             raise ValueError(
-                f"{owner}: field {field_def.name!r} recurs with a conflicting type/cardinality across Choice branches",
+                f'{owner}: field {field_def.name!r} recurs with a conflicting type/cardinality across Choice branches',
             )
         return False
     emitted[field_def.name] = field_def
@@ -300,16 +300,16 @@ class Elem(Field):
         return self.source
 
     def __repr__(self) -> str:
-        return f"Elem({self.name})"
+        return f'Elem({self.name})'
 
     def proto_type_str(self, path: tuple[str, ...]) -> str:
-        repeated = "repeated " if self.is_repeated else ""
+        repeated = 'repeated ' if self.is_repeated else ''
         if isinstance(self.proto_type, AtomicType):
             return repeated + self.proto_type.proto_str
         if isinstance(self.proto_type, MapType):
             key_type = self.proto_type.key_type.proto_str
             val_type = self.proto_type.value_type.proto_str
-            return f"map<{key_type}, {val_type}>"
+            return f'map<{key_type}, {val_type}>'
         return repeated + _relative_path(self.proto_type.path, path)
 
     @property
@@ -321,7 +321,7 @@ class Elem(Field):
 class ValueElem(Field):
     """Represents an attribute or element definition within an XSD."""
 
-    name: str | None = "value"
+    name: str | None = 'value'
     default: str | None = None
     occurs: Occurs = (0, 1)
 
@@ -329,11 +329,11 @@ class ValueElem(Field):
         return XMLElemTextSource()
 
     def __repr__(self) -> str:
-        return f"ValueElem({self.name})"
+        return f'ValueElem({self.name})'
 
     def _set_computed_occurs(self, value: Occurs) -> None:
         if _is_repeated(value):
-            raise ValueError(f"{self}: element values cannot be repeated (occurs={value})")
+            raise ValueError(f'{self}: element values cannot be repeated (occurs={value})')
         self._computed_occurs = value
 
     def proto_type_str(self, path: tuple[str, ...]) -> str:
@@ -357,11 +357,11 @@ class Attr(Field):
         return self.source
 
     def __repr__(self) -> str:
-        return f"Attr({self.name})"
+        return f'Attr({self.name})'
 
     def _set_computed_occurs(self, value: Occurs) -> None:
         if _is_repeated(value):
-            raise ValueError(f"{self}: attributes cannot be repeated (occurs={value})")
+            raise ValueError(f'{self}: attributes cannot be repeated (occurs={value})')
         self._computed_occurs = value
 
     def proto_type_str(self, path: tuple[str, ...]) -> str:
@@ -387,7 +387,7 @@ class Message(TypeDefinition):
                 yield field.proto_type
 
     def __repr__(self) -> str:
-        return f"Message({self.name})"
+        return f'Message({self.name})'
 
 
 @dataclasses.dataclass(frozen=True)
@@ -402,23 +402,23 @@ class Enumeration(TypeDefinition):
     enum_values: tuple[str, ...]
 
     def __repr__(self) -> str:
-        return f"Enumeration({self.name})"
+        return f'Enumeration({self.name})'
 
     def field_iter(self) -> Iterator[EnumField]:
         if self.name is None:
-            raise RuntimeError(f"Anonymous enumeration {self} has not been assigned a name.")
+            raise RuntimeError(f'Anonymous enumeration {self} has not been assigned a name.')
 
         base = text.snake_case(self.name).upper()
 
         seen: set[str] = set()
-        unspecified = base + "_UNSPECIFIED"
+        unspecified = base + '_UNSPECIFIED'
         seen.add(unspecified)
         yield EnumField(0, unspecified, None)
         for i, xml_value in enumerate(self.enum_values, start=1):
-            name = base + "_" + text.snake_case(xml_value).upper()
+            name = base + '_' + text.snake_case(xml_value).upper()
             if name in seen:
                 # Deduplicate by appending the field number.
-                name = f"{name}_{i}"
+                name = f'{name}_{i}'
             seen.add(name)
             yield EnumField(i, name, xml_value)
 
@@ -431,7 +431,7 @@ class MapType(TypeDefinition):
     value_source: Source
 
     def __repr__(self) -> str:
-        return f"MapType({self.name})"
+        return f'MapType({self.name})'
 
 
 def first(field_def: FieldDefinition) -> set[str | None]:
@@ -466,7 +466,7 @@ def _get_proto_type(t: xmlschema.XsdType) -> AtomicType:
         return _PROTO_ATOMIC_TYPE[t.simple_type.datatype]
     if t.simple_type and t.simple_type.base_type:
         return _get_proto_type(t.simple_type.base_type)
-    raise NotImplementedError(f"not implemented: {t=}")
+    raise NotImplementedError(f'not implemented: {t=}')
 
 
 def _resolve_proto_type(
@@ -486,7 +486,7 @@ def _generate_attributes(
     for attr in attributes.values():
         if not isinstance(attr, xmlschema.validators.attributes.XsdAttribute):
             continue
-        occurs = (0, 1) if getattr(attr, "use", "optional") == "optional" else (1, 1)
+        occurs = (0, 1) if getattr(attr, 'use', 'optional') == 'optional' else (1, 1)
 
         yield Attr(
             name=text.snake_case(attr.name),
@@ -503,7 +503,7 @@ def _process_content(
     t: xmlschema.XsdComponent,
     type_defs: dict[xmlschema.XsdType, TypeDefinition],
 ) -> FieldDefinition:
-    raise NotImplementedError(f"not implemented: {t=}")
+    raise NotImplementedError(f'not implemented: {t=}')
 
 
 @_process_content.register
@@ -527,20 +527,20 @@ def _(
     type_defs: dict[xmlschema.XsdType, TypeDefinition],
 ) -> FieldContainer:
     match t.model:
-        case "sequence":
+        case 'sequence':
             return Seq(
                 documentation=_get_documentation(t),
                 occurs=(t.min_occurs, t.max_occurs),
                 content=tuple(_process_content(elem, type_defs) for elem in t.content),
             )
-        case "choice":
+        case 'choice':
             return Choice(
                 documentation=_get_documentation(t),
                 occurs=(t.min_occurs, t.max_occurs),
                 content=tuple(_process_content(elem, type_defs) for elem in t.content),
             )
         case model:
-            raise NotImplementedError(f"not implemented: {model=}")
+            raise NotImplementedError(f'not implemented: {model=}')
 
 
 def _message_content(
@@ -557,7 +557,7 @@ def _message_content(
         fields = _process_content(t.content, type_defs)
         leaves = tuple(_flatten_simple_seqs(fields))
         if t.mixed and leaves:
-            raise NotImplementedError("Mixed content type with elements.")
+            raise NotImplementedError('Mixed content type with elements.')
         yield from leaves
         if t.mixed:
             yield ValueElem(
@@ -567,35 +567,35 @@ def _message_content(
 
 
 def _print_message_content(c: FieldDefinition, depth: int = 0) -> None:
-    indent = "  " * depth
+    indent = '  ' * depth
     match c:
         case Seq():
-            print(f"{indent}{c.occurs} seq {{")
+            print(f'{indent}{c.occurs} seq {{')
             for c2 in c.content:
                 _print_message_content(c2, depth + 1)
-            print(f"{indent}}}")
+            print(f'{indent}}}')
         case Choice():
-            print(f"{indent}{c.occurs} choice {{")
+            print(f'{indent}{c.occurs} choice {{')
             for c2 in c.content:
                 _print_message_content(c2, depth + 1)
-            print(f"{indent}}}")
+            print(f'{indent}}}')
         case Attr():
-            print(f"{indent}{c.occurs} attr {c.name}")
+            print(f'{indent}{c.occurs} attr {c.name}')
         case Elem():
-            print(f"{indent}{c.occurs} elem {c.name}")
+            print(f'{indent}{c.occurs} elem {c.name}')
         case _:
-            raise NotImplementedError(f"Not implemented for {c=}")
+            raise NotImplementedError(f'Not implemented for {c=}')
 
 
 def _print_message(message: Message) -> None:
-    print(f"message: {message.name}")
+    print(f'message: {message.name}')
     for c in message.content:
         _print_message_content(c)
 
 
 def _get_type_name(t: xmlschema.XsdType) -> str | None:
     if t.name:
-        return text.pascal_case(re.sub(r"^type", "", t.name))
+        return text.pascal_case(re.sub(r'^type', '', t.name))
     if t.parent is not None and t.parent.is_global():
         return text.pascal_case(t.parent.name)
     return None
@@ -637,7 +637,7 @@ def _make_message_for(
 
 def _make_enum_for(t: simple_types.XsdSimpleType) -> Enumeration:
     if t.enumeration is None:
-        raise ValueError(f"expected {t} to be an enumeration.")
+        raise ValueError(f'expected {t} to be an enumeration.')
     return Enumeration(
         name=_get_type_name(t),
         documentation=_get_documentation(t),
@@ -655,7 +655,7 @@ def _make_definition_for(
         ):
             return None
         case complex_types.XsdComplexType(
-            name="{http://www.w3.org/2001/XMLSchema}anyType",
+            name='{http://www.w3.org/2001/XMLSchema}anyType',
         ):
             return None
         case xmlschema.validators.XsdAtomicBuiltin():
@@ -667,7 +667,7 @@ def _make_definition_for(
         case complex_types.XsdComplexType():
             return _make_message_for(t, type_defs)
         case _:
-            raise NotImplementedError(f"not implemented: {t=}")
+            raise NotImplementedError(f'not implemented: {t=}')
 
 
 def _include_type(xsd_type: xmlschema.XsdType | None) -> bool:
@@ -738,8 +738,8 @@ def _gather_xsd_types(
 ) -> dict[_BaseXsdType, set[_BaseXsdType]]:
     # Every concrete schema type is complex or simple, though the schema exposes
     # them through the abstract `XsdType`.
-    all_types: set[_BaseXsdType] = {cast("_BaseXsdType", t) for t in schema.types.values()}
-    all_types.update(cast("_BaseXsdType", e.type) for e in schema.elements.values())
+    all_types: set[_BaseXsdType] = {cast('_BaseXsdType', t) for t in schema.types.values()}
+    all_types.update(cast('_BaseXsdType', e.type) for e in schema.elements.values())
     all_types = {x for x in all_types if _include_type(x)}
 
     type_defs = {}
@@ -782,15 +782,15 @@ def find_map_fields(
             val_field = f
 
     if key_field is None:
-        raise RuntimeError(f"could not find {map_override.key_field} in {map_type}")
+        raise RuntimeError(f'could not find {map_override.key_field} in {map_type}')
     if val_field is None:
-        raise RuntimeError(f"could not find {map_override.value_field} in {map_type}")
+        raise RuntimeError(f'could not find {map_override.value_field} in {map_type}')
 
     return key_field, val_field
 
 
 # TODO: simplify
-def process_xsd(  # noqa: C901
+def process_xsd(
     xsd_file: str | bytes | pathlib.Path | IO[str] | IO[bytes],
     config: Config | None = None,
 ) -> tuple[TypeDefinition, ...]:
@@ -805,7 +805,7 @@ def process_xsd(  # noqa: C901
     definition_order = []
     sorter.prepare()
     while sorter.is_active():
-        ready_nodes = sorted(sorter.get_ready(), key=lambda t: t.name or "")
+        ready_nodes = sorted(sorter.get_ready(), key=lambda t: t.name or '')
         definition_order.append(ready_nodes)
         sorter.done(*ready_nodes)
 
@@ -815,7 +815,7 @@ def process_xsd(  # noqa: C901
 
     # re-sort within group once type def names are assigned.
     for defs in definition_order:
-        defs.sort(key=lambda t: type_defs[t].name or "")
+        defs.sort(key=lambda t: type_defs[t].name or '')
 
     rewriter = TypeRewriter(list(type_defs.values()))
 
@@ -830,9 +830,9 @@ def process_xsd(  # noqa: C901
             key_field, val_field = find_map_fields(map_type, map_override)
 
             if not isinstance(key_field.proto_type, AtomicType):
-                raise RuntimeError(f"expected map key: {key_field} to have an atomic type")
+                raise RuntimeError(f'expected map key: {key_field} to have an atomic type')
             if not isinstance(val_field.proto_type, AtomicType):
-                raise RuntimeError(f"expected map value: {val_field} to have an atomic type")
+                raise RuntimeError(f'expected map value: {val_field} to have an atomic type')
 
             new_type_def = MapType(
                 documentation=map_type.documentation,

@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 
 class TransformHint(enum.Enum):
-    DROPPED = "dropped"
-    INLINED_WRAPPER = "inlined_wrapper"
-    COLLAPSED_TO_STRING = "collapsed_to_string"
+    DROPPED = 'dropped'
+    INLINED_WRAPPER = 'inlined_wrapper'
+    COLLAPSED_TO_STRING = 'collapsed_to_string'
 
 
 @dataclasses.dataclass(frozen=True)
@@ -63,20 +63,20 @@ class MapFieldConfig:
 class BuildConfig:
     namespace: str
     package_name: str
-    version: str = "0.1.0"
+    version: str = '0.1.0'
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> BuildConfig | None:
         """Loads BuildConfig from the `build:` section of a YAML file, or None if absent."""
         with open(path) as f:
             data: dict[str, Any] = yaml.safe_load(f) or {}
-        build = data.get("build")
+        build = data.get('build')
         if not build:
             return None
         return cls(
-            namespace=build["namespace"],
-            package_name=build["package_name"],
-            version=build.get("version", "0.1.0"),
+            namespace=build['namespace'],
+            package_name=build['package_name'],
+            version=build.get('version', '0.1.0'),
         )
 
 
@@ -101,23 +101,23 @@ class TransformConfig:
         with open(path) as f:
             data: dict[str, Any] = yaml.safe_load(f) or {}
 
-        drop_fields = {k: frozenset(v) for k, v in data.get("drop_fields", {}).items()}
-        rename_fields = {k: dict(v) for k, v in data.get("rename_fields", {}).items()}
+        drop_fields = {k: frozenset(v) for k, v in data.get('drop_fields', {}).items()}
+        rename_fields = {k: dict(v) for k, v in data.get('rename_fields', {}).items()}
         return cls(
-            drop_types=frozenset(data.get("drop_types", [])),
+            drop_types=frozenset(data.get('drop_types', [])),
             drop_fields=drop_fields,
-            inline_wrappers=data.get("inline_wrappers", False),
-            flatten_list_wrappers=data.get("flatten_list_wrappers", False),
-            collapse_to_string=frozenset(data.get("collapse_to_string", [])),
-            rename_types=dict(data.get("rename_types", {})),
+            inline_wrappers=data.get('inline_wrappers', False),
+            flatten_list_wrappers=data.get('flatten_list_wrappers', False),
+            collapse_to_string=frozenset(data.get('collapse_to_string', [])),
+            rename_types=dict(data.get('rename_types', {})),
             rename_fields=rename_fields,
-            serialize_content=dict(data.get("serialize_content", {})),
-            coerce_to_bool=data.get("coerce_to_bool", False),
-            coerce_to_timestamp=frozenset(data.get("coerce_to_timestamp", [])),
-            comments=dict(data.get("comments", {})),
+            serialize_content=dict(data.get('serialize_content', {})),
+            coerce_to_bool=data.get('coerce_to_bool', False),
+            coerce_to_timestamp=frozenset(data.get('coerce_to_timestamp', [])),
+            comments=dict(data.get('comments', {})),
             maps={
-                type_name: MapFieldConfig(key=cfg["key"], value=cfg["value"])
-                for type_name, cfg in data.get("maps", {}).items()
+                type_name: MapFieldConfig(key=cfg['key'], value=cfg['value'])
+                for type_name, cfg in data.get('maps', {}).items()
             },
         )
 
@@ -266,24 +266,24 @@ def _apply_maps(
         if type_def.name not in maps:
             continue
         if not isinstance(type_def, xsd.Message):
-            raise ValueError(f"maps: {type_def.name!r} is not a message type")
+            raise ValueError(f'maps: {type_def.name!r} is not a message type')
         cfg = maps[type_def.name]
         fields_by_name = {f.name: f for f in type_def.get_fields()}
         key_field = fields_by_name.get(cfg.key)
         val_field = fields_by_name.get(cfg.value)
         if key_field is None:
-            raise ValueError(f"maps: key field {cfg.key!r} not found in {type_def.name!r}")
+            raise ValueError(f'maps: key field {cfg.key!r} not found in {type_def.name!r}')
         if val_field is None:
-            raise ValueError(f"maps: value field {cfg.value!r} not found in {type_def.name!r}")
+            raise ValueError(f'maps: value field {cfg.value!r} not found in {type_def.name!r}')
         if not isinstance(key_field.proto_type, xsd.AtomicType):
             raise ValueError(
-                f"maps: key field {cfg.key!r} in {type_def.name!r} must be an atomic type "
-                f"(proto3 map keys cannot be enums or messages); got {key_field.proto_type!r}",
+                f'maps: key field {cfg.key!r} in {type_def.name!r} must be an atomic type '
+                f'(proto3 map keys cannot be enums or messages); got {key_field.proto_type!r}',
             )
         if not isinstance(val_field.proto_type, xsd.AtomicType):
             raise ValueError(
-                f"maps: value field {cfg.value!r} in {type_def.name!r} must be an atomic type; "
-                f"got {val_field.proto_type!r}",
+                f'maps: value field {cfg.value!r} in {type_def.name!r} must be an atomic type; '
+                f'got {val_field.proto_type!r}',
             )
         map_type = xsd.MapType(
             documentation=type_def.documentation,
@@ -327,7 +327,7 @@ def _coerce_to_bool(
     for type_def in defs:
         if not isinstance(type_def, xsd.Enumeration):
             continue
-        if set(type_def.enum_values) != {"Y", "N"}:
+        if set(type_def.enum_values) != {'Y', 'N'}:
             continue
         for ref_field in field_index.get(id(type_def), []):
             ref_field.proto_type = xsd.AtomicType.BOOL
@@ -381,7 +381,7 @@ def _add_comments(
         if type_def.name in comments:
             type_def.documentation = comments[type_def.name]
         for field in type_def.get_fields():
-            key = f"{type_def.name}.{field.name}"
+            key = f'{type_def.name}.{field.name}'
             if key in comments:
                 field.documentation = comments[key]
 

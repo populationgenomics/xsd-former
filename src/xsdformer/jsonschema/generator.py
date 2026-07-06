@@ -35,7 +35,7 @@ _FLOAT_FIELD_TYPES = frozenset(
 
 
 DescriptorT = TypeVar(
-    "DescriptorT",
+    'DescriptorT',
     bound=descriptor_pb2.DescriptorProto | descriptor_pb2.EnumDescriptorProto,
 )
 
@@ -90,7 +90,7 @@ class _JsonSchemaFromDesc:
         main_message_descriptor: descriptor.Descriptor | None = None
         for fdp in self._fdp_map.values():
             for msg_proto in fdp.message_type:
-                full_name = f"{fdp.package}.{msg_proto.name}" if fdp.package else msg_proto.name
+                full_name = f'{fdp.package}.{msg_proto.name}' if fdp.package else msg_proto.name
                 msg_descriptor = self._pool.FindMessageTypeByName(full_name)
                 if full_name == message_name:
                     main_message_descriptor = msg_descriptor
@@ -98,11 +98,11 @@ class _JsonSchemaFromDesc:
                     self._convert_message_to_schema(msg_descriptor)
 
         schema = {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "definitions": self._definitions,
+            '$schema': 'http://json-schema.org/draft-07/schema#',
+            'definitions': self._definitions,
         }
         if main_message_descriptor:
-            schema["$ref"] = f"#/definitions/{main_message_descriptor.full_name}"
+            schema['$ref'] = f'#/definitions/{main_message_descriptor.full_name}'
         elif message_name:
             raise ValueError(f"Message '{message_name}' not found in descriptor set.")
         return schema
@@ -124,9 +124,9 @@ class _JsonSchemaFromDesc:
         self._convert_message_to_schema(main_message_descriptor)
 
         return {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "definitions": self._definitions,
-            "$ref": f"#/definitions/{main_message_descriptor.full_name}",
+            '$schema': 'http://json-schema.org/draft-07/schema#',
+            'definitions': self._definitions,
+            '$ref': f'#/definitions/{main_message_descriptor.full_name}',
         }
 
     def _get_comment(
@@ -137,7 +137,7 @@ class _JsonSchemaFromDesc:
         | descriptor.EnumValueDescriptor,
     ) -> str | None:
         path: list[int] = []
-        file_name = ""
+        file_name = ''
         try:
             if isinstance(desc, descriptor.FieldDescriptor):
                 if desc.containing_type.GetOptions().map_entry:
@@ -193,7 +193,7 @@ class _JsonSchemaFromDesc:
             for i, message_type in enumerate(fdp.message_type):
                 if message_type.name == desc.name:
                     return [descriptor_pb2.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER, i]
-        raise ValueError(f"Could not find source code path for message {desc.full_name}")
+        raise ValueError(f'Could not find source code path for message {desc.full_name}')
 
     def _get_field_path(self, desc: descriptor.FieldDescriptor) -> list[int]:
         """Gets the source code path for a field descriptor.
@@ -216,7 +216,7 @@ class _JsonSchemaFromDesc:
                 if field.name == desc.name:
                     path.extend([descriptor_pb2.DescriptorProto.FIELD_FIELD_NUMBER, i])
                     return path
-        raise ValueError(f"Could not find source code path for field {desc.full_name}")
+        raise ValueError(f'Could not find source code path for field {desc.full_name}')
 
     def _get_enum_path(self, desc: descriptor.EnumDescriptor) -> list[int]:
         """Gets the source code path for an enum descriptor.
@@ -245,7 +245,7 @@ class _JsonSchemaFromDesc:
             for i, enum_type in enumerate(fdp.enum_type):
                 if enum_type.name == desc.name:
                     return [descriptor_pb2.FileDescriptorProto.ENUM_TYPE_FIELD_NUMBER, i]
-        raise ValueError(f"Could not find source code path for enum {desc.full_name}")
+        raise ValueError(f'Could not find source code path for enum {desc.full_name}')
 
     def _get_enum_value_path(self, desc: descriptor.EnumValueDescriptor) -> list[int]:
         """Gets the source code path for an enum value descriptor.
@@ -269,7 +269,7 @@ class _JsonSchemaFromDesc:
                     path.extend([descriptor_pb2.EnumDescriptorProto.VALUE_FIELD_NUMBER, i])
                     return path
         raise ValueError(
-            f"Could not find source code path for enum value {desc.name}",
+            f'Could not find source code path for enum value {desc.name}',
         )
 
     def _get_name_parts(
@@ -279,8 +279,8 @@ class _JsonSchemaFromDesc:
         """Gets the relative name parts of a descriptor within its file."""
         fdp = self._fdp_map[desc.file.name]
         if fdp.package:
-            return desc.full_name.replace(fdp.package + ".", "").split(".")
-        return desc.full_name.split(".")
+            return desc.full_name.replace(fdp.package + '.', '').split('.')
+        return desc.full_name.split('.')
 
     def _find_descriptor_proto(
         self,
@@ -345,23 +345,23 @@ class _JsonSchemaFromDesc:
         message_descriptor: descriptor.Descriptor,
     ) -> dict:
         message_name = message_descriptor.full_name
-        if message_name == "google.protobuf.Timestamp":
+        if message_name == 'google.protobuf.Timestamp':
             return {}
         if message_name in self._definitions:
-            return {"$ref": f"#/definitions/{message_name}"}
+            return {'$ref': f'#/definitions/{message_name}'}
         properties = {}
         for field in message_descriptor.fields:
             property_name = field.name if self._preserving_proto_field_name else field.json_name
             properties[property_name] = self._convert_field_to_schema(field)
 
         schema: dict[str, Any] = {
-            "type": "object",
-            "properties": properties,
+            'type': 'object',
+            'properties': properties,
         }
 
         comment = self._get_comment(message_descriptor)
         if comment:
-            schema["description"] = comment
+            schema['description'] = comment
 
         self._definitions[message_name] = schema
 
@@ -378,50 +378,50 @@ class _JsonSchemaFromDesc:
         if field.is_repeated:
             if field.message_type and field.message_type.GetOptions().map_entry:
                 value_schema = self._get_field_schema(
-                    field.message_type.fields_by_name["value"],
+                    field.message_type.fields_by_name['value'],
                 )
-                return {"type": "object", "additionalProperties": value_schema}
+                return {'type': 'object', 'additionalProperties': value_schema}
             schema: dict[str, Any] = {
-                "type": "array",
-                "items": self._get_field_schema(field),
+                'type': 'array',
+                'items': self._get_field_schema(field),
             }
         else:
             schema = self._get_field_schema(field)
 
         comment = self._get_comment(field)
         if comment:
-            schema["description"] = comment
+            schema['description'] = comment
 
         return schema
 
     def _get_field_schema(self, field: descriptor.FieldDescriptor) -> dict:
-        if field.message_type and field.message_type.full_name == "google.protobuf.Timestamp":
-            return {"type": "string", "format": "date-time"}
+        if field.message_type and field.message_type.full_name == 'google.protobuf.Timestamp':
+            return {'type': 'string', 'format': 'date-time'}
         field_type = field.type
 
         if field_type in _INTEGER_FIELD_TYPES:
-            schema = {"type": "integer"}
+            schema = {'type': 'integer'}
         elif field_type in _FLOAT_FIELD_TYPES:
-            schema = {"type": "number"}
+            schema = {'type': 'number'}
         elif field_type == descriptor.FieldDescriptor.TYPE_BOOL:
-            schema = {"type": "boolean"}
+            schema = {'type': 'boolean'}
         elif field_type == descriptor.FieldDescriptor.TYPE_STRING:
-            schema = {"type": "string"}
+            schema = {'type': 'string'}
         elif field_type == descriptor.FieldDescriptor.TYPE_BYTES:
-            schema = {"type": "string", "contentEncoding": "base64"}
+            schema = {'type': 'string', 'contentEncoding': 'base64'}
         elif field_type == descriptor.FieldDescriptor.TYPE_ENUM:
             schema = self._get_enum_schema(field)
         elif field_type == descriptor.FieldDescriptor.TYPE_MESSAGE:
             schema = self._get_message_schema(field)
         else:
-            raise NotImplementedError(f"Unhandled field type: {field_type}")
+            raise NotImplementedError(f'Unhandled field type: {field_type}')
 
         return schema
 
     def _get_message_schema(self, field: descriptor.FieldDescriptor) -> dict:
         if not field.message_type:
             raise ValueError(f"Field '{field.name}' does not have a message type.")
-        return {"$ref": f"#/definitions/{field.message_type.full_name}"}
+        return {'$ref': f'#/definitions/{field.message_type.full_name}'}
 
     def _convert_enum_to_schema(self, enum_descriptor: descriptor.EnumDescriptor) -> None:
         enum_name = enum_descriptor.full_name
@@ -433,25 +433,25 @@ class _JsonSchemaFromDesc:
         if has_value_descriptions:
             one_of = []
             for value in enum_descriptor.values:
-                entry: dict[str, str] = {"const": value.name}
+                entry: dict[str, str] = {'const': value.name}
                 if comment := self._get_comment(value):
-                    entry["description"] = comment
+                    entry['description'] = comment
                 one_of.append(entry)
-            schema["oneOf"] = one_of
+            schema['oneOf'] = one_of
         else:
-            schema["enum"] = [v.name for v in enum_descriptor.values]
+            schema['enum'] = [v.name for v in enum_descriptor.values]
 
         enum_comment = self._get_comment(enum_descriptor)
         if enum_comment:
-            schema["description"] = enum_comment
+            schema['description'] = enum_comment
 
         self._definitions[enum_name] = schema
 
     def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict[str, Any]:
-        return {"$ref": f"#/definitions/{field.enum_type.full_name}"}
+        return {'$ref': f'#/definitions/{field.enum_type.full_name}'}
 
 
-def _generate_schema_from_descriptor_set(  # noqa: PLR0913
+def _generate_schema_from_descriptor_set(
     descriptor_set: descriptor_pb2.FileDescriptorSet,
     namespace: str,
     main_message: str | None,
@@ -464,17 +464,17 @@ def _generate_schema_from_descriptor_set(  # noqa: PLR0913
         descriptor_set,
         preserving_proto_field_name=preserving_proto_field_name,
     )
-    fully_qualified_main_message = f"{namespace}.{main_message}" if main_message else None
+    fully_qualified_main_message = f'{namespace}.{main_message}' if main_message else None
     if include_all:
         schema = schema_generator.generate_all(fully_qualified_main_message)
     else:
         if not fully_qualified_main_message:
             raise ValueError(
-                "`main_message` is required when `include_all` is False",
+                '`main_message` is required when `include_all` is False',
             )
         schema = schema_generator.generate(fully_qualified_main_message)
         if definitions_only:
-            del schema["$ref"]
+            del schema['$ref']
 
     return json.dumps(schema, indent=2)
 
@@ -486,21 +486,21 @@ def _compile_proto_to_descriptor_set(
     """Compiles a .proto file to a FileDescriptorSet."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = pathlib.Path(tmpdir)
-        desc_path = tmp_path / f"{proto_path.stem}.desc"
+        desc_path = tmp_path / f'{proto_path.stem}.desc'
 
         protoc_command = [
             sys.executable,
-            "-m",
-            "grpc_tools.protoc",
-            f"--proto_path={proto_path.parent}",
+            '-m',
+            'grpc_tools.protoc',
+            f'--proto_path={proto_path.parent}',
         ]
         if include_paths:
             for include_path in include_paths:
-                protoc_command.append(f"--proto_path={include_path}")
+                protoc_command.append(f'--proto_path={include_path}')
         protoc_command.extend(
             [
-                f"--descriptor_set_out={desc_path}",
-                "--include_source_info",
+                f'--descriptor_set_out={desc_path}',
+                '--include_source_info',
                 str(proto_path),
             ],
         )
@@ -510,7 +510,7 @@ def _compile_proto_to_descriptor_set(
             check=True,
         )
 
-        with open(desc_path, "rb") as f:
+        with open(desc_path, 'rb') as f:
             descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
 
     return descriptor_set
@@ -524,10 +524,10 @@ def generate(
     definitions_only: bool = False,
 ) -> str:
     """Generates a JSON schema from XSD type definitions."""
-    proto_def = "\n".join(proto_generator.generate(namespace, type_defs))
+    proto_def = '\n'.join(proto_generator.generate(namespace, type_defs))
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = pathlib.Path(tmpdir)
-        proto_path = tmp_path / f"{namespace}.proto"
+        proto_path = tmp_path / f'{namespace}.proto'
         proto_path.write_text(proto_def)
         descriptor_set = _compile_proto_to_descriptor_set(proto_path)
     return _generate_schema_from_descriptor_set(
@@ -539,7 +539,7 @@ def generate(
     )
 
 
-def generate_from_proto(  # noqa: PLR0913
+def generate_from_proto(
     proto_path: pathlib.Path,
     namespace: str,
     main_message: str | None,

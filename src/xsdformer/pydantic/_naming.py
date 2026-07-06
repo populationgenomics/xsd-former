@@ -20,11 +20,11 @@ def type_name(type_def: xsd.TypeDefinition) -> str:
     PascalCase path components joined by `_`. Top-level types have a one-element
     path, so this is just their name.
     """
-    return "_".join(type_def.path)
+    return '_'.join(type_def.path)
 
 
 def attr_name(name: str | None) -> str | None:
     """The attribute name for a field, suffixed if it collides with a keyword."""
     if name is not None and keyword.iskeyword(name):
-        return name + "_"
+        return name + '_'
     return name

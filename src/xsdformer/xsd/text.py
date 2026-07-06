@@ -22,9 +22,9 @@ def _words(text: str) -> list[str]:
     Returns:
       A list of words.
     """
-    text = re.sub(r"([a-z])([A-Z0-9])", r"\1 \2", text)
-    text = re.sub(r"([0-9])([a-zA-Z])", r"\1 \2", text)
-    text = re.sub(r"[^0-9a-zA-Z]", " ", text)
+    text = re.sub(r'([a-z])([A-Z0-9])', r'\1 \2', text)
+    text = re.sub(r'([0-9])([a-zA-Z])', r'\1 \2', text)
+    text = re.sub(r'[^0-9a-zA-Z]', ' ', text)
     return text.strip().split()
 
 
@@ -41,7 +41,7 @@ def normalize_whitespace(text: Sequence[str]) -> str:
     Returns:
       A string with normalized whitespace.
     """
-    return re.sub(r"\s+", " ", " ".join(text)).strip()
+    return re.sub(r'\s+', ' ', ' '.join(text)).strip()
 
 
 @functools.singledispatch
@@ -56,7 +56,7 @@ def snake_case(text: str) -> str:
     Returns:
       A string in snake_case.
     """
-    return "_".join([w.lower() for w in _words(text)])
+    return '_'.join([w.lower() for w in _words(text)])
 
 
 @snake_case.register
@@ -76,7 +76,7 @@ def pascal_case(text: str) -> str:
     Returns:
       A string in PascalCase.
     """
-    return "".join([w.capitalize() for w in _words(text)])
+    return ''.join([w.capitalize() for w in _words(text)])
 
 
 @pascal_case.register
@@ -84,14 +84,14 @@ def _(text: _Exact) -> str:
     return text
 
 
-def indent(text: Iterable[str], *, indent: str = "  ") -> Iterator[str]:
+def indent(text: Iterable[str], *, indent: str = '  ') -> Iterator[str]:
     for t in text:
         yield indent + t
 
 
 def render_comment(comment: str) -> Iterable[str]:
-    for line in comment.split("\n"):
-        yield f"// {line}"
+    for line in comment.split('\n'):
+        yield f'// {line}'
 
 
 def render_doc_comment(doc: str) -> Iterable[str]:
@@ -107,11 +107,11 @@ def render_doc_comment(doc: str) -> Iterable[str]:
       The doc-comment lines.
     """
     # Break any `*/` in the text so it can't terminate the comment block early.
-    lines = doc.replace("*/", "* /").split("\n")
+    lines = doc.replace('*/', '* /').split('\n')
     if len(lines) == 1:
-        yield f"/** {lines[0]} */"
+        yield f'/** {lines[0]} */'
         return
-    yield "/**"
+    yield '/**'
     for line in lines:
-        yield f" * {line}"
-    yield " */"
+        yield f' * {line}'
+    yield ' */'

@@ -11,8 +11,8 @@ def test_book_role_converter(
     book_converter: types.ModuleType,
 ) -> None:
     book_pb2 = book_converter.book_pb2
-    assert hasattr(book_converter, "Role")
-    assert book_converter.Role("editor") == book_pb2.Role.ROLE_EDITOR
+    assert hasattr(book_converter, 'Role')
+    assert book_converter.Role('editor') == book_pb2.Role.ROLE_EDITOR
 
 
 _BOOK_XML = """
@@ -53,9 +53,9 @@ def test_xml_to_proto(
     root = etree.XML(_BOOK_XML, parser=None)
     proto_book = book_converter.Book(root)
 
-    expected_metadata = etree.tostring(root.find("metadata")).decode("utf-8")
+    expected_metadata = etree.tostring(root.find('metadata')).decode('utf-8')
     assert proto_book.metadata == expected_metadata
-    proto_book.ClearField("metadata")
+    proto_book.ClearField('metadata')
     book_pb2 = book_converter.book_pb2
     expected_book = text_format.Parse(_BOOK_PROTO, book_pb2.Book())
 
@@ -95,19 +95,19 @@ def test_xsd_union(
     #     * have to synthesize field name suffixes.
     union_module = py_converter_module_factory(
         _UNION_XSD,
-        proto_namespace="union",
-        py_module="union",
+        proto_namespace='union',
+        py_module='union',
     )
     union_pb2 = union_module.union_pb2
     # Test with an integer value
-    xml_int = "<root><value>123</value></root>"
+    xml_int = '<root><value>123</value></root>'
     root_int = etree.XML(xml_int, parser=None)
     proto_int = union_module.Root(root_int)
     expected_proto_int = text_format.Parse('value: "123"', union_pb2.Root())
     assert proto_int == expected_proto_int
 
     # Test with a string value
-    xml_string = "<root><value>hello</value></root>"
+    xml_string = '<root><value>hello</value></root>'
     root_string = etree.XML(xml_string, parser=None)
     proto_string = union_module.Root(root_string)
     expected_proto_string = text_format.Parse('value: "hello"', union_pb2.Root())
@@ -181,8 +181,8 @@ def test_xsd_choice(
 ) -> None:
     choice_module = py_converter_module_factory(
         _CHOICE_XSD,
-        proto_namespace="choice",
-        py_module="choice",
+        proto_namespace='choice',
+        py_module='choice',
     )
     choice_pb2 = choice_module.choice_pb2
 
@@ -287,8 +287,8 @@ def test_xsd_choice_occurs(
 ) -> None:
     choice_module = py_converter_module_factory(
         _CHOICE_OCCURS_XSD,
-        proto_namespace="choice_occurs",
-        py_module="choice_occurs",
+        proto_namespace='choice_occurs',
+        py_module='choice_occurs',
     )
     choice_pb2 = choice_module.choice_occurs_pb2
 
@@ -350,8 +350,8 @@ def test_xsd_date(
 ) -> None:
     date_module = py_converter_module_factory(
         _DATE_XSD,
-        proto_namespace="date",
-        py_module="date",
+        proto_namespace='date',
+        py_module='date',
     )
     date_pb2 = date_module.date_pb2
 
@@ -386,8 +386,8 @@ def test_mixed_content(
 ) -> None:
     mixed_module = py_converter_module_factory(
         _MIXED_XSD,
-        proto_namespace="mixed",
-        py_module="mixed",
+        proto_namespace='mixed',
+        py_module='mixed',
     )
     mixed_pb2 = mixed_module.mixed_pb2
 
@@ -433,8 +433,8 @@ def test_complex_enum(
 ) -> None:
     module = py_converter_module_factory(
         _COMPLEX_ENUM_XSD,
-        proto_namespace="complex_enum",
-        py_module="complex_enum",
+        proto_namespace='complex_enum',
+        py_module='complex_enum',
     )
     pb2_module = module.complex_enum_pb2
 
@@ -482,21 +482,21 @@ def test_map_type(
 ) -> None:
     module = py_converter_module_factory(
         _MAP_TYPE_XSD,
-        proto_namespace="map_type",
-        py_module="map_type",
+        proto_namespace='map_type',
+        py_module='map_type',
         config=xsd.Config(
             map_overrides=(
                 xsd.MapOverrideConfig(
-                    map_type=("Infon",),
-                    key_field="key",
-                    value_field="value",
+                    map_type=('Infon',),
+                    key_field='key',
+                    value_field='value',
                 ),
             ),
         ),
     )
     pb2_module = module.map_type_pb2
-    assert hasattr(pb2_module, "Document")
-    assert not hasattr(pb2_module, "Infon")
+    assert hasattr(pb2_module, 'Document')
+    assert not hasattr(pb2_module, 'Infon')
 
     root = etree.XML(_MAP_TYPE_XML, parser=None)
     proto = module.Document(root)

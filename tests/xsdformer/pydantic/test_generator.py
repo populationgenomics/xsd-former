@@ -17,11 +17,11 @@ from xsdformer.xsd import xsd
 
 def _generate(
     xsd_str: str,
-    namespace: str = "demo",
+    namespace: str = 'demo',
     config: xsd.Config | None = None,
 ) -> str:
     type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
-    return "\n".join(generator.generate(namespace, type_defs))
+    return '\n'.join(generator.generate(namespace, type_defs))
 
 
 # A flat schema: one complexType of scalar fields exercising each cardinality.
@@ -49,23 +49,23 @@ def test_scalar_model_golden() -> None:
     # `(1,1)` -> `T`, `(0,1)` -> `T | None = None`, repeated -> `list[T] = []`;
     # `xs:date` -> `datetime`. Only the datetime/BaseModel imports are pulled in.
     assert _generate(_SCALAR_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from datetime import datetime\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Record(BaseModel):\n"
-        "    id: str\n"
-        "    ref: str | None = None\n"
-        "    title: str\n"
-        "    comment: str | None = None\n"
-        "    tag: list[str] = []\n"
-        "    count: int\n"
-        "    ratio: float\n"
-        "    active: bool\n"
-        "    created: datetime"
+        'from __future__ import annotations\n'
+        '\n'
+        'from datetime import datetime\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Record(BaseModel):\n'
+        '    id: str\n'
+        '    ref: str | None = None\n'
+        '    title: str\n'
+        '    comment: str | None = None\n'
+        '    tag: list[str] = []\n'
+        '    count: int\n'
+        '    ratio: float\n'
+        '    active: bool\n'
+        '    created: datetime'
     )
 
 
@@ -93,22 +93,22 @@ def test_enum_string_valued_golden() -> None:
     # `str, Enum`; member name = proto value name, value = xml_value; synthesized
     # "" zero member first. The enum (a dependency) is emitted before the model.
     assert _generate(_ENUM_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from enum import Enum\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Role(str, Enum):\n"
+        'from __future__ import annotations\n'
+        '\n'
+        'from enum import Enum\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Role(str, Enum):\n'
         '    ROLE_UNSPECIFIED = ""\n'
         '    ROLE_AUTHOR = "author"\n'
         '    ROLE_EDITOR = "editor"\n'
         '    ROLE_REVIEWER = "reviewer"\n'
-        "\n"
-        "\n"
-        "class Person(BaseModel):\n"
-        "    role: Role"
+        '\n'
+        '\n'
+        'class Person(BaseModel):\n'
+        '    role: Role'
     )
 
 
@@ -139,25 +139,25 @@ def test_doc_comments_as_class_docstrings_golden() -> None:
     # Type docs become class docstrings; the field-level doc on `name` is dropped
     # (clean dialect — only structure survives; the gate normalizes descriptions).
     assert _generate(_DOC_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from enum import Enum\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Role(str, Enum):\n"
+        'from __future__ import annotations\n'
+        '\n'
+        'from enum import Enum\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Role(str, Enum):\n'
         '    """The contributor\'s role."""\n'
-        "\n"
+        '\n'
         '    ROLE_UNSPECIFIED = ""\n'
         '    ROLE_AUTHOR = "author"\n'
-        "\n"
-        "\n"
-        "class Person(BaseModel):\n"
+        '\n'
+        '\n'
+        'class Person(BaseModel):\n'
         '    """A contributor record."""\n'
-        "\n"
-        "    name: str\n"
-        "    role: Role"
+        '\n'
+        '    name: str\n'
+        '    role: Role'
     )
 
 
@@ -186,18 +186,18 @@ def test_nested_type_hoisted_golden() -> None:
     # The anonymous `book` type is hoisted to `Library_Book` and referenced by
     # that name. As a dependency it is emitted first.
     assert _generate(_NESTED_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Library_Book(BaseModel):\n"
-        "    title: str\n"
-        "    author: str | None = None\n"
-        "\n"
-        "\n"
-        "class Library(BaseModel):\n"
-        "    book: Library_Book"
+        'from __future__ import annotations\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Library_Book(BaseModel):\n'
+        '    title: str\n'
+        '    author: str | None = None\n'
+        '\n'
+        '\n'
+        'class Library(BaseModel):\n'
+        '    book: Library_Book'
     )
 
 
@@ -223,15 +223,15 @@ def test_choice_flattened_to_optional_golden() -> None:
     # `label` stays required; the choice branches `email`/`phone` become optional
     # even though each is individually required.
     assert _generate(_CHOICE_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Contact(BaseModel):\n"
-        "    label: str\n"
-        "    email: str | None = None\n"
-        "    phone: str | None = None"
+        'from __future__ import annotations\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Contact(BaseModel):\n'
+        '    label: str\n'
+        '    email: str | None = None\n'
+        '    phone: str | None = None'
     )
 
 
@@ -252,7 +252,7 @@ _MAP_XSD = """
 """
 
 _MAP_CONFIG = xsd.Config(
-    map_overrides=(xsd.MapOverrideConfig(map_type=("Entry",), key_field="key", value_field="value"),),
+    map_overrides=(xsd.MapOverrideConfig(map_type=('Entry',), key_field='key', value_field='value'),),
 )
 
 
@@ -260,13 +260,13 @@ def test_map_field_becomes_dict_golden() -> None:
     # The `Entry` map type emits nothing; the field surfaces as `dict[str, V] = {}`
     # (required-but-possibly-empty — no `| None`).
     assert _generate(_MAP_XSD, config=_MAP_CONFIG) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Catalog(BaseModel):\n"
-        "    entry: dict[str, str] = {}"
+        'from __future__ import annotations\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Catalog(BaseModel):\n'
+        '    entry: dict[str, str] = {}'
     )
 
 
@@ -289,17 +289,17 @@ def test_keyword_field_names_aliased_golden() -> None:
     # `class`/`import` are Python keywords, so they are suffixed with `_` and given
     # a `Field(alias=...)`; the model gains `populate_by_name`. `value` stays bare.
     assert _generate(_KEYWORD_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from pydantic import BaseModel, ConfigDict, Field\n"
-        "\n"
-        "\n"
-        "class Thing(BaseModel):\n"
-        "    model_config = ConfigDict(populate_by_name=True)\n"
-        "\n"
+        'from __future__ import annotations\n'
+        '\n'
+        'from pydantic import BaseModel, ConfigDict, Field\n'
+        '\n'
+        '\n'
+        'class Thing(BaseModel):\n'
+        '    model_config = ConfigDict(populate_by_name=True)\n'
+        '\n'
         '    class_: str = Field(alias="class")\n'
         '    import_: str | None = Field(default=None, alias="import")\n'
-        "    value: str"
+        '    value: str'
     )
 
 
@@ -327,21 +327,21 @@ def test_nested_enum_hoisted_golden() -> None:
     # The inline enum is hoisted to `Sample_Origin`, keeping the bare proto value
     # name (`ORIGIN_*`) as the member name — the converter's identity key.
     assert _generate(_NESTED_ENUM_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from enum import Enum\n"
-        "\n"
-        "from pydantic import BaseModel\n"
-        "\n"
-        "\n"
-        "class Sample_Origin(str, Enum):\n"
+        'from __future__ import annotations\n'
+        '\n'
+        'from enum import Enum\n'
+        '\n'
+        'from pydantic import BaseModel\n'
+        '\n'
+        '\n'
+        'class Sample_Origin(str, Enum):\n'
         '    ORIGIN_UNSPECIFIED = ""\n'
         '    ORIGIN_GERMLINE = "germline"\n'
         '    ORIGIN_SOMATIC = "somatic"\n'
-        "\n"
-        "\n"
-        "class Sample(BaseModel):\n"
-        "    origin: Sample_Origin"
+        '\n'
+        '\n'
+        'class Sample(BaseModel):\n'
+        '    origin: Sample_Origin'
     )
 
 
@@ -364,12 +364,12 @@ def test_enum_string_values_escaped_golden() -> None:
     # Double quotes and backslashes in the xml_value are escaped so the emitted
     # Python string literal stays valid. No model/pydantic import (enum only).
     assert _generate(_ESCAPE_ENUM_XSD) == (
-        "from __future__ import annotations\n"
-        "\n"
-        "from enum import Enum\n"
-        "\n"
-        "\n"
-        "class Quote(str, Enum):\n"
+        'from __future__ import annotations\n'
+        '\n'
+        'from enum import Enum\n'
+        '\n'
+        '\n'
+        'class Quote(str, Enum):\n'
         '    QUOTE_UNSPECIFIED = ""\n'
         '    QUOTE_SAY_HI = "say \\"hi\\""\n'
         '    QUOTE_BACK_SLASH = "back\\\\slash"'
@@ -396,32 +396,32 @@ def test_conflicting_choice_branches_raise() -> None:
     # the generators raise instead of emitting a model that loses schema shape.
     message = xsd.Message(
         documentation=None,
-        name="Rec",
+        name='Rec',
         content=(
             xsd.Choice(
                 documentation=None,
                 occurs=(1, 1),
                 content=(
-                    _leaf("x", xsd.AtomicType.STRING),
-                    _leaf("x", xsd.AtomicType.INT32),
+                    _leaf('x', xsd.AtomicType.STRING),
+                    _leaf('x', xsd.AtomicType.INT32),
                 ),
             ),
         ),
     )
-    with pytest.raises(ValueError, match="conflicting type"):
-        "\n".join(generator.generate("demo", (message,)))
+    with pytest.raises(ValueError, match='conflicting type'):
+        '\n'.join(generator.generate('demo', (message,)))
 
 
 def test_duplicate_same_shape_field_is_deduped() -> None:
     # Same name *and* same shape is harmless — dedup silently, no raise.
-    same = (_leaf("x", xsd.AtomicType.STRING), _leaf("x", xsd.AtomicType.STRING))
+    same = (_leaf('x', xsd.AtomicType.STRING), _leaf('x', xsd.AtomicType.STRING))
     message = xsd.Message(
         documentation=None,
-        name="Rec",
+        name='Rec',
         content=(xsd.Choice(documentation=None, occurs=(1, 1), content=same),),
     )
-    code = "\n".join(generator.generate("demo", (message,)))
-    assert code.count("x:") == 1
+    code = '\n'.join(generator.generate('demo', (message,)))
+    assert code.count('x:') == 1
 
 
 def test_all_fixtures_compile() -> None:
@@ -439,4 +439,4 @@ def test_all_fixtures_compile() -> None:
         (_ESCAPE_ENUM_XSD, None),
     ):
         code = _generate(xsd_str, config=config)
-        compile(code, "<generated>", "exec")
+        compile(code, '<generated>', 'exec')

@@ -23,26 +23,26 @@ from xsdformer.dtd import dtd
 from xsdformer.transforms import TransformConfig, apply_transforms
 
 _REPO_ROOT = pathlib.Path(__file__).parents[3]
-_SCHEMAS_DIR = _REPO_ROOT / "tests" / "xsdformer" / "typespec" / "schemas"
-_RECORDS_DIR = pathlib.Path(__file__).parent / "records"
-_RECORDS = sorted(_RECORDS_DIR.glob("*.xml"))
+_SCHEMAS_DIR = _REPO_ROOT / 'tests' / 'xsdformer' / 'typespec' / 'schemas'
+_RECORDS_DIR = pathlib.Path(__file__).parent / 'records'
+_RECORDS = sorted(_RECORDS_DIR.glob('*.xml'))
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def pubmed_package(tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
     """Build the full pubmed suite once, under the production transform config."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / "pubmed_transforms.yaml")
-    type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / "pubmed.dtd")), config)
-    out_dir = tmp_path_factory.mktemp("pubmed_build")
-    build_package(type_defs=type_defs, namespace="pubmed", package_name="pubmed_proto", out_dir=out_dir)
+    config = TransformConfig.from_yaml(_REPO_ROOT / 'pubmed_transforms.yaml')
+    type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / 'pubmed.dtd')), config)
+    out_dir = tmp_path_factory.mktemp('pubmed_build')
+    build_package(type_defs=type_defs, namespace='pubmed', package_name='pubmed_proto', out_dir=out_dir)
     return out_dir
 
 
 def test_records_present() -> None:
-    assert _RECORDS, f"no PubMed record fixtures found in {_RECORDS_DIR}"
+    assert _RECORDS, f'no PubMed record fixtures found in {_RECORDS_DIR}'
 
 
-@pytest.mark.parametrize("record", _RECORDS, ids=lambda p: p.stem)
+@pytest.mark.parametrize('record', _RECORDS, ids=lambda p: p.stem)
 def test_pubmed_record_roundtrip(record: pathlib.Path, pubmed_package: pathlib.Path) -> None:
     # Run in a subprocess so the dynamically compiled `*_pb2` (a global descriptor
     # pool registration) and the generated package stay isolated from the test
@@ -67,7 +67,7 @@ restored = models.PubmedArticle.model_validate_json(model.model_dump_json())
 assert restored == model
 """
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", script],
+        [sys.executable, '-c', script],
         check=False,
         capture_output=True,
         text=True,

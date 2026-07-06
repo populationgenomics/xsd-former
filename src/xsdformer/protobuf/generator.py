@@ -40,7 +40,7 @@ class ProtobufGenerator:
 
     def begin_namespace(self, namespace: str) -> Iterable[str]:
         self._namespace = namespace
-        return [f"package {namespace};"]
+        return [f'package {namespace};']
 
     def end_namespace(self, namespace: str) -> Iterable[str]:
         del namespace
@@ -49,17 +49,17 @@ class ProtobufGenerator:
     def enum(self, enum_def: xsd.Enumeration) -> Iterable[str]:
         if enum_def.documentation:
             yield from text.render_comment(enum_def.documentation)
-        yield f"enum {enum_def.name} {{"
+        yield f'enum {enum_def.name} {{'
         for field in enum_def.field_iter():
-            yield f"  {field.name} = {field.num};"
-        yield "}"
+            yield f'  {field.name} = {field.num};'
+        yield '}'
 
     def definition(self, type_def: xsd.TypeDefinition) -> Iterable[str]:
         yield from self._definition(type_def)
 
     @functools.singledispatchmethod
     def _definition(self, type_def: xsd.TypeDefinition) -> Iterable[str]:
-        raise NotImplementedError(f"Not implemented for {type_def=}")
+        raise NotImplementedError(f'Not implemented for {type_def=}')
 
     @_definition.register
     def _(self, msg_def: xsd.MapType) -> Iterable[str]:
@@ -91,7 +91,7 @@ class ProtobufGenerator:
         *,
         in_oneof: bool = False,
     ) -> Iterable[str]:
-        raise NotImplementedError(f"Not implemented for {field_def=}")
+        raise NotImplementedError(f'Not implemented for {field_def=}')
 
     @_message_field.register
     def _(self, field_def: xsd.Choice, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
@@ -110,9 +110,9 @@ class ProtobufGenerator:
         if not oneof:
             yield from inner
         else:
-            yield "oneof oneof_name {"
+            yield 'oneof oneof_name {'
             yield from text.indent(inner)
-            yield "}"
+            yield '}'
 
     @_message_field.register
     def _(self, field_def: xsd.Seq, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
@@ -129,20 +129,20 @@ class ProtobufGenerator:
         if field_def.documentation:
             yield from text.render_comment(field_def.documentation)
         type_str = field_def.proto_type_str(path)
-        optional = "optional " if not in_oneof and _needs_proto3_optional(field_def) else ""
-        yield f"{optional}{type_str} {field_def.name} = {field_def.num};"
+        optional = 'optional ' if not in_oneof and _needs_proto3_optional(field_def) else ''
+        yield f'{optional}{type_str} {field_def.name} = {field_def.num};'
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
-        saved = getattr(self, "_emitted_fields", None)
+        saved = getattr(self, '_emitted_fields', None)
         self._emitted_fields: set[str] = set()
         if msg_def.documentation:
             yield from text.render_comment(msg_def.documentation)
-        yield f"message {msg_def.name} {{"
+        yield f'message {msg_def.name} {{'
         for inner in msg_def.inner_types():
             yield from text.indent(self.definition(inner))
         for field_def in msg_def.content:
             yield from text.indent(self.message_field(field_def, msg_def.path))
-        yield "}"
+        yield '}'
         self._emitted_fields = saved or set()
 
 

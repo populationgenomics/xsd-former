@@ -20,16 +20,16 @@ _AttributeDecl = Any  # etree._DTDAttributeDecl
 def _occur_to_ir(occur: str) -> xsd.Occurs:
     """Maps lxml DTD occurrence strings to IR occurrence tuples."""
     match occur:
-        case "once":
+        case 'once':
             return (1, 1)
-        case "opt":
+        case 'opt':
             return (0, 1)
-        case "mult":
+        case 'mult':
             return (0, None)
-        case "plus":
+        case 'plus':
             return (1, None)
         case _:
-            raise ValueError(f"Unknown occur value: {occur}")
+            raise ValueError(f'Unknown occur value: {occur}')
 
 
 def _flatten_content_tree(node: _ContentNode) -> list[_ContentNode]:
@@ -40,14 +40,14 @@ def _flatten_content_tree(node: _ContentNode) -> list[_ContentNode]:
     and matching type.
     """
     node_type = node.type
-    if node_type not in ("seq", "or"):
+    if node_type not in ('seq', 'or'):
         return [node]
 
     result: list[_ContentNode] = []
     if node.left is not None:
         result.append(node.left)
     current = node.right
-    while current is not None and current.type == node_type and current.occur == "once":
+    while current is not None and current.type == node_type and current.occur == 'once':
         if current.left is not None:
             result.append(current.left)
         current = current.right
@@ -65,7 +65,7 @@ def _process_content_node(
     node_type = node.type
     occurs = _occur_to_ir(node.occur)
 
-    if node_type == "element":
+    if node_type == 'element':
         target = element_messages[node.name]
         return xsd.Elem(
             name=text.snake_case(node.name),
@@ -76,24 +76,24 @@ def _process_content_node(
             default=None,
         )
 
-    if node_type in ("seq", "or"):
-        children = [c for c in _flatten_content_tree(node) if c.type != "pcdata"]
+    if node_type in ('seq', 'or'):
+        children = [c for c in _flatten_content_tree(node) if c.type != 'pcdata']
         if not children:
-            raise ValueError(f"Empty {node_type} after filtering pcdata")
+            raise ValueError(f'Empty {node_type} after filtering pcdata')
 
         content = tuple(_process_content_node(c, element_messages) for c in children)
-        if node_type == "seq":
+        if node_type == 'seq':
             return xsd.Seq(documentation=None, occurs=occurs, content=content)
         return xsd.Choice(documentation=None, occurs=occurs, content=content)
 
-    raise ValueError(f"Unexpected content node type: {node_type}")
+    raise ValueError(f'Unexpected content node type: {node_type}')
 
 
 def _has_element_children(node: _ContentNode | None) -> bool:
     """Checks if a content model tree contains any element references."""
     if node is None:
         return False
-    if node.type == "element":
+    if node.type == 'element':
         return True
     return _has_element_children(node.left) or _has_element_children(node.right)
 
@@ -102,9 +102,9 @@ def _collect_mixed_elements(node: _ContentNode | None) -> list[_ContentNode]:
     """Collects all element nodes from a mixed content model tree."""
     if node is None:
         return []
-    if node.type == "element":
+    if node.type == 'element':
         return [node]
-    if node.type == "pcdata":
+    if node.type == 'pcdata':
         return []
     result: list[_ContentNode] = []
     result.extend(_collect_mixed_elements(node.left))
@@ -117,7 +117,7 @@ def _collect_referenced_names(node: _ContentNode | None) -> set[str]:
     if node is None:
         return set()
     names: set[str] = set()
-    if node.type == "element" and node.name:
+    if node.type == 'element' and node.name:
         names.add(node.name)
     names.update(_collect_referenced_names(node.left))
     names.update(_collect_referenced_names(node.right))
@@ -131,11 +131,11 @@ def _attr_type_from_dtd(
 ) -> xsd.AtomicType | xsd.Enumeration:
     """Maps a DTD attribute type to an IR type."""
     match attr.type:
-        case "cdata" | "nmtoken" | "nmtokens" | "idref" | "idrefs" | "entity" | "entities":
+        case 'cdata' | 'nmtoken' | 'nmtokens' | 'idref' | 'idrefs' | 'entity' | 'entities':
             return xsd.AtomicType.STRING
-        case "id":
+        case 'id':
             return xsd.AtomicType.ID
-        case "enumeration":
+        case 'enumeration':
             values = tuple(attr.values())
             key = frozenset(values)
             if key in enum_registry:
@@ -155,7 +155,7 @@ def _attr_type_from_dtd(
 def _attr_occurs(attr: _AttributeDecl) -> xsd.Occurs:
     """Maps DTD attribute default to IR occurrence."""
     match attr.default:
-        case "required" | "fixed":
+        case 'required' | 'fixed':
             return (1, 1)
         case _:
             return (0, 1)
@@ -234,13 +234,13 @@ def _build_message_content(
     fields: list[xsd.FieldDefinition] = _process_attributes(element, message, enum_registry)
 
     match element.type:
-        case "empty":
+        case 'empty':
             pass
-        case "any":
+        case 'any':
             fields.append(xsd.ValueElem(documentation=None, proto_type=xsd.AtomicType.COMPLEXANY))
-        case "mixed":
+        case 'mixed':
             fields.extend(_build_mixed_content(element, element_messages))
-        case "element":
+        case 'element':
             fields.extend(_build_element_content(element, element_messages))
 
     return tuple(fields)
@@ -288,9 +288,9 @@ def _apply_map_overrides(
             key_field, val_field = xsd.find_map_fields(map_type, map_override)
 
             if not isinstance(key_field.proto_type, xsd.AtomicType):
-                raise RuntimeError(f"expected map key: {key_field} to have an atomic type")
+                raise RuntimeError(f'expected map key: {key_field} to have an atomic type')
             if not isinstance(val_field.proto_type, xsd.AtomicType):
-                raise RuntimeError(f"expected map value: {val_field} to have an atomic type")
+                raise RuntimeError(f'expected map value: {val_field} to have an atomic type')
 
             new_type_def = xsd.MapType(
                 documentation=map_type.documentation,
@@ -366,7 +366,7 @@ def process_dtd(
     for element in elements:
         msg = element_messages[element.name]
         content = _build_message_content(element, msg, element_messages, enum_registry)
-        object.__setattr__(msg, "content", content)
+        object.__setattr__(msg, 'content', content)
         _number_fields(msg)
 
     # Collect all type definitions: messages + enumerations.

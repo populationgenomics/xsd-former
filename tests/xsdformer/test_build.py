@@ -62,7 +62,7 @@ _BOOK_XSD = """
 
 @pytest.fixture
 def book_xsd_file(tmp_path: pathlib.Path) -> pathlib.Path:
-    xsd_file = tmp_path / "book.xsd"
+    xsd_file = tmp_path / 'book.xsd'
     xsd_file.write_text(_BOOK_XSD)
     return xsd_file
 
@@ -73,13 +73,13 @@ def built_package(
     book_xsd_file: pathlib.Path,  # noqa: ARG001
 ) -> tuple[pathlib.Path, pathlib.Path]:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
-    out_dir = tmp_path / "out"
+    out_dir = tmp_path / 'out'
     out_dir.mkdir()
     package_dir = build_package(
         type_defs=type_defs,
-        namespace="book",
-        package_name="book_proto",
-        version="1.2.3",
+        namespace='book',
+        package_name='book_proto',
+        version='1.2.3',
         out_dir=out_dir,
     )
     return out_dir, package_dir
@@ -87,20 +87,20 @@ def built_package(
 
 def test_build_returns_package_dir(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     out_dir, package_dir = built_package
-    assert package_dir == out_dir / "book_proto"
+    assert package_dir == out_dir / 'book_proto'
 
 
 def test_generated_file_tree(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     _, package_dir = built_package
     expected_files = {
-        "__init__.py",
-        "book.proto",
-        "book_pb2.py",
-        "book_pb2.pyi",
-        "xml_converter.py",
-        "models.py",
-        "pydantic_converter.py",
-        "py.typed",
+        '__init__.py',
+        'book.proto',
+        'book_pb2.py',
+        'book_pb2.pyi',
+        'xml_converter.py',
+        'models.py',
+        'pydantic_converter.py',
+        'py.typed',
     }
     actual_files = {f.name for f in package_dir.iterdir() if f.is_file()}
     assert expected_files == actual_files
@@ -108,29 +108,29 @@ def test_generated_file_tree(built_package: tuple[pathlib.Path, pathlib.Path]) -
 
 def test_pyproject_toml(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     out_dir, _ = built_package
-    pyproject = (out_dir / "pyproject.toml").read_text()
+    pyproject = (out_dir / 'pyproject.toml').read_text()
     assert 'name = "book_proto"' in pyproject
     assert 'version = "1.2.3"' in pyproject
     assert '"book_proto/book.proto" = "book_proto/book.proto"' in pyproject
-    assert "hatchling" in pyproject
-    assert "pydantic>=2" in pyproject
-    assert "defusedxml" not in pyproject
+    assert 'hatchling' in pyproject
+    assert 'pydantic>=2' in pyproject
+    assert 'defusedxml' not in pyproject
 
 
 def test_init_py(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     _, package_dir = built_package
-    init = (package_dir / "__init__.py").read_text()
-    assert "book_pb2" in init
-    assert "xml_converter" in init
-    assert "models" in init
-    assert "pydantic_converter" in init
+    init = (package_dir / '__init__.py').read_text()
+    assert 'book_pb2' in init
+    assert 'xml_converter' in init
+    assert 'models' in init
+    assert 'pydantic_converter' in init
 
 
 def test_proto_file_content(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     _, package_dir = built_package
-    proto = (package_dir / "book.proto").read_text()
-    assert "syntax" in proto
-    assert "Book" in proto
+    proto = (package_dir / 'book.proto').read_text()
+    assert 'syntax' in proto
+    assert 'Book' in proto
 
 
 def test_xml_converter_importable(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
@@ -141,7 +141,7 @@ sys.path.insert(0, {str(out_dir)!r})
 import book_proto.xml_converter
 """
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", script],
+        [sys.executable, '-c', script],
         check=False,
         capture_output=True,
         text=True,
@@ -157,7 +157,7 @@ sys.path.insert(0, {str(out_dir)!r})
 import book_proto.book_pb2
 """
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", script],
+        [sys.executable, '-c', script],
         check=False,
         capture_output=True,
         text=True,
@@ -179,7 +179,7 @@ book_proto.pydantic_converter.Book_from_proto
 book_proto.pydantic_converter.Book_to_proto
 """
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", script],
+        [sys.executable, '-c', script],
         check=False,
         capture_output=True,
         text=True,
@@ -204,7 +204,7 @@ assert model.authors.author[0].name == "Ann"
 assert pydantic_converter.Book_to_proto(model) == proto
 """
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-c", script],
+        [sys.executable, '-c', script],
         check=False,
         capture_output=True,
         text=True,

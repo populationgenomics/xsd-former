@@ -46,16 +46,16 @@ if TYPE_CHECKING:
 
 pytestmark = pytest.mark.skipif(
     not _tsp.json_schema_available(),
-    reason="TypeSpec toolchain unavailable (run `npm install` in tests/xsdformer/typespec/tsp_project)",
+    reason='TypeSpec toolchain unavailable (run `npm install` in tests/xsdformer/typespec/tsp_project)',
 )
 
-_SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / "typespec" / "schemas"
+_SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / 'typespec' / 'schemas'
 _REPO_ROOT = pathlib.Path(__file__).parents[3]
 
 
 def _load_module(code: str, name: str, tmp_path: pathlib.Path) -> types.ModuleType:
     """Load generated pydantic source as an importable module."""
-    path = tmp_path / f"{name}.py"
+    path = tmp_path / f'{name}.py'
     path.write_text(code)
     # Register under a per-call-unique name. With `from __future__ import
     # annotations`, pydantic resolves forward references (hoisted nested types
@@ -63,7 +63,7 @@ def _load_module(code: str, name: str, tmp_path: pathlib.Path) -> types.ModuleTy
     # which it finds via `sys.modules[__module__]` — so the module must stay in
     # `sys.modules`. A uuid suffix keeps two same-namespace loads (e.g. across
     # tests in one session) from shadowing each other there.
-    unique = f"{name}_{uuid.uuid4().hex}"
+    unique = f'{name}_{uuid.uuid4().hex}'
     spec = importlib.util.spec_from_file_location(unique, path)
     assert spec is not None
     assert spec.loader is not None
@@ -79,13 +79,13 @@ def _assert_equivalent(
     tmp_path: pathlib.Path,
 ) -> None:
     """Assert IR-pydantic's induced JSON Schema ≡ the tsp→json-schema bundle."""
-    tsp_source = "\n".join(typespec_generator.generate(namespace, type_defs))
+    tsp_source = '\n'.join(typespec_generator.generate(namespace, type_defs))
     bundle = _tsp.compile_tsp_to_json_schema(tsp_source, tmp_path)
     contract = _equivalence.canonicalize(_equivalence.tsp_defs(bundle))
 
     module = _load_module(
-        "\n".join(pydantic_generator.generate(namespace, type_defs)),
-        f"{namespace}_models",
+        '\n'.join(pydantic_generator.generate(namespace, type_defs)),
+        f'{namespace}_models',
         tmp_path,
     )
     induced = _equivalence.canonicalize(_equivalence.pydantic_defs(module))
@@ -95,26 +95,26 @@ def _assert_equivalent(
 
 def test_book_equivalent(tmp_path: pathlib.Path) -> None:
     """book: IR-pydantic ≡ tsp contract (backbone fixture)."""
-    _assert_equivalent(xsd.process_xsd(io.StringIO(_BOOK_XSD)), "book", tmp_path)
+    _assert_equivalent(xsd.process_xsd(io.StringIO(_BOOK_XSD)), 'book', tmp_path)
 
 
 def test_clinvar_equivalent(tmp_path: pathlib.Path) -> None:
     """ClinVar: IR-pydantic ≡ tsp contract under the production transforms."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / "clinvar_transforms.yaml")
-    type_defs = apply_transforms(xsd.process_xsd(str(_SCHEMAS_DIR / "ClinVar_VCV.xsd")), config)
-    _assert_equivalent(type_defs, "clinvar", tmp_path)
+    config = TransformConfig.from_yaml(_REPO_ROOT / 'clinvar_transforms.yaml')
+    type_defs = apply_transforms(xsd.process_xsd(str(_SCHEMAS_DIR / 'ClinVar_VCV.xsd')), config)
+    _assert_equivalent(type_defs, 'clinvar', tmp_path)
 
 
 def test_pubmed_equivalent(tmp_path: pathlib.Path) -> None:
     """PubMed: IR-pydantic ≡ tsp contract under the production transforms."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / "pubmed_transforms.yaml")
-    type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / "pubmed.dtd")), config)
-    _assert_equivalent(type_defs, "pubmed", tmp_path)
+    config = TransformConfig.from_yaml(_REPO_ROOT / 'pubmed_transforms.yaml')
+    type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / 'pubmed.dtd')), config)
+    _assert_equivalent(type_defs, 'pubmed', tmp_path)
 
 
 @pytest.mark.skipif(
-    importlib.util.find_spec("datamodel_code_generator") is None,
-    reason="datamodel-code-generator not installed",
+    importlib.util.find_spec('datamodel_code_generator') is None,
+    reason='datamodel-code-generator not installed',
 )
 def test_datamodel_codegen_sanity(tmp_path: pathlib.Path) -> None:
     """Freshness/sanity check: dmcg turns the tsp contract into models that import.
@@ -125,28 +125,28 @@ def test_datamodel_codegen_sanity(tmp_path: pathlib.Path) -> None:
     prediction). Equivalence is asserted against the contract above.
     """
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
-    bundle = _tsp.compile_tsp_to_json_schema("\n".join(typespec_generator.generate("book", type_defs)), tmp_path)
+    bundle = _tsp.compile_tsp_to_json_schema('\n'.join(typespec_generator.generate('book', type_defs)), tmp_path)
     # #4084: localize the bundle's `$id`-relative refs so dmcg resolves them.
     normalized = _equivalence.canonicalize(_equivalence.tsp_defs(bundle))
-    schema_path = tmp_path / "book.schema.json"
-    schema_path.write_text(json.dumps({"$defs": normalized}))
-    out_path = tmp_path / "dmcg_models.py"
+    schema_path = tmp_path / 'book.schema.json'
+    schema_path.write_text(json.dumps({'$defs': normalized}))
+    out_path = tmp_path / 'dmcg_models.py'
     subprocess.run(  # noqa: S603
         [
             sys.executable,
-            "-m",
-            "datamodel_code_generator",
-            "--input",
+            '-m',
+            'datamodel_code_generator',
+            '--input',
             str(schema_path),
-            "--input-file-type",
-            "jsonschema",
-            "--output",
+            '--input-file-type',
+            'jsonschema',
+            '--output',
             str(out_path),
-            "--output-model-type",
-            "pydantic_v2.BaseModel",
-            "--use-union-operator",
-            "--use-standard-collections",
+            '--output-model-type',
+            'pydantic_v2.BaseModel',
+            '--use-union-operator',
+            '--use-standard-collections',
         ],
         check=True,
     )
-    _load_module(out_path.read_text(), "book_dmcg", tmp_path)
+    _load_module(out_path.read_text(), 'book_dmcg', tmp_path)

@@ -23,24 +23,24 @@ from xsdformer.xsd import text, xsd
 # `AtomicType.proto_str` where TypeSpec spells the type differently:
 # float32/float64 vs float/double, boolean vs bool, utcDateTime vs Timestamp.
 _TSP_SCALAR = {
-    xsd.AtomicType.ID: "string",
-    xsd.AtomicType.URI: "string",
-    xsd.AtomicType.STRING: "string",
-    xsd.AtomicType.SIMPLEANY: "string",
-    xsd.AtomicType.COMPLEXANY: "string",
-    xsd.AtomicType.INT8: "int8",
-    xsd.AtomicType.UINT8: "uint8",
-    xsd.AtomicType.INT16: "int16",
-    xsd.AtomicType.UINT16: "uint16",
-    xsd.AtomicType.INT32: "int32",
-    xsd.AtomicType.UINT32: "uint32",
-    xsd.AtomicType.INT64: "int64",
-    xsd.AtomicType.UINT64: "uint64",
-    xsd.AtomicType.FLOAT: "float32",
-    xsd.AtomicType.DOUBLE: "float64",
-    xsd.AtomicType.BOOL: "boolean",
-    xsd.AtomicType.BYTES: "bytes",
-    xsd.AtomicType.DATE: "utcDateTime",
+    xsd.AtomicType.ID: 'string',
+    xsd.AtomicType.URI: 'string',
+    xsd.AtomicType.STRING: 'string',
+    xsd.AtomicType.SIMPLEANY: 'string',
+    xsd.AtomicType.COMPLEXANY: 'string',
+    xsd.AtomicType.INT8: 'int8',
+    xsd.AtomicType.UINT8: 'uint8',
+    xsd.AtomicType.INT16: 'int16',
+    xsd.AtomicType.UINT16: 'uint16',
+    xsd.AtomicType.INT32: 'int32',
+    xsd.AtomicType.UINT32: 'uint32',
+    xsd.AtomicType.INT64: 'int64',
+    xsd.AtomicType.UINT64: 'uint64',
+    xsd.AtomicType.FLOAT: 'float32',
+    xsd.AtomicType.DOUBLE: 'float64',
+    xsd.AtomicType.BOOL: 'boolean',
+    xsd.AtomicType.BYTES: 'bytes',
+    xsd.AtomicType.DATE: 'utcDateTime',
 }
 
 # TypeSpec reserved keywords (from the `@typespec/compiler` scanner). A property
@@ -50,100 +50,100 @@ _TSP_SCALAR = {
 # is valid for any identifier, so escaping this (possibly over-broad) set is safe.
 _TSP_RESERVED = frozenset(
     {
-        "alias",
-        "arg",
-        "array",
-        "async",
-        "auto",
-        "const",
-        "context",
-        "dec",
-        "declare",
-        "else",
-        "enum",
-        "env",
-        "extends",
-        "extern",
-        "false",
-        "flag",
-        "fn",
-        "if",
-        "impl",
-        "implements",
-        "import",
-        "init",
-        "interface",
-        "internal",
-        "is",
-        "keyof",
-        "local",
-        "macro",
-        "metadata",
-        "mod",
-        "model",
-        "module",
-        "namespace",
-        "never",
-        "op",
-        "package",
-        "partial",
-        "private",
-        "projection",
-        "prop",
-        "property",
-        "protected",
-        "pub",
-        "public",
-        "record",
-        "return",
-        "satisfies",
-        "scalar",
-        "scenario",
-        "sealed",
-        "self",
-        "statemachine",
-        "struct",
-        "sub",
-        "super",
-        "sym",
-        "this",
-        "trait",
-        "true",
-        "typeof",
-        "typeref",
-        "union",
-        "unknown",
-        "using",
-        "valueof",
-        "void",
-        "with",
+        'alias',
+        'arg',
+        'array',
+        'async',
+        'auto',
+        'const',
+        'context',
+        'dec',
+        'declare',
+        'else',
+        'enum',
+        'env',
+        'extends',
+        'extern',
+        'false',
+        'flag',
+        'fn',
+        'if',
+        'impl',
+        'implements',
+        'import',
+        'init',
+        'interface',
+        'internal',
+        'is',
+        'keyof',
+        'local',
+        'macro',
+        'metadata',
+        'mod',
+        'model',
+        'module',
+        'namespace',
+        'never',
+        'op',
+        'package',
+        'partial',
+        'private',
+        'projection',
+        'prop',
+        'property',
+        'protected',
+        'pub',
+        'public',
+        'record',
+        'return',
+        'satisfies',
+        'scalar',
+        'scenario',
+        'sealed',
+        'self',
+        'statemachine',
+        'struct',
+        'sub',
+        'super',
+        'sym',
+        'this',
+        'trait',
+        'true',
+        'typeof',
+        'typeref',
+        'union',
+        'unknown',
+        'using',
+        'valueof',
+        'void',
+        'with',
     },
 )
 
 
 def _escape_field_name(name: str | None) -> str | None:
     """Backtick-quotes a field name that collides with a TypeSpec keyword."""
-    return f"`{name}`" if name in _TSP_RESERVED else name
+    return f'`{name}`' if name in _TSP_RESERVED else name
 
 
 _FIRST_PRINTABLE = 0x20  # Code points below this are C0 control characters.
 
 
 def _tsp_string(value: str) -> str:
-    """A fully-escaped TypeSpec double-quoted string literal for `value`.
+    r"""A fully-escaped TypeSpec double-quoted string literal for `value`.
 
     Escapes backslash/quote and every control character so the literal is always
     valid TypeSpec. Control chars use TypeSpec's `\\u{hex}` form — JSON's bare
     `\\uXXXX` is not valid TypeSpec, so `json.dumps` can't be used here.
     """
-    simple = {"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r", "\t": "\\t"}
-    out = [simple.get(ch) or (f"\\u{{{ord(ch):x}}}" if ord(ch) < _FIRST_PRINTABLE else ch) for ch in value]
-    return '"' + "".join(out) + '"'
+    simple = {'\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t'}
+    out = [simple.get(ch) or (f'\\u{{{ord(ch):x}}}' if ord(ch) < _FIRST_PRINTABLE else ch) for ch in value]
+    return '"' + ''.join(out) + '"'
 
 
 def _namespace_name(namespace: str) -> str:
     """Renders a (possibly dotted) package as a TypeSpec namespace identifier."""
-    return ".".join(text.pascal_case(part) for part in namespace.split("."))
+    return '.'.join(text.pascal_case(part) for part in namespace.split('.'))
 
 
 def _type_name(type_def: xsd.TypeDefinition) -> str:
@@ -153,7 +153,7 @@ def _type_name(type_def: xsd.TypeDefinition) -> str:
     PascalCase path components joined by `_`. Top-level types have a one-element
     path, so this is just their name.
     """
-    return "_".join(type_def.path)
+    return '_'.join(type_def.path)
 
 
 def _scalar(atomic: xsd.AtomicType, *, proto_compat: bool) -> str:
@@ -166,7 +166,7 @@ def _scalar(atomic: xsd.AtomicType, *, proto_compat: bool) -> str:
     the protobuf generator emits, keeping `xsd->proto` ≡ `xsd->tsp->proto`.
     """
     if proto_compat and atomic is xsd.AtomicType.DATE:
-        return "WellKnown.Timestamp"
+        return 'WellKnown.Timestamp'
     return _TSP_SCALAR[atomic]
 
 
@@ -179,7 +179,7 @@ def _field_type(field_def: xsd.Field, *, proto_compat: bool) -> str:
         # A proto map<K, V> -> `Record<V>` (string-keyed). proto-JSON stringifies
         # every map key, so a string-keyed Record is JSON-correct for any proto
         # map; non-string proto key types are deferred (ADR 0001).
-        return f"Record<{_scalar(proto_type.value_type, proto_compat=proto_compat)}>"
+        return f'Record<{_scalar(proto_type.value_type, proto_compat=proto_compat)}>'
     # A reference to another (possibly hoisted) type.
     return _type_name(proto_type)
 
@@ -189,8 +189,7 @@ def _iter_message_fields(
     *,
     in_choice: bool = False,
 ) -> Iterator[tuple[xsd.Field, bool]]:
-    """Walks a message's content tree, yielding each leaf field paired with
-    whether a `Choice` encloses it.
+    """Yield each leaf field of a message's content tree, paired with whether a `Choice` encloses it.
 
     `Choice` members flatten to optional properties (ADR 0001): a proto `oneof`
     and N optional fields with the same numbers are wire- and proto-JSON-
@@ -212,7 +211,7 @@ class TypeSpecGenerator:
 
     def header(self) -> Iterable[str]:
         if self._proto_compat:
-            return ['import "@typespec/protobuf";', "using Protobuf;", ""]
+            return ['import "@typespec/protobuf";', 'using Protobuf;', '']
         return []
 
     def footer(self) -> Iterable[str]:
@@ -225,9 +224,9 @@ class TypeSpecGenerator:
             # `namespace` identifier is the PascalCased form.
             return [
                 f'@package({{name: "{namespace}"}})',
-                f"namespace {_namespace_name(namespace)};",
+                f'namespace {_namespace_name(namespace)};',
             ]
-        return [f"namespace {_namespace_name(namespace)};"]
+        return [f'namespace {_namespace_name(namespace)};']
 
     def end_namespace(self, namespace: str) -> Iterable[str]:
         del namespace
@@ -238,7 +237,7 @@ class TypeSpecGenerator:
 
     @functools.singledispatchmethod
     def _definition(self, type_def: xsd.TypeDefinition) -> Iterable[str]:
-        raise NotImplementedError(f"Not implemented for {type_def=}")
+        raise NotImplementedError(f'Not implemented for {type_def=}')
 
     @_definition.register
     def _(self, msg_def: xsd.Message) -> Iterable[str]:
@@ -259,20 +258,20 @@ class TypeSpecGenerator:
         # = `xml_value` (the synthesized zero member has none, so `""`).
         # `--proto-compat`: integer values (`@typespec/protobuf` rejects string
         # members), member names preserved, numbers = the IR's enum numbers.
-        yield ""
+        yield ''
         if enum_def.documentation:
             yield from text.render_doc_comment(enum_def.documentation)
-        yield f"enum {_type_name(enum_def)} {{"
+        yield f'enum {_type_name(enum_def)} {{'
         yield from text.indent(self._enum_members(enum_def))
-        yield "}"
+        yield '}'
 
     def _enum_members(self, enum_def: xsd.Enumeration) -> Iterable[str]:
         for field_def in enum_def.field_iter():
             if self._proto_compat:
-                yield f"{self._proto_member_name(enum_def, field_def)}: {field_def.num},"
+                yield f'{self._proto_member_name(enum_def, field_def)}: {field_def.num},'
             else:
-                value = "" if field_def.xml_value is None else field_def.xml_value
-                yield f"{field_def.name}: {_tsp_string(value)},"
+                value = '' if field_def.xml_value is None else field_def.xml_value
+                yield f'{field_def.name}: {_tsp_string(value)},'
 
     @staticmethod
     def _proto_member_name(enum_def: xsd.Enumeration, field_def: xsd.EnumField) -> str:
@@ -290,8 +289,8 @@ class TypeSpecGenerator:
         enum members aren't C++-scoped, and the converter keys off the bare proto
         value name (ADR 0001). The round-trip normalizer strips this prefix.
         """
-        parent_prefix = "_".join(text.snake_case(part).upper() for part in enum_def.path[:-1])
-        return f"{parent_prefix}_{field_def.name}" if parent_prefix else field_def.name
+        parent_prefix = '_'.join(text.snake_case(part).upper() for part in enum_def.path[:-1])
+        return f'{parent_prefix}_{field_def.name}' if parent_prefix else field_def.name
 
     def field(self, field_def: xsd.Field, *, force_optional: bool = False) -> Iterable[str]:
         if field_def.documentation:
@@ -299,26 +298,26 @@ class TypeSpecGenerator:
         type_str = _field_type(field_def, proto_compat=self._proto_compat)
         # `--proto-compat`: `@field(N)` pins the proto field number to the IR's,
         # so `tsp->proto` reproduces `xsd->proto`'s wire layout.
-        prefix = f"@field({field_def.num}) " if self._proto_compat else ""
+        prefix = f'@field({field_def.num}) ' if self._proto_compat else ''
         name = _escape_field_name(field_def.name)
         if isinstance(field_def.proto_type, xsd.MapType):
             # `Record<V>` already carries collection shape: a map is required-but-
             # possibly-empty (like repeated -> `T[]`), so no `[]` or optional marker.
-            yield f"{prefix}{name}: {type_str};"
+            yield f'{prefix}{name}: {type_str};'
         elif field_def.is_repeated:
-            yield f"{prefix}{name}: {type_str}[];"
+            yield f'{prefix}{name}: {type_str}[];'
         elif force_optional or field_def.computed_occurs[0] == 0:
             # Optionality is on the property name in TypeSpec (`name?: T`), not a
             # suffix on the type.
-            yield f"{prefix}{name}?: {type_str};"
+            yield f'{prefix}{name}?: {type_str};'
         else:
-            yield f"{prefix}{name}: {type_str};"
+            yield f'{prefix}{name}: {type_str};'
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
-        yield ""
+        yield ''
         if msg_def.documentation:
             yield from text.render_doc_comment(msg_def.documentation)
-        yield f"model {_type_name(msg_def)} {{"
+        yield f'model {_type_name(msg_def)} {{'
         emitted: dict[str | None, xsd.Field] = {}
         for field_def, in_choice in _iter_message_fields(msg_def.content):
             if field_def.transform_hint is TransformHint.DROPPED:
@@ -326,7 +325,7 @@ class TypeSpecGenerator:
             if not xsd.register_field(emitted, field_def, _type_name(msg_def)):
                 continue
             yield from text.indent(self.field(field_def, force_optional=in_choice))
-        yield "}"
+        yield '}'
 
 
 def generate(

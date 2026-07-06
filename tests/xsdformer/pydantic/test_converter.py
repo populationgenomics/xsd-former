@@ -1,5 +1,4 @@
-"""Backbone (pure-Python) tests for the proto <-> pydantic converter — ADR 0002
-slice 3.
+"""Backbone (pure-Python) tests for the proto <-> pydantic converter (ADR 0002 slice 3).
 
 Golden/structural assertions on the emitted `pydantic_converter.py`: the
 `*_from_proto` / `*_to_proto` pairs that bridge compiled protobuf classes and the
@@ -20,7 +19,7 @@ from xsdformer.xsd import xsd
 
 def _generate(xsd_str: str, config: xsd.Config | None = None) -> str:
     type_defs = xsd.process_xsd(io.StringIO(xsd_str), config)
-    return "\n".join(converter.generate("demo", type_defs, "demo_pb2"))
+    return '\n'.join(converter.generate('demo', type_defs, 'demo_pb2'))
 
 
 # Scalars across every cardinality, plus a date and required/optional attributes.
@@ -49,38 +48,38 @@ def test_scalar_converter_golden() -> None:
     # guard (ADR 0002 R1 presence); repeated -> `list`/`extend`; `xs:date` <->
     # `Timestamp` via `ToDatetime`/`FromDatetime`; required scalars are direct.
     assert _generate(_SCALAR_XSD) == (
-        "import demo_pb2\n"
-        "import models\n"
-        "\n"
-        "\n"
-        "def Record_from_proto(proto):\n"
-        "    return models.Record(\n"
-        "        id=proto.id,\n"
+        'import demo_pb2\n'
+        'import models\n'
+        '\n'
+        '\n'
+        'def Record_from_proto(proto):\n'
+        '    return models.Record(\n'
+        '        id=proto.id,\n'
         "        ref=proto.ref if proto.HasField('ref') else None,\n"
-        "        title=proto.title,\n"
+        '        title=proto.title,\n'
         "        comment=proto.comment if proto.HasField('comment') else None,\n"
-        "        tag=list(proto.tag),\n"
-        "        count=proto.count,\n"
-        "        ratio=proto.ratio,\n"
-        "        active=proto.active,\n"
-        "        created=proto.created.ToDatetime(),\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Record_to_proto(model):\n"
-        "    proto = demo_pb2.Record()\n"
-        "    proto.id = model.id\n"
-        "    if model.ref is not None:\n"
-        "        proto.ref = model.ref\n"
-        "    proto.title = model.title\n"
-        "    if model.comment is not None:\n"
-        "        proto.comment = model.comment\n"
-        "    proto.tag.extend(model.tag)\n"
-        "    proto.count = model.count\n"
-        "    proto.ratio = model.ratio\n"
-        "    proto.active = model.active\n"
-        "    proto.created.FromDatetime(model.created)\n"
-        "    return proto"
+        '        tag=list(proto.tag),\n'
+        '        count=proto.count,\n'
+        '        ratio=proto.ratio,\n'
+        '        active=proto.active,\n'
+        '        created=proto.created.ToDatetime(),\n'
+        '    )\n'
+        '\n'
+        '\n'
+        'def Record_to_proto(model):\n'
+        '    proto = demo_pb2.Record()\n'
+        '    proto.id = model.id\n'
+        '    if model.ref is not None:\n'
+        '        proto.ref = model.ref\n'
+        '    proto.title = model.title\n'
+        '    if model.comment is not None:\n'
+        '        proto.comment = model.comment\n'
+        '    proto.tag.extend(model.tag)\n'
+        '    proto.count = model.count\n'
+        '    proto.ratio = model.ratio\n'
+        '    proto.active = model.active\n'
+        '    proto.created.FromDatetime(model.created)\n'
+        '    return proto'
     )
 
 
@@ -109,22 +108,22 @@ def test_enum_converter_golden() -> None:
     # indexes `models.Role[demo_pb2.Role.Name(v)]`, `pydantic -> proto` writes
     # `demo_pb2.Role.Value(v.name)`. The enum type itself emits no functions.
     assert _generate(_ENUM_XSD) == (
-        "import demo_pb2\n"
-        "import models\n"
-        "\n"
-        "\n"
-        "def Person_from_proto(proto):\n"
-        "    return models.Person(\n"
-        "        role=models.Role[demo_pb2.Role.Name(proto.role)],\n"
-        "        tags=[models.Role[demo_pb2.Role.Name(v)] for v in proto.tags],\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Person_to_proto(model):\n"
-        "    proto = demo_pb2.Person()\n"
-        "    proto.role = demo_pb2.Role.Value(model.role.name)\n"
-        "    proto.tags.extend(demo_pb2.Role.Value(v.name) for v in model.tags)\n"
-        "    return proto"
+        'import demo_pb2\n'
+        'import models\n'
+        '\n'
+        '\n'
+        'def Person_from_proto(proto):\n'
+        '    return models.Person(\n'
+        '        role=models.Role[demo_pb2.Role.Name(proto.role)],\n'
+        '        tags=[models.Role[demo_pb2.Role.Name(v)] for v in proto.tags],\n'
+        '    )\n'
+        '\n'
+        '\n'
+        'def Person_to_proto(model):\n'
+        '    proto = demo_pb2.Person()\n'
+        '    proto.role = demo_pb2.Role.Value(model.role.name)\n'
+        '    proto.tags.extend(demo_pb2.Role.Value(v.name) for v in model.tags)\n'
+        '    return proto'
     )
 
 
@@ -152,35 +151,35 @@ def test_nested_message_converter_golden() -> None:
     # The hoisted `Library_Book` model bridges proto `Library.Book`; a singular
     # message field round-trips via the child pair + `CopyFrom`.
     assert _generate(_NESTED_XSD) == (
-        "import demo_pb2\n"
-        "import models\n"
-        "\n"
-        "\n"
-        "def Library_Book_from_proto(proto):\n"
-        "    return models.Library_Book(\n"
-        "        title=proto.title,\n"
+        'import demo_pb2\n'
+        'import models\n'
+        '\n'
+        '\n'
+        'def Library_Book_from_proto(proto):\n'
+        '    return models.Library_Book(\n'
+        '        title=proto.title,\n'
         "        author=proto.author if proto.HasField('author') else None,\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Library_Book_to_proto(model):\n"
-        "    proto = demo_pb2.Library.Book()\n"
-        "    proto.title = model.title\n"
-        "    if model.author is not None:\n"
-        "        proto.author = model.author\n"
-        "    return proto\n"
-        "\n"
-        "\n"
-        "def Library_from_proto(proto):\n"
-        "    return models.Library(\n"
-        "        book=Library_Book_from_proto(proto.book),\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Library_to_proto(model):\n"
-        "    proto = demo_pb2.Library()\n"
-        "    proto.book.CopyFrom(Library_Book_to_proto(model.book))\n"
-        "    return proto"
+        '    )\n'
+        '\n'
+        '\n'
+        'def Library_Book_to_proto(model):\n'
+        '    proto = demo_pb2.Library.Book()\n'
+        '    proto.title = model.title\n'
+        '    if model.author is not None:\n'
+        '        proto.author = model.author\n'
+        '    return proto\n'
+        '\n'
+        '\n'
+        'def Library_from_proto(proto):\n'
+        '    return models.Library(\n'
+        '        book=Library_Book_from_proto(proto.book),\n'
+        '    )\n'
+        '\n'
+        '\n'
+        'def Library_to_proto(model):\n'
+        '    proto = demo_pb2.Library()\n'
+        '    proto.book.CopyFrom(Library_Book_to_proto(model.book))\n'
+        '    return proto'
     )
 
 
@@ -207,28 +206,28 @@ def test_choice_oneof_guard_golden() -> None:
     # proto` raises when more than one branch of the proto `oneof` is set, since
     # proto cannot represent it (ADR 0002 "Choice enforcement").
     assert _generate(_CHOICE_XSD) == (
-        "import demo_pb2\n"
-        "import models\n"
-        "\n"
-        "\n"
-        "def Contact_from_proto(proto):\n"
-        "    return models.Contact(\n"
-        "        label=proto.label,\n"
+        'import demo_pb2\n'
+        'import models\n'
+        '\n'
+        '\n'
+        'def Contact_from_proto(proto):\n'
+        '    return models.Contact(\n'
+        '        label=proto.label,\n'
         "        email=proto.email if proto.HasField('email') else None,\n"
         "        phone=proto.phone if proto.HasField('phone') else None,\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Contact_to_proto(model):\n"
-        "    proto = demo_pb2.Contact()\n"
-        "    if sum(x is not None for x in (model.email, model.phone)) > 1:\n"
+        '    )\n'
+        '\n'
+        '\n'
+        'def Contact_to_proto(model):\n'
+        '    proto = demo_pb2.Contact()\n'
+        '    if sum(x is not None for x in (model.email, model.phone)) > 1:\n'
         '        raise ValueError("at most one of email, phone may be set in Contact")\n'
-        "    proto.label = model.label\n"
-        "    if model.email is not None:\n"
-        "        proto.email = model.email\n"
-        "    if model.phone is not None:\n"
-        "        proto.phone = model.phone\n"
-        "    return proto"
+        '    proto.label = model.label\n'
+        '    if model.email is not None:\n'
+        '        proto.email = model.email\n'
+        '    if model.phone is not None:\n'
+        '        proto.phone = model.phone\n'
+        '    return proto'
     )
 
 
@@ -249,7 +248,7 @@ _MAP_XSD = """
 """
 
 _MAP_CONFIG = xsd.Config(
-    map_overrides=(xsd.MapOverrideConfig(map_type=("Entry",), key_field="key", value_field="value"),),
+    map_overrides=(xsd.MapOverrideConfig(map_type=('Entry',), key_field='key', value_field='value'),),
 )
 
 
@@ -257,20 +256,20 @@ def test_map_converter_golden() -> None:
     # A scalar-valued map round-trips via `dict(proto.f)` / `proto.f.update(...)`;
     # the `Entry` map type itself emits no functions.
     assert _generate(_MAP_XSD, _MAP_CONFIG) == (
-        "import demo_pb2\n"
-        "import models\n"
-        "\n"
-        "\n"
-        "def Catalog_from_proto(proto):\n"
-        "    return models.Catalog(\n"
-        "        entry=dict(proto.entry),\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Catalog_to_proto(model):\n"
-        "    proto = demo_pb2.Catalog()\n"
-        "    proto.entry.update(model.entry)\n"
-        "    return proto"
+        'import demo_pb2\n'
+        'import models\n'
+        '\n'
+        '\n'
+        'def Catalog_from_proto(proto):\n'
+        '    return models.Catalog(\n'
+        '        entry=dict(proto.entry),\n'
+        '    )\n'
+        '\n'
+        '\n'
+        'def Catalog_to_proto(model):\n'
+        '    proto = demo_pb2.Catalog()\n'
+        '    proto.entry.update(model.entry)\n'
+        '    return proto'
     )
 
 
@@ -295,25 +294,25 @@ def test_keyword_field_converter_golden() -> None:
     # the converter reaches them with `getattr`/`setattr`; the model attribute is
     # the keyword generator's `_`-suffixed alias (`class_`, `import_`).
     assert _generate(_KEYWORD_XSD) == (
-        "import demo_pb2\n"
-        "import models\n"
-        "\n"
-        "\n"
-        "def Thing_from_proto(proto):\n"
-        "    return models.Thing(\n"
+        'import demo_pb2\n'
+        'import models\n'
+        '\n'
+        '\n'
+        'def Thing_from_proto(proto):\n'
+        '    return models.Thing(\n'
         "        class_=getattr(proto, 'class'),\n"
         "        import_=getattr(proto, 'import') if proto.HasField('import') else None,\n"
-        "        value=proto.value,\n"
-        "    )\n"
-        "\n"
-        "\n"
-        "def Thing_to_proto(model):\n"
-        "    proto = demo_pb2.Thing()\n"
+        '        value=proto.value,\n'
+        '    )\n'
+        '\n'
+        '\n'
+        'def Thing_to_proto(model):\n'
+        '    proto = demo_pb2.Thing()\n'
         "    setattr(proto, 'class', model.class_)\n"
-        "    if model.import_ is not None:\n"
+        '    if model.import_ is not None:\n'
         "        setattr(proto, 'import', model.import_)\n"
-        "    proto.value = model.value\n"
-        "    return proto"
+        '    proto.value = model.value\n'
+        '    return proto'
     )
 
 
@@ -328,4 +327,4 @@ def test_all_fixtures_compile() -> None:
         (_KEYWORD_XSD, None),
     ):
         code = _generate(xsd_str, config)
-        compile(code, "<generated>", "exec")
+        compile(code, '<generated>', 'exec')

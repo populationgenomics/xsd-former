@@ -16,12 +16,12 @@ from typing import Any
 
 from google.protobuf import descriptor_pb2
 
-TSP_PROJECT_DIR = pathlib.Path(__file__).parent / "tsp_project"
-_NODE_MODULES = TSP_PROJECT_DIR / "node_modules"
+TSP_PROJECT_DIR = pathlib.Path(__file__).parent / 'tsp_project'
+_NODE_MODULES = TSP_PROJECT_DIR / 'node_modules'
 # Canonical CLI entrypoint shipped by @typespec/compiler.
-_TSP_CLI = _NODE_MODULES / "@typespec" / "compiler" / "cmd" / "tsp.js"
-_PROTOBUF_EMITTER = _NODE_MODULES / "@typespec" / "protobuf"
-_JSON_SCHEMA_EMITTER = _NODE_MODULES / "@typespec" / "json-schema"
+_TSP_CLI = _NODE_MODULES / '@typespec' / 'compiler' / 'cmd' / 'tsp.js'
+_PROTOBUF_EMITTER = _NODE_MODULES / '@typespec' / 'protobuf'
+_JSON_SCHEMA_EMITTER = _NODE_MODULES / '@typespec' / 'json-schema'
 
 
 class TspCompileError(RuntimeError):
@@ -30,7 +30,7 @@ class TspCompileError(RuntimeError):
 
 def tsp_available() -> bool:
     """Whether the TypeSpec toolchain can run the round-trip tests."""
-    return shutil.which("node") is not None and _TSP_CLI.is_file() and _PROTOBUF_EMITTER.is_dir()
+    return shutil.which('node') is not None and _TSP_CLI.is_file() and _PROTOBUF_EMITTER.is_dir()
 
 
 def json_schema_available() -> bool:
@@ -49,22 +49,22 @@ def compile_tsp_to_proto(tsp_source: str, work_dir: pathlib.Path) -> str:
     Raises:
         TspCompileError: if compilation fails.
     """
-    node = shutil.which("node")
-    assert node is not None, "node not on PATH (guarded by tsp_available)"
-    (work_dir / "node_modules").symlink_to(_NODE_MODULES, target_is_directory=True)
-    main_tsp = work_dir / "main.tsp"
+    node = shutil.which('node')
+    assert node is not None, 'node not on PATH (guarded by tsp_available)'
+    (work_dir / 'node_modules').symlink_to(_NODE_MODULES, target_is_directory=True)
+    main_tsp = work_dir / 'main.tsp'
     main_tsp.write_text(tsp_source)
-    out_dir = work_dir / "out"
+    out_dir = work_dir / 'out'
 
     result = subprocess.run(  # noqa: S603
         [
             node,
             str(_TSP_CLI),
-            "compile",
+            'compile',
             str(main_tsp),
-            "--emit",
-            "@typespec/protobuf",
-            "--output-dir",
+            '--emit',
+            '@typespec/protobuf',
+            '--output-dir',
             str(out_dir),
         ],
         cwd=work_dir,
@@ -75,9 +75,9 @@ def compile_tsp_to_proto(tsp_source: str, work_dir: pathlib.Path) -> str:
     if result.returncode != 0:
         raise TspCompileError(result.stdout + result.stderr)
 
-    protos = list((out_dir / "@typespec" / "protobuf").glob("*.proto"))
+    protos = list((out_dir / '@typespec' / 'protobuf').glob('*.proto'))
     if len(protos) != 1:
-        raise TspCompileError(f"expected exactly one emitted .proto, found {protos!r}")
+        raise TspCompileError(f'expected exactly one emitted .proto, found {protos!r}')
     return protos[0].read_text()
 
 
@@ -96,36 +96,36 @@ def compile_tsp_to_json_schema(tsp_source: str, work_dir: pathlib.Path) -> dict[
     Raises:
         TspCompileError: if compilation fails.
     """
-    node = shutil.which("node")
-    assert node is not None, "node not on PATH (guarded by json_schema_available)"
-    (work_dir / "node_modules").symlink_to(_NODE_MODULES, target_is_directory=True)
-    main_tsp = work_dir / "main.tsp"
+    node = shutil.which('node')
+    assert node is not None, 'node not on PATH (guarded by json_schema_available)'
+    (work_dir / 'node_modules').symlink_to(_NODE_MODULES, target_is_directory=True)
+    main_tsp = work_dir / 'main.tsp'
     main_tsp.write_text(tsp_source)
-    out_dir = work_dir / "out"
-    bundle_id = "bundle.json"
+    out_dir = work_dir / 'out'
+    bundle_id = 'bundle.json'
 
     result = subprocess.run(  # noqa: S603
         [
             node,
             str(_TSP_CLI),
-            "compile",
+            'compile',
             str(main_tsp),
-            "--emit",
-            "@typespec/json-schema",
-            "--option",
-            "@typespec/json-schema.emitAllModels=true",
-            "--option",
-            "@typespec/json-schema.file-type=json",
+            '--emit',
+            '@typespec/json-schema',
+            '--option',
+            '@typespec/json-schema.emitAllModels=true',
+            '--option',
+            '@typespec/json-schema.file-type=json',
             # int64/uint64 as JSON numbers, not the emitter's default JSON-safe
             # strings — matching the dialect's choice to keep 64-bit ints native
             # Python `int` (ADR 0001 "Scalars"; the converter bridges proto-JSON's
             # string encoding). Without this the contract renders them `string`.
-            "--option",
-            "@typespec/json-schema.int64-strategy=number",
-            "--option",
-            f"@typespec/json-schema.bundleId={bundle_id}",
-            "--option",
-            f"@typespec/json-schema.emitter-output-dir={out_dir}",
+            '--option',
+            '@typespec/json-schema.int64-strategy=number',
+            '--option',
+            f'@typespec/json-schema.bundleId={bundle_id}',
+            '--option',
+            f'@typespec/json-schema.emitter-output-dir={out_dir}',
         ],
         cwd=work_dir,
         capture_output=True,
@@ -147,22 +147,22 @@ def proto_to_descriptor_set(
     This is the ``proto->descriptor`` half shared with the ``xsd->proto`` path,
     so descriptors from either side are comparable at the wire/semantic level.
     """
-    spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+    spec = importlib.util.find_spec('google.protobuf.timestamp_pb2')
     assert spec is not None
     assert spec.origin is not None
     proto_include_path = pathlib.Path(spec.origin).parent.parent
 
-    proto_path = work_dir / "from_tsp.proto"
-    desc_path = work_dir / "from_tsp.desc"
+    proto_path = work_dir / 'from_tsp.proto'
+    desc_path = work_dir / 'from_tsp.desc'
     proto_path.write_text(proto_text)
     subprocess.run(  # noqa: S603
         [
             sys.executable,
-            "-m",
-            "grpc_tools.protoc",
-            f"--proto_path={work_dir}",
-            f"--proto_path={proto_include_path}",
-            f"--descriptor_set_out={desc_path}",
+            '-m',
+            'grpc_tools.protoc',
+            f'--proto_path={work_dir}',
+            f'--proto_path={proto_include_path}',
+            f'--descriptor_set_out={desc_path}',
             proto_path.name,
         ],
         check=True,

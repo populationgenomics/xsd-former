@@ -44,9 +44,9 @@ from {package_name} import xml_converter as xml_converter
 
 
 def _proto_include_path() -> pathlib.Path:
-    spec = importlib.util.find_spec("google.protobuf.timestamp_pb2")
+    spec = importlib.util.find_spec('google.protobuf.timestamp_pb2')
     if spec is None or spec.origin is None:
-        raise RuntimeError("Could not find google.protobuf package")
+        raise RuntimeError('Could not find google.protobuf package')
     return pathlib.Path(spec.origin).parent.parent
 
 
@@ -55,10 +55,10 @@ def _write_proto(
     type_defs: tuple[xsd.TypeDefinition, ...],
     package_dir: pathlib.Path,
 ) -> pathlib.Path:
-    proto_path = package_dir / f"{namespace}.proto"
-    with open(proto_path, "w") as f:
+    proto_path = package_dir / f'{namespace}.proto'
+    with open(proto_path, 'w') as f:
         for line in proto_generator.generate(namespace, type_defs):
-            f.write(line + "\n")
+            f.write(line + '\n')
     return proto_path
 
 
@@ -71,13 +71,13 @@ def _compile_proto(
     subprocess.run(  # noqa: S603
         [
             sys.executable,
-            "-m",
-            "grpc_tools.protoc",
-            f"--proto_path={out_dir}",
-            f"--proto_path={proto_include}",
-            f"--python_out={out_dir}",
-            f"--pyi_out={out_dir}",
-            f"{package_dir.name}/{namespace}.proto",
+            '-m',
+            'grpc_tools.protoc',
+            f'--proto_path={out_dir}',
+            f'--proto_path={proto_include}',
+            f'--python_out={out_dir}',
+            f'--pyi_out={out_dir}',
+            f'{package_dir.name}/{namespace}.proto',
         ],
         check=True,
     )
@@ -89,10 +89,10 @@ def _write_converter(
     package_name: str,
     package_dir: pathlib.Path,
 ) -> None:
-    module = f"{package_name}.{namespace}_pb2"
-    with open(package_dir / "xml_converter.py", "w") as f:
+    module = f'{package_name}.{namespace}_pb2'
+    with open(package_dir / 'xml_converter.py', 'w') as f:
         for line in xml_converter.generate(namespace, type_defs, module):
-            f.write(line + "\n")
+            f.write(line + '\n')
 
 
 def _write_pydantic_models(
@@ -100,9 +100,9 @@ def _write_pydantic_models(
     type_defs: tuple[xsd.TypeDefinition, ...],
     package_dir: pathlib.Path,
 ) -> None:
-    with open(package_dir / "models.py", "w") as f:
+    with open(package_dir / 'models.py', 'w') as f:
         for line in pydantic_generator.generate(namespace, type_defs):
-            f.write(line + "\n")
+            f.write(line + '\n')
 
 
 def _write_pydantic_converter(
@@ -111,11 +111,11 @@ def _write_pydantic_converter(
     package_name: str,
     package_dir: pathlib.Path,
 ) -> None:
-    proto_module = f"{package_name}.{namespace}_pb2"
-    models_module = f"{package_name}.models"
-    with open(package_dir / "pydantic_converter.py", "w") as f:
+    proto_module = f'{package_name}.{namespace}_pb2'
+    models_module = f'{package_name}.models'
+    with open(package_dir / 'pydantic_converter.py', 'w') as f:
         for line in pydantic_converter.generate(namespace, type_defs, proto_module, models_module):
-            f.write(line + "\n")
+            f.write(line + '\n')
 
 
 def _write_pyproject(
@@ -129,14 +129,14 @@ def _write_pyproject(
         namespace=namespace,
         version=version,
     )
-    (out_dir / "pyproject.toml").write_text(content)
+    (out_dir / 'pyproject.toml').write_text(content)
 
 
-def build_package(  # noqa: PLR0913
+def build_package(
     type_defs: tuple[xsd.TypeDefinition, ...],
     namespace: str,
     package_name: str,
-    version: str = "0.1.0",
+    version: str = '0.1.0',
     out_dir: pathlib.Path | None = None,
     run_build: bool = False,
     wheel_out: pathlib.Path | None = None,
@@ -146,7 +146,7 @@ def build_package(  # noqa: PLR0913
     Returns the package directory path.
     """
     if out_dir is None:
-        out_dir = pathlib.Path(".")
+        out_dir = pathlib.Path('.')
     out_dir = out_dir.resolve()
     package_dir = out_dir / package_name
     package_dir.mkdir(parents=True, exist_ok=True)
@@ -163,16 +163,16 @@ def build_package(  # noqa: PLR0913
     _write_pydantic_converter(namespace, type_defs, package_name, package_dir)
 
     # Write package metadata files.
-    (package_dir / "__init__.py").write_text(
+    (package_dir / '__init__.py').write_text(
         _INIT_TEMPLATE.format(package_name=package_name, namespace=namespace),
     )
-    (package_dir / "py.typed").write_text("")
+    (package_dir / 'py.typed').write_text('')
     _write_pyproject(namespace, package_name, version, out_dir)
 
     if run_build:
-        build_cmd = [sys.executable, "-m", "build", "--wheel"]
+        build_cmd = [sys.executable, '-m', 'build', '--wheel']
         if wheel_out:
-            build_cmd.extend(["--outdir", str(wheel_out)])
+            build_cmd.extend(['--outdir', str(wheel_out)])
         subprocess.run(build_cmd, check=True, cwd=out_dir)  # noqa: S603
 
     return package_dir
