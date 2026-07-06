@@ -39,7 +39,6 @@ Issues = "https://github.com/populationgenomics/xsd-former/issues"
 # in-repo so CI and contributors inherit the same resolution.
 [tool.uv]
 exclude-newer = "7 days"
-default-groups = ["test", "lint"]
 
 [dependency-groups]
 test = ["datamodel-code-generator", "jsonschema", "pydantic>=2", "pytest>=8.4.1"]

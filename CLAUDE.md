@@ -35,7 +35,7 @@ model dispositions.
 ## Commands
 
 ```bash
-uv sync                       # install dependencies (test + lint groups)
+uv sync --group test --group lint   # install dev dependencies
 uv run pytest                 # run the test suite
 uv run pytest tests/xsdformer/xsd/test_xsd.py::test_name -x   # single test
 uv run pre-commit run --all-files   # the full static-check gate (see below)
