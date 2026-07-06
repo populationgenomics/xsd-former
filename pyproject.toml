@@ -35,13 +35,26 @@ dependencies = [
 Repository = "https://github.com/populationgenomics/xsd-former"
 Issues = "https://github.com/populationgenomics/xsd-former/issues"
 
+# Supply-chain age gate: never resolve a release younger than 7 days. Declared
+# in-repo so CI and contributors inherit the same resolution.
+[tool.uv]
+exclude-newer = "7 days"
+default-groups = ["test", "lint"]
+
 [dependency-groups]
-dev = [
+test = ["datamodel-code-generator", "jsonschema", "pydantic>=2", "pytest>=8.4.1"]
+# pre-commit and pyright are in the lint group because CI runs the whole
+# static-check gate via `uv run pre-commit run --all-files`. pyright checks
+# src/ + tests/, so the group carries the test deps for those imports to resolve.
+lint = [
+    "ruff",
+    "pyright",
+    "pre-commit",
     "datamodel-code-generator",
     "jsonschema",
     "pydantic>=2",
     "pytest>=8.4.1",
-    "ruff",
+    "lxml-stubs>=0.5.1",
 ]
 
 [project.scripts]
