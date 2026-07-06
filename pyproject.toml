@@ -1,5 +1,5 @@
 [project]
-name = "xsdformer"
+name = "xsd-former"
 version = "1.0.0"
 description = "Generate Protobuf definitions, JSON Schema, and Python XML-to-protobuf converters from XSD and DTD schemas."
 readme = "README.md"

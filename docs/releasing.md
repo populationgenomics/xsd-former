@@ -1,4 +1,4 @@
-# Releasing xsdformer to PyPI
+# Releasing xsd-former to PyPI
 
 Publishing is automated by [`.github/workflows/release.yml`](../.github/workflows/release.yml)
 via PyPI **Trusted Publishing** (OIDC): CI mints a short-lived, scoped token at
@@ -10,7 +10,7 @@ Before the first release, register the trusted publisher on PyPI (needs a PyPI
 account with the project, or pre-register the pending publisher for a
 not-yet-existing project):
 
-- Project: `xsdformer`
+- Project: `xsd-former` (the distribution name; the import package stays `xsdformer`)
 - Owner: `populationgenomics`
 - Repository: `xsd-former`
 - Workflow filename: `release.yml`

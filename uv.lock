@@ -7,7 +7,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-06-29T06:49:54.910824Z"
+exclude-newer = "2026-06-29T07:22:40.87152Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -1096,7 +1096,7 @@ wheels = [
 ]
 
 [[package]]
-name = "xsdformer"
+name = "xsd-former"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
