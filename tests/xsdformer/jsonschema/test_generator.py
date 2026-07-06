@@ -19,7 +19,7 @@ class _SchemaGenerator(Protocol):
         self,
         proto_content: str,
         *,
-        main_message: str = 'TestMessage',
+        main_message: str | None = 'TestMessage',
         namespace: str = 'test',
         preserving_proto_field_name: bool = True,
         include_all: bool = False,
@@ -32,7 +32,7 @@ def generate_schema_from_proto_content() -> _SchemaGenerator:
     def _generate(
         proto_content: str,
         *,
-        main_message: str = 'TestMessage',
+        main_message: str | None = 'TestMessage',
         namespace: str = 'test',
         preserving_proto_field_name: bool = True,
         include_all: bool = False,

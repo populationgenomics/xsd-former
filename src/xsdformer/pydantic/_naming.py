@@ -11,6 +11,7 @@ truth rather than the converter reaching into the generator's internals.
 from __future__ import annotations
 
 import keyword
+from typing import overload
 
 from xsdformer.xsd import xsd
 
@@ -25,6 +26,10 @@ def type_name(type_def: xsd.TypeDefinition) -> str:
     return '_'.join(type_def.path)
 
 
+@overload
+def attr_name(name: str) -> str: ...
+@overload
+def attr_name(name: None) -> None: ...
 def attr_name(name: str | None) -> str | None:
     """The attribute name for a field, suffixed if it collides with a keyword."""
     if name is not None and keyword.iskeyword(name):

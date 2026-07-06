@@ -259,7 +259,7 @@ def _number_fields(message: xsd.Message) -> None:
     Handles duplicate field names (from DTD choice branches with overlapping
     elements) by assigning the same field number and merging occurs.
     """
-    seen: dict[str, xsd.Field] = {}
+    seen: dict[str | None, xsd.Field] = {}
     next_num = 1
     for f, occurs in xsd.get_fields_occurs(message, occurs=(1, 1)):
         if f.name in seen:
@@ -337,7 +337,8 @@ def process_dtd(
     if config is None:
         config = xsd.Config()
 
-    elements = sorted(dtd.iterelements(), key=lambda e: e.name)
+    # lxml-stubs omits DTD.iterelements (a real lxml API); ignore the stub gap.
+    elements = sorted(dtd.iterelements(), key=lambda e: e.name)  # pyright: ignore[reportAttributeAccessIssue]
 
     # Pass 1: pre-create empty Messages for all elements.
     element_messages: dict[str, xsd.Message] = {}

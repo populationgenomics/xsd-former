@@ -189,7 +189,10 @@ class FieldDefinition(Definition, abc.ABC):
 
 @dataclasses.dataclass(eq=False, kw_only=True)
 class TypeDefinition(Definition):
-    enclosing_type: tuple[TypeDefinition, Field] | None = None
+    # (parent type, the field that encloses this type). The field is None when
+    # the enclosure carries no field — e.g. a DTD attribute enum hoisted under a
+    # message.
+    enclosing_type: tuple[TypeDefinition, Field | None] | None = None
 
     @property
     def path(self) -> tuple[str, ...]:

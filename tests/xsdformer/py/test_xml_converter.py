@@ -53,7 +53,9 @@ def test_xml_to_proto(
     root = etree.XML(_BOOK_XML, parser=None)
     proto_book = book_converter.Book(root)
 
-    expected_metadata = etree.tostring(root.find('metadata')).decode('utf-8')
+    metadata_el = root.find('metadata')
+    assert metadata_el is not None
+    expected_metadata = etree.tostring(metadata_el).decode('utf-8')
     assert proto_book.metadata == expected_metadata
     proto_book.ClearField('metadata')
     book_pb2 = book_converter.book_pb2

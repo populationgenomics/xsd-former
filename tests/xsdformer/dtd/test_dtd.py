@@ -17,11 +17,11 @@ def _process(dtd_str: str) -> tuple[xsd.TypeDefinition, ...]:
     return dtd.process_dtd(io.StringIO(dtd_str))
 
 
-def _by_name(type_defs: tuple[xsd.TypeDefinition, ...]) -> dict[str, xsd.Message]:
+def _by_name(type_defs: tuple[xsd.TypeDefinition, ...]) -> dict[str | None, xsd.Message]:
     return {t.name: t for t in type_defs if isinstance(t, xsd.Message)}
 
 
-def _fields_by_name(msg: xsd.Message) -> dict[str, xsd.Field]:
+def _fields_by_name(msg: xsd.Message) -> dict[str | None, xsd.Field]:
     return {f.name: f for f in msg.get_fields()}
 
 
@@ -268,6 +268,8 @@ def test_converter_with_choice_duplicates(tmp_path: pathlib.Path) -> None:
 
     # Compile proto
     spec = importlib.util.find_spec('google.protobuf.timestamp_pb2')
+    assert spec is not None
+    assert spec.origin is not None
     proto_include = pathlib.Path(spec.origin).parent.parent
     subprocess.run(  # noqa: S603
         [
@@ -287,6 +289,8 @@ def test_converter_with_choice_duplicates(tmp_path: pathlib.Path) -> None:
         f'{namespace}_pb2',
         tmp_path / f'{namespace}_pb2.py',
     )
+    assert pb2_spec is not None
+    assert pb2_spec.loader is not None
     module_pb2 = importlib.util.module_from_spec(pb2_spec)
     pb2_spec.loader.exec_module(module_pb2)
 

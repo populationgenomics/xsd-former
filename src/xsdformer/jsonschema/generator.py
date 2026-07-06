@@ -142,10 +142,16 @@ class _JsonSchemaFromDesc:
         file_name = ''
         try:
             if isinstance(desc, descriptor.FieldDescriptor):
-                if desc.containing_type.GetOptions().map_entry:
+                # A field descriptor in the generated protos always has a
+                # containing message (the stubs type it Optional for the
+                # top-level-extension case, which these protos never produce).
+                containing = desc.containing_type
+                if containing is None:
+                    return None
+                if containing.GetOptions().map_entry:
                     return None  # No comments for map entry fields
                 path = self._get_field_path(desc)
-                file_name = desc.containing_type.file.name
+                file_name = containing.file.name
             elif isinstance(desc, descriptor.Descriptor):
                 path = self._get_message_path(desc)
                 file_name = desc.file.name
@@ -211,8 +217,11 @@ class _JsonSchemaFromDesc:
         Raises:
           ValueError: If the path for the descriptor cannot be found.
         """
-        path = self._get_message_path(desc.containing_type)
-        containing_type_dp = self._find_descriptor_proto(desc.containing_type)
+        containing = desc.containing_type
+        if containing is None:
+            raise ValueError(f'{desc.full_name}: field descriptor has no containing type')
+        path = self._get_message_path(containing)
+        containing_type_dp = self._find_descriptor_proto(containing)
         if containing_type_dp:
             for i, field in enumerate(containing_type_dp.field):
                 if field.name == desc.name:
@@ -369,9 +378,9 @@ class _JsonSchemaFromDesc:
 
         # Recursively convert nested messages
         for field in message_descriptor.fields:
-            if field.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
+            if field.type == descriptor.FieldDescriptor.TYPE_MESSAGE and field.message_type is not None:
                 self._convert_message_to_schema(field.message_type)
-            elif field.type == descriptor.FieldDescriptor.TYPE_ENUM:
+            elif field.type == descriptor.FieldDescriptor.TYPE_ENUM and field.enum_type is not None:
                 self._convert_enum_to_schema(field.enum_type)
 
         return schema
@@ -450,7 +459,10 @@ class _JsonSchemaFromDesc:
         self._definitions[enum_name] = schema
 
     def _get_enum_schema(self, field: descriptor.FieldDescriptor) -> dict[str, Any]:
-        return {'$ref': f'#/definitions/{field.enum_type.full_name}'}
+        enum_type = field.enum_type
+        if enum_type is None:
+            raise ValueError(f'{field.full_name}: enum field has no enum_type')
+        return {'$ref': f'#/definitions/{enum_type.full_name}'}
 
 
 def _generate_schema_from_descriptor_set(

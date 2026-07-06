@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 import click
 
-from xsdformer import build
+from xsdformer import build, transforms
 from xsdformer.dtd import dtd
 from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
@@ -18,10 +18,10 @@ from xsdformer.xsd import xsd
 
 def _maybe_transform(
     type_defs: tuple[xsd.TypeDefinition, ...],
-    transforms: str | None,
+    transforms_path: str | None,
 ) -> tuple[xsd.TypeDefinition, ...]:
-    if transforms:
-        config = transforms.TransformConfig.from_yaml(pathlib.Path(transforms))
+    if transforms_path:
+        config = transforms.TransformConfig.from_yaml(pathlib.Path(transforms_path))
         return transforms.apply_transforms(type_defs, config)
     return type_defs
 
@@ -157,6 +157,7 @@ def cli() -> None:
 )
 @click.option(
     '--transforms',
+    'transforms_path',
     type=click.Path(exists=True),
     help='YAML file specifying IR transforms to apply.',
 )
@@ -172,10 +173,10 @@ def xsd_command(
     main_message: str,
     preserving_proto_field_name: bool,
     proto_package: str,
-    transforms: str | None,
+    transforms_path: str | None,
 ) -> None:
     """Converts an XSD file to a Protobuf definition and/or a Python XML converter."""
-    type_defs = _maybe_transform(xsd.process_xsd(xsd_file), transforms)
+    type_defs = _maybe_transform(xsd.process_xsd(xsd_file), transforms_path)
     _emit_outputs(
         type_defs,
         xsd_file,
@@ -278,6 +279,7 @@ def proto(
 )
 @click.option(
     '--transforms',
+    'transforms_path',
     type=click.Path(exists=True),
     help='YAML file specifying IR transforms to apply.',
 )
@@ -293,10 +295,10 @@ def dtd_command(
     main_message: str,
     preserving_proto_field_name: bool,
     proto_package: str,
-    transforms: str | None,
+    transforms_path: str | None,
 ) -> None:
     """Converts a DTD file to a Protobuf definition and/or a Python XML converter."""
-    type_defs = _maybe_transform(dtd.process_dtd(dtd_file), transforms)
+    type_defs = _maybe_transform(dtd.process_dtd(dtd_file), transforms_path)
     _emit_outputs(
         type_defs,
         dtd_file,
@@ -319,6 +321,7 @@ def dtd_command(
 @click.argument('schema_file', type=click.Path(exists=True))
 @click.option(
     '--transforms',
+    'transforms_path',
     type=click.Path(exists=True),
     help='Transform config YAML (provides build: section too).',
 )
@@ -346,7 +349,7 @@ def dtd_command(
 )
 def build_command(
     schema_file: str,
-    transforms: str | None,
+    transforms_path: str | None,
     namespace: str | None,
     package_name: str | None,
     version: str | None,
@@ -359,8 +362,8 @@ def build_command(
 
     # Load build config from transforms YAML if provided.
     build_cfg: transforms.BuildConfig | None = None
-    if transforms:
-        build_cfg = transforms.BuildConfig.from_yaml(pathlib.Path(transforms))
+    if transforms_path:
+        build_cfg = transforms.BuildConfig.from_yaml(pathlib.Path(transforms_path))
 
     # CLI options override config.
     resolved_namespace = namespace or (build_cfg.namespace if build_cfg else None)
@@ -378,8 +381,8 @@ def build_command(
     suffix = schema_path.suffix.lower()
     type_defs = dtd.process_dtd(str(schema_path)) if suffix == '.dtd' else xsd.process_xsd(str(schema_path))
 
-    if transforms:
-        config = transforms.TransformConfig.from_yaml(pathlib.Path(transforms))
+    if transforms_path:
+        config = transforms.TransformConfig.from_yaml(pathlib.Path(transforms_path))
         type_defs = transforms.apply_transforms(type_defs, config)
 
     package_dir = build.build_package(

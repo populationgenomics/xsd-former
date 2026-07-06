@@ -135,7 +135,7 @@ class ProtobufGenerator:
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
         saved = getattr(self, '_emitted_fields', None)
-        self._emitted_fields: set[str] = set()
+        self._emitted_fields: set[str | None] = set()
         if msg_def.documentation:
             yield from text.render_comment(msg_def.documentation)
         yield f'message {msg_def.name} {{'

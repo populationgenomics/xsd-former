@@ -16,7 +16,7 @@ from xsdformer.xsd import text, xsd
 
 
 def _xml_as_str(val: etree._Element) -> str:
-    return etree.tostring(val)
+    return etree.tostring(val, encoding='unicode')
 
 
 def _node_is(val: etree._Element, tag: str) -> bool:
@@ -90,7 +90,7 @@ def _parse_date_element(element: etree._Element) -> datetime.datetime:
             if m:
                 return datetime.datetime(int(m.group(1)), 1, 1)  # noqa: DTZ001
         return datetime.datetime(1, 1, 1)  # noqa: DTZ001
-    year = int(year_el.text)
+    year = int(year_el.text) if year_el.text else 1
     month_el = _find_child(element, 'Month', 'month')
     if month_el is not None and month_el.text:
         month_text = month_el.text.strip()

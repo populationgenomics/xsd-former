@@ -41,7 +41,7 @@ class FlattenedListInfo:
     inner_tag is the XML element tag of the items to collect from the wrapper.
     """
 
-    inner_tag: str
+    inner_tag: str | None
 
 
 @dataclasses.dataclass(frozen=True)
