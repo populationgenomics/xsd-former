@@ -6,24 +6,43 @@ import functools
 import inspect
 import itertools
 import re
+import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any
-
-from lxml import etree
+from typing import Any, Protocol, cast
 
 from xsdformer import generator, transforms
 from xsdformer.xsd import text, xsd
 
 
-def _xml_as_str(val: etree._Element) -> str:
-    return etree.tostring(val, encoding='unicode')
+class _Element(Protocol):
+    """Structural type for an ElementTree-compatible XML element.
+
+    Satisfied by lxml, stdlib xml.etree.ElementTree, and defusedxml
+    elements alike, so the consumer of the generated converter picks the
+    parser. This type is copied verbatim into generated modules.
+    """
+
+    tag: str
+    text: str | None
+    tail: str | None
+
+    def find(self, path: str) -> _Element | None: ...
+
+    def __iter__(self) -> Iterator[_Element]: ...
 
 
-def _node_is(val: etree._Element, tag: str) -> bool:
+def _xml_as_str(val: _Element) -> str:
+    # stdlib tostring serializes any ElementTree-compatible element (lxml,
+    # stdlib, defusedxml); lxml's tostring rejects non-lxml elements. cast
+    # bridges the structural Protocol to the concretely-typed serializer.
+    return ET.tostring(cast('ET.Element', val), encoding='unicode')
+
+
+def _node_is(val: _Element, tag: str) -> bool:
     return val.tag == tag
 
 
-def _consume(queue: collections.deque[etree._Element], tag: str) -> etree._Element:
+def _consume(queue: collections.deque[_Element], tag: str) -> _Element:
     node = queue.popleft()
     if node.tag != tag:
         raise ValueError(f'Expected {tag}, but saw {node.tag=}')
@@ -31,9 +50,9 @@ def _consume(queue: collections.deque[etree._Element], tag: str) -> etree._Eleme
 
 
 def _consume_if(
-    queue: collections.deque[etree._Element],
+    queue: collections.deque[_Element],
     tag: str,
-) -> etree._Element | None:
+) -> _Element | None:
     if not (queue and _node_is(queue[0], tag)):
         return None
     return _consume(queue, tag)
@@ -73,7 +92,7 @@ _MONTH_NAMES = {
 }
 
 
-def _find_child(element: etree._Element, *names: str) -> etree._Element | None:
+def _find_child(element: _Element, *names: str) -> _Element | None:
     for name in names:
         el = element.find(name)
         if el is not None:
@@ -81,7 +100,7 @@ def _find_child(element: etree._Element, *names: str) -> etree._Element | None:
     return None
 
 
-def _parse_date_element(element: etree._Element) -> datetime.datetime:
+def _parse_date_element(element: _Element) -> datetime.datetime:
     year_el = _find_child(element, 'Year', 'year')
     if year_el is None:
         md = _find_child(element, 'MedlineDate', 'medline_date')
@@ -111,7 +130,7 @@ def _parse_date_element(element: etree._Element) -> datetime.datetime:
     return datetime.datetime(year, month, day, hour, minute, second)  # noqa: DTZ001
 
 
-def _serialize_markdown(element: etree._Element) -> str:
+def _serialize_markdown(element: _Element) -> str:
     tags = {
         'b': ('**', '**'),
         'B': ('**', '**'),
@@ -126,7 +145,7 @@ def _serialize_markdown(element: etree._Element) -> str:
     }
     parts: list[str] = []
 
-    def _walk(el: etree._Element) -> None:
+    def _walk(el: _Element) -> None:
         pair = tags.get(el.tag)
         if pair:
             parts.append(pair[0])
@@ -157,6 +176,8 @@ _PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
     _parse_date_element,
     _serialize_markdown,
 )
+
+_PROTO_PY_CONVERTER_TYPES: tuple[type, ...] = (_Element,)
 
 _PROTO_PY_CONVERTER_CONSTANTS: tuple[tuple[str, Any], ...] = (('_MONTH_NAMES', _MONTH_NAMES),)
 
@@ -523,6 +544,8 @@ class PyXMLConverterGenerator:
         self._package, _, self._module = module.rpartition('.')
 
     def header(self) -> Iterable[str]:
+        yield 'from __future__ import annotations'
+        yield ''
         if self._package:
             yield f'from {self._package} import {self._module}'
         else:
@@ -530,9 +553,13 @@ class PyXMLConverterGenerator:
         yield 'import collections'
         yield 'import datetime'
         yield 'import re'
-        yield 'from lxml import etree'
+        yield 'import xml.etree.ElementTree as ET'
+        yield 'from collections.abc import Iterator'
+        yield 'from typing import Protocol, cast'
         yield ''
         yield ''
+        for type_ in _PROTO_PY_CONVERTER_TYPES:
+            yield from inspect.getsource(type_).split('\n')
         for name, value in _PROTO_PY_CONVERTER_CONSTANTS:
             yield f'{name} = {value!r}'
             yield ''
@@ -576,7 +603,7 @@ class PyXMLConverterGenerator:
         yield f"""
 
 
-def _fill_{method_name}(element: etree._Element, proto: {msg_class}):
+def _fill_{method_name}(element: _Element, proto: {msg_class}):
   children = collections.deque(element)
 """
         for field_def in msg_def.content:
@@ -585,7 +612,7 @@ def _fill_{method_name}(element: etree._Element, proto: {msg_class}):
         yield f"""
 
 
-def {method_name}(element: etree._Element) -> {msg_class}:
+def {method_name}(element: _Element) -> {msg_class}:
   proto = {msg_class}()
   _fill_{method_name}(element, proto)
   return proto
