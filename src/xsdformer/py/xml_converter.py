@@ -14,6 +14,20 @@ from xsdformer import generator, transforms
 from xsdformer.xsd import text, xsd
 
 
+class _Attrib(Protocol):
+    """Structural type for an element's attribute mapping.
+
+    Models only what the generated code uses — subscript and membership.
+    Not `Mapping[str, str]`: lxml's `_Attrib` is not a `Mapping` and its
+    values are `str | bytes`, so `Mapping[str, str]` would exclude lxml.
+    Params are positional-only to match stdlib `dict`'s signatures.
+    """
+
+    def __getitem__(self, key: str, /) -> str | bytes: ...
+
+    def __contains__(self, key: str, /) -> bool: ...
+
+
 class _Element(Protocol):
     """Structural type for an ElementTree-compatible XML element.
 
@@ -25,6 +39,9 @@ class _Element(Protocol):
     tag: str
     text: str | None
     tail: str | None
+
+    @property
+    def attrib(self) -> _Attrib: ...
 
     def find(self, path: str) -> _Element | None: ...
 
@@ -177,7 +194,7 @@ _PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
     _serialize_markdown,
 )
 
-_PROTO_PY_CONVERTER_TYPES: tuple[type, ...] = (_Element,)
+_PROTO_PY_CONVERTER_TYPES: tuple[type, ...] = (_Attrib, _Element)
 
 _PROTO_PY_CONVERTER_CONSTANTS: tuple[tuple[str, Any], ...] = (('_MONTH_NAMES', _MONTH_NAMES),)
 

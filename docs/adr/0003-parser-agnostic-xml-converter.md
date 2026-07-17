@@ -31,11 +31,14 @@ The generated converter is parser-agnostic. The consumer supplies elements from
 any ElementTree-compatible parser.
 
 - **Annotations use a structural `_Element` Protocol** (`tag`/`text`/`tail`/
-  `find`/`__iter__`), copied verbatim into generated modules via
+  `attrib`/`find`/`__iter__`), copied verbatim into generated modules via
   `inspect.getsource` alongside the runtime helpers. Rejected: annotating as
   stdlib `ElementTree.Element` — lxml `_Element` is not a subclass, so that
   merely reverses the lock-in (a consumer passing lxml elements would fail
-  type-checking). A Protocol accepts all three parsers honestly.
+  type-checking). A Protocol accepts all three parsers honestly. `attrib` is a
+  read-only property typed against a nested `_Attrib` protocol (subscript +
+  membership only), not `Mapping[str, str]` — lxml's `_Attrib` is not a
+  `Mapping` and yields `str | bytes`, so `Mapping[str, str]` would exclude it.
 - **`_xml_as_str` serializes with stdlib `ElementTree.tostring`**, which
   duck-types over lxml, stdlib, and defusedxml elements alike (verified);
   lxml's does not. A single `cast` bridges the Protocol to the concretely-typed
