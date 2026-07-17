@@ -78,9 +78,11 @@ implements `IGenerator`:
 - [`protobuf/generator.py`](src/xsdformer/protobuf/generator.py) — emits
   `.proto` syntax.
 - [`py/xml_converter.py`](src/xsdformer/py/xml_converter.py) — emits Python code
-  that converts parsed lxml elements into Protobuf message instances. Runtime
-  helpers (e.g. `_xml_bool`, `_consume`) are embedded into the generated output
-  via `inspect.getsource`.
+  that converts parsed XML elements into Protobuf message instances. Element
+  params are typed against a structural `_Element` Protocol (not `lxml.etree._Element`),
+  so the consumer picks the parser — lxml, stdlib `xml.etree.ElementTree`, or
+  defusedxml. Runtime helpers (e.g. `_xml_bool`, `_consume`) are embedded into
+  the generated output via `inspect.getsource`.
 - [`jsonschema/generator.py`](src/xsdformer/jsonschema/generator.py) — compiles
   proto (from the IR or an existing `.proto` file) via `grpc_tools.protoc` into
   a `FileDescriptorSet`, then walks the Protobuf descriptors to emit JSON

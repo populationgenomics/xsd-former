@@ -1,4 +1,5 @@
 import types
+import xml.etree.ElementTree as ET
 
 from google.protobuf import text_format
 from lxml import etree
@@ -56,6 +57,26 @@ def test_xml_to_proto(
     metadata_el = root.find('metadata')
     assert metadata_el is not None
     expected_metadata = etree.tostring(metadata_el).decode('utf-8')
+    assert proto_book.metadata == expected_metadata
+    proto_book.ClearField('metadata')
+    book_pb2 = book_converter.book_pb2
+    expected_book = text_format.Parse(_BOOK_PROTO, book_pb2.Book())
+
+    assert proto_book == expected_book
+
+
+def test_xml_to_proto_stdlib_parser(
+    book_converter: types.ModuleType,
+) -> None:
+    # The generated converter is parser-agnostic: a stdlib (or defusedxml)
+    # element drives it identically to an lxml one, including the
+    # _xml_as_str/tostring path exercised by the COMPLEXANY `metadata` field.
+    root = ET.fromstring(_BOOK_XML)  # noqa: S314 — trusted literal test data
+    proto_book = book_converter.Book(root)
+
+    metadata_el = root.find('metadata')
+    assert metadata_el is not None
+    expected_metadata = ET.tostring(metadata_el, encoding='unicode')
     assert proto_book.metadata == expected_metadata
     proto_book.ClearField('metadata')
     book_pb2 = book_converter.book_pb2

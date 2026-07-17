@@ -168,7 +168,7 @@ def _write_pyproject(
         project.append('classifiers = [')
         project.extend(f'  {_toml_str(c)},' for c in classifiers)
         project.append(']')
-    project.append('dependencies = ["lxml", "protobuf>=6.32.1", "pydantic>=2"]')
+    project.append('dependencies = ["protobuf>=6.32.1", "pydantic>=2"]')
     if urls:
         project.append('')
         project.append('[project.urls]')
