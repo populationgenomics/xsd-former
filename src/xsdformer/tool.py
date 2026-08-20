@@ -338,6 +338,12 @@ def dtd_command(
 @click.option('--readme', type=click.Path(exists=True), help='README file to bundle (overrides config).')
 @click.option('--license-file', type=click.Path(exists=True), help='LICENSE file to bundle (overrides config).')
 @click.option(
+    '--min-protobuf-runtime',
+    type=str,
+    help='Oldest protobuf runtime the generated package supports (overrides config). '
+    "Defaults to the gencode version the build's protoc emits.",
+)
+@click.option(
     '--out-dir',
     type=click.Path(),
     default='.',
@@ -367,6 +373,7 @@ def build_command(
     description: str | None,
     readme: str | None,
     license_file: str | None,
+    min_protobuf_runtime: str | None,
     out_dir: str,
     run_build: bool,
     wheel_out: str | None,
@@ -390,6 +397,7 @@ def build_command(
     resolved_license_file = (
         pathlib.Path(license_file) if license_file else (build_cfg.license_file if build_cfg else None)
     )
+    resolved_min_protobuf_runtime = min_protobuf_runtime or (build_cfg.min_protobuf_runtime if build_cfg else None)
     # List/table metadata (keywords, classifiers, authors, urls) is config-only.
     resolved_keywords = build_cfg.keywords if build_cfg else ()
     resolved_classifiers = build_cfg.classifiers if build_cfg else ()
@@ -428,6 +436,7 @@ def build_command(
         classifiers=resolved_classifiers,
         authors=resolved_authors,
         urls=resolved_urls,
+        min_protobuf_runtime=resolved_min_protobuf_runtime,
     )
     click.echo(f'Generated package: {package_dir}')
 

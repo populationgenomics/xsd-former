@@ -384,3 +384,81 @@ class TestGencodeVersion:
         pb2.write_text(_VALIDATE_POSITIONAL.replace('    31,', '    _MINOR,'))
         with pytest.raises(RuntimeError, match='gen_minor'):
             build._gencode_version(pb2)
+
+
+class TestParseVersion:
+    @pytest.mark.parametrize(
+        ('value', 'expected'),
+        [('6', (6, 0, 0)), ('6.34', (6, 34, 0)), ('6.34.1', (6, 34, 1))],
+    )
+    def test_zero_fills_absent_components(self, value: str, expected: tuple[int, int, int]) -> None:
+        assert build._parse_version(value, 'test') == expected
+
+    @pytest.mark.parametrize('value', ['', '6.', '6.x', '6.34.1.2', 'v6.34', '-1'])
+    def test_rejects_malformed(self, value: str) -> None:
+        with pytest.raises(ValueError, match='dot-separated integers'):
+            build._parse_version(value, 'test')
+
+
+class TestResolveProtobufFloor:
+    """The declared floor is the gencode unless the caller promises a higher one."""
+
+    def test_defaults_to_gencode(self) -> None:
+        assert build._resolve_protobuf_floor((6, 31, 1), None) == '6.31.1'
+
+    @pytest.mark.parametrize('promise', ['6.31.1', '6.31.2', '6.32', '7'])
+    def test_promise_at_or_above_gencode_becomes_the_floor(self, promise: str) -> None:
+        assert build._resolve_protobuf_floor((6, 31, 1), promise) == promise
+
+    @pytest.mark.parametrize('promise', ['6.31.0', '6.30', '6', '5.29.0'])
+    def test_promise_below_gencode_raises(self, promise: str) -> None:
+        with pytest.raises(RuntimeError, match='refuses gencode newer than itself'):
+            build._resolve_protobuf_floor((6, 31, 1), promise)
+
+    def test_error_names_the_toolchain_and_both_versions(self) -> None:
+        """The message has to say which pin to move, not just that it is wrong."""
+        with pytest.raises(RuntimeError) as excinfo:
+            build._resolve_protobuf_floor((6, 33, 5), '6.30')
+        message = str(excinfo.value)
+        assert 'grpcio-tools' in message
+        assert '6.33.5' in message
+        assert '6.30' in message
+
+
+def test_pyproject_honours_min_protobuf_runtime(tmp_path: pathlib.Path) -> None:
+    """A promise above the stamped gencode is emitted as the floor verbatim."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    # Derived from the toolchain in use rather than hardcoded, so the promise is
+    # above the stamped gencode under any grpcio-tools version.
+    probe = tmp_path / 'probe'
+    probe.mkdir()
+    build.build_package(type_defs=type_defs, namespace='book', package_name='book_proto', out_dir=probe)
+    major, minor, _ = build._gencode_version(probe / 'book_proto' / 'book_pb2.py')
+    promise = f'{major}.{minor + 1}'
+
+    build.build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='book_proto',
+        out_dir=out_dir,
+        min_protobuf_runtime=promise,
+    )
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    assert f'protobuf>={promise}' in data['project']['dependencies']
+
+
+def test_build_fails_when_min_protobuf_runtime_is_below_gencode(tmp_path: pathlib.Path) -> None:
+    """A promise the toolchain cannot meet fails the build instead of shipping it."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    with pytest.raises(RuntimeError, match=r'would not import at 4\.0'):
+        build.build_package(
+            type_defs=type_defs,
+            namespace='book',
+            package_name='book_proto',
+            out_dir=out_dir,
+            min_protobuf_runtime='4.0',
+        )

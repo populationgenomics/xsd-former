@@ -835,6 +835,16 @@ class TestBuildConfigFromYaml:
         assert cfg.classifiers == ()
         assert cfg.readme is None
         assert cfg.license_file is None
+        assert cfg.min_protobuf_runtime is None
+
+    def test_reads_min_protobuf_runtime(self, tmp_path: pathlib.Path) -> None:
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text(
+            'build:\n  namespace: book\n  package_name: book_proto\n  min_protobuf_runtime: "6.34"\n',
+        )
+        cfg = BuildConfig.from_yaml(yaml_path)
+        assert cfg is not None
+        assert cfg.min_protobuf_runtime == '6.34'
 
     def test_resolves_asset_paths_relative_to_config(self, tmp_path: pathlib.Path) -> None:
         yaml_path = tmp_path / 'transforms.yaml'

@@ -91,6 +91,9 @@ class BuildConfig:
     # Resolved relative to the config file. Unset -> not emitted.
     readme: pathlib.Path | None = None
     license_file: pathlib.Path | None = None
+    # Oldest protobuf runtime the generated package is declared to support. Unset
+    # -> the floor is whatever gencode the build's protoc stamps.
+    min_protobuf_runtime: str | None = None
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> BuildConfig | None:
@@ -113,6 +116,7 @@ class BuildConfig:
             urls=tuple((label, url) for label, url in (build.get('urls') or {}).items()),
             readme=_resolve_asset(path, build.get('readme')),
             license_file=_resolve_asset(path, build.get('license_file')),
+            min_protobuf_runtime=build.get('min_protobuf_runtime'),
         )
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import importlib.metadata
 import importlib.util
 import json
 import pathlib
@@ -141,6 +142,59 @@ def _gencode_version(pb2_path: pathlib.Path) -> tuple[int, int, int]:
     return major, minor, patch
 
 
+def _toolchain_version() -> str:
+    """The resolved grpcio-tools version, for diagnostics only."""
+    try:
+        return importlib.metadata.version('grpcio-tools')
+    except importlib.metadata.PackageNotFoundError:
+        # Only enriches an error message; a missing distribution must not mask
+        # the error being reported.
+        return '(unknown version)'
+
+
+def _parse_version(value: str, source: str) -> tuple[int, int, int]:
+    """Parses a one-to-three component dotted version, zero-filling what is absent."""
+    parts = value.split('.')
+    if not 1 <= len(parts) <= 3 or not all(part.isdigit() for part in parts):
+        raise ValueError(f'{source} must be one to three dot-separated integers, got {value!r}.')
+    padded = (*(int(part) for part in parts), 0, 0)
+    return padded[0], padded[1], padded[2]
+
+
+def _resolve_protobuf_floor(
+    gencode_version: tuple[int, int, int],
+    min_protobuf_runtime: str | None,
+) -> str:
+    """Resolves the protobuf floor to declare for the generated package.
+
+    Args:
+        gencode_version: Gencode version stamped into the generated `_pb2`.
+        min_protobuf_runtime: Oldest protobuf runtime the caller promises the
+            generated package supports, or None to take the gencode as the floor.
+
+    Returns:
+        The version to declare as the generated package's `protobuf>=` floor.
+
+    Raises:
+        RuntimeError: If `min_protobuf_runtime` is older than the stamped gencode,
+            which the protobuf runtime would refuse to load.
+        ValueError: If `min_protobuf_runtime` is not a dotted version.
+    """
+    gencode = '.'.join(str(part) for part in gencode_version)
+    if min_protobuf_runtime is None:
+        return gencode
+    if gencode_version > _parse_version(min_protobuf_runtime, 'min_protobuf_runtime'):
+        raise RuntimeError(
+            f'The protoc bundled in grpcio-tools {_toolchain_version()} stamped gencode {gencode} '
+            f'into the generated _pb2, but min_protobuf_runtime promises support for protobuf '
+            f'{min_protobuf_runtime}. The protobuf runtime refuses gencode newer than itself, so '
+            f'the generated package would not import at {min_protobuf_runtime}. Either pin '
+            f'grpcio-tools to a release whose protoc emits gencode {min_protobuf_runtime} or '
+            f'older, or raise min_protobuf_runtime to {gencode}.',
+        )
+    return min_protobuf_runtime
+
+
 def _write_converter(
     namespace: str,
     type_defs: tuple[xsd.TypeDefinition, ...],
@@ -192,7 +246,7 @@ def _write_pyproject(
     distribution_name: str,
     version: str,
     out_dir: pathlib.Path,
-    gencode_version: tuple[int, int, int],
+    protobuf_floor: str,
     *,
     description: str | None = None,
     readme: str | None = None,
@@ -230,7 +284,6 @@ def _write_pyproject(
         project.append('classifiers = [')
         project.extend(f'  {_toml_str(c)},' for c in classifiers)
         project.append(']')
-    protobuf_floor = '.'.join(str(part) for part in gencode_version)
     project.append(f'dependencies = ["protobuf>={protobuf_floor}", "pydantic>=2"]')
     if urls:
         project.append('')
@@ -260,6 +313,7 @@ def build_package(
     classifiers: Sequence[str] = (),
     authors: Sequence[transforms.Author] = (),
     urls: Sequence[tuple[str, str]] = (),
+    min_protobuf_runtime: str | None = None,
 ) -> pathlib.Path:
     """Generates a pip-installable source tree (and optionally builds a wheel).
 
@@ -269,6 +323,11 @@ def build_package(
     emitted only when set, so the default output stays minimal. `readme` and
     `license_file`, when given, are copied into the build root and referenced by
     `readme` / `license-files`.
+
+    `min_protobuf_runtime` is the oldest protobuf runtime the caller promises the
+    generated package supports. When given it becomes the declared `protobuf>=`
+    floor, and the build fails if the toolchain stamps gencode newer than it.
+    When unset, the floor is the stamped gencode.
 
     Returns the package directory path.
     """
@@ -281,11 +340,11 @@ def build_package(
     package_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate and compile the proto. The gencode version protoc stamps into the
-    # _pb2 sets the generated package's protobuf floor: the runtime refuses
-    # gencode newer than itself, so a lower floor is unimportable.
+    # _pb2 bounds the generated package's protobuf floor from below: the runtime
+    # refuses gencode newer than itself, so a lower floor is unimportable.
     _write_proto(namespace, type_defs, package_dir)
     pb2_path = _compile_proto(namespace, package_dir, out_dir)
-    gencode_version = _gencode_version(pb2_path)
+    protobuf_floor = _resolve_protobuf_floor(_gencode_version(pb2_path), min_protobuf_runtime)
 
     # Generate the XML converter.
     _write_converter(namespace, type_defs, package_name, package_dir)
@@ -316,7 +375,7 @@ def build_package(
         distribution_name,
         version,
         out_dir,
-        gencode_version,
+        protobuf_floor,
         description=description,
         readme=readme_name,
         license_expr=license_expr,
