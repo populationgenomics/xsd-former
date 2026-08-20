@@ -398,11 +398,13 @@ def build_command(
         pathlib.Path(license_file) if license_file else (build_cfg.license_file if build_cfg else None)
     )
     resolved_min_protobuf_runtime = min_protobuf_runtime or (build_cfg.min_protobuf_runtime if build_cfg else None)
-    # List/table metadata (keywords, classifiers, authors, urls) is config-only.
+    # List/table metadata (keywords, classifiers, authors, urls, dependencies) is
+    # config-only.
     resolved_keywords = build_cfg.keywords if build_cfg else ()
     resolved_classifiers = build_cfg.classifiers if build_cfg else ()
     resolved_authors = build_cfg.authors if build_cfg else ()
     resolved_urls = build_cfg.urls if build_cfg else ()
+    resolved_dependencies = build_cfg.dependencies if build_cfg else ()
 
     if not resolved_namespace:
         resolved_namespace = schema_path.stem
@@ -437,6 +439,7 @@ def build_command(
         authors=resolved_authors,
         urls=resolved_urls,
         min_protobuf_runtime=resolved_min_protobuf_runtime,
+        dependencies=resolved_dependencies,
     )
     click.echo(f'Generated package: {package_dir}')
 

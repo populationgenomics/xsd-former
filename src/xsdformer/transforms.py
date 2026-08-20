@@ -94,6 +94,9 @@ class BuildConfig:
     # Oldest protobuf runtime the generated package is declared to support. Unset
     # -> the floor is whatever gencode the build's protoc stamps.
     min_protobuf_runtime: str | None = None
+    # Extra runtime requirements, on top of the protobuf and pydantic ones every
+    # generated package declares.
+    dependencies: tuple[str, ...] = ()
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> BuildConfig | None:
@@ -117,6 +120,7 @@ class BuildConfig:
             readme=_resolve_asset(path, build.get('readme')),
             license_file=_resolve_asset(path, build.get('license_file')),
             min_protobuf_runtime=build.get('min_protobuf_runtime'),
+            dependencies=tuple(build.get('dependencies', [])),
         )
 
 

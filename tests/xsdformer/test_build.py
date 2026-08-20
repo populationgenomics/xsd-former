@@ -462,3 +462,60 @@ def test_build_fails_when_min_protobuf_runtime_is_below_gencode(tmp_path: pathli
             out_dir=out_dir,
             min_protobuf_runtime='4.0',
         )
+
+
+class TestCheckDependencies:
+    @pytest.mark.parametrize(
+        'requirement',
+        ['protobuf>=6.30', 'PROTOBUF', 'pydantic>=2', 'Pydantic ==2.5'],
+        ids=['protobuf', 'uppercase', 'pydantic', 'spaced-specifier'],
+    )
+    def test_rejects_reserved_names(self, requirement: str) -> None:
+        """Names are compared PEP 503 normalized, so case and specifiers cannot slip past."""
+        with pytest.raises(ValueError, match='already declares'):
+            build._check_dependencies([requirement])
+
+    @pytest.mark.parametrize(
+        'requirement',
+        ['defusedxml>=0.7', 'lxml', 'zstandard>=0.22,<1', 'proto_buf'],
+        ids=['specifier', 'bare', 'range', 'distinct-name-normalizing-differently'],
+    )
+    def test_accepts_unrelated_requirements(self, requirement: str) -> None:
+        build._check_dependencies([requirement])
+
+    def test_rejects_unreadable_requirement(self) -> None:
+        with pytest.raises(ValueError, match='distribution name'):
+            build._check_dependencies(['>=1.0'])
+
+
+def test_pyproject_extra_dependencies(tmp_path: pathlib.Path) -> None:
+    """Extra requirements are emitted alongside the ones always declared."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    build.build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='book_proto',
+        out_dir=out_dir,
+        dependencies=('defusedxml>=0.7', 'zstandard>=0.22'),
+    )
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    deps = data['project']['dependencies']
+    assert deps[-2:] == ['defusedxml>=0.7', 'zstandard>=0.22']
+    assert any(dep.startswith('protobuf>=') for dep in deps)
+    assert 'pydantic>=2' in deps
+
+
+def test_build_rejects_dependency_restating_protobuf(tmp_path: pathlib.Path) -> None:
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    with pytest.raises(ValueError, match='min_protobuf_runtime'):
+        build.build_package(
+            type_defs=type_defs,
+            namespace='book',
+            package_name='book_proto',
+            out_dir=out_dir,
+            dependencies=('protobuf>=6.30',),
+        )

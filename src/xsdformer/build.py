@@ -7,6 +7,7 @@ import importlib.metadata
 import importlib.util
 import json
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -195,6 +196,44 @@ def _resolve_protobuf_floor(
     return min_protobuf_runtime
 
 
+# Requirements the generated package always declares, with the reason a caller
+# cannot restate them: two sources for one requirement is ambiguous.
+_RESERVED_DEPENDENCIES = {
+    'protobuf': 'its floor is set by min_protobuf_runtime',
+    'pydantic': 'the generated models require pydantic v2',
+}
+
+_DEPENDENCY_NAME = re.compile(r'^([A-Za-z0-9][A-Za-z0-9._-]*)')
+
+
+def _canonical_dependency_name(requirement: str) -> str:
+    """The PEP 503 normalized distribution name of a PEP 508 requirement string."""
+    match = _DEPENDENCY_NAME.match(requirement.strip())
+    if match is None:
+        raise ValueError(f'Could not read a distribution name from dependency {requirement!r}.')
+    return re.sub(r'[-_.]+', '-', match.group(1)).lower()
+
+
+def _check_dependencies(dependencies: Sequence[str]) -> None:
+    """Rejects extra dependencies that restate one the generated package already declares.
+
+    Args:
+        dependencies: Extra PEP 508 requirement strings from the caller.
+
+    Raises:
+        ValueError: If a requirement names protobuf or pydantic, or has no
+            readable distribution name.
+    """
+    for requirement in dependencies:
+        name = _canonical_dependency_name(requirement)
+        reason = _RESERVED_DEPENDENCIES.get(name)
+        if reason is not None:
+            raise ValueError(
+                f'Dependency {requirement!r} restates {name}, which every generated package '
+                f'already declares ({reason}).',
+            )
+
+
 def _write_converter(
     namespace: str,
     type_defs: tuple[xsd.TypeDefinition, ...],
@@ -256,6 +295,7 @@ def _write_pyproject(
     classifiers: Sequence[str] = (),
     authors: Sequence[transforms.Author] = (),
     urls: Sequence[tuple[str, str]] = (),
+    dependencies: Sequence[str] = (),
 ) -> None:
     project = [
         '[project]',
@@ -284,7 +324,15 @@ def _write_pyproject(
         project.append('classifiers = [')
         project.extend(f'  {_toml_str(c)},' for c in classifiers)
         project.append(']')
-    project.append(f'dependencies = ["protobuf>={protobuf_floor}", "pydantic>=2"]')
+    all_dependencies = [f'protobuf>={protobuf_floor}', 'pydantic>=2', *dependencies]
+    if dependencies:
+        project.append('dependencies = [')
+        project.extend(f'  {_toml_str(dep)},' for dep in all_dependencies)
+        project.append(']')
+    else:
+        # Inline when there are no extras, so this option does not reformat the
+        # pyproject.toml of every package that does not use it.
+        project.append(f'dependencies = [{", ".join(_toml_str(dep) for dep in all_dependencies)}]')
     if urls:
         project.append('')
         project.append('[project.urls]')
@@ -314,6 +362,7 @@ def build_package(
     authors: Sequence[transforms.Author] = (),
     urls: Sequence[tuple[str, str]] = (),
     min_protobuf_runtime: str | None = None,
+    dependencies: Sequence[str] = (),
 ) -> pathlib.Path:
     """Generates a pip-installable source tree (and optionally builds a wheel).
 
@@ -329,8 +378,13 @@ def build_package(
     floor, and the build fails if the toolchain stamps gencode newer than it.
     When unset, the floor is the stamped gencode.
 
+    `dependencies` are extra runtime requirements for the generated package,
+    declared alongside the protobuf and pydantic requirements it always carries.
+
     Returns the package directory path.
     """
+    _check_dependencies(dependencies)
+
     if distribution_name is None:
         distribution_name = package_name
     if out_dir is None:
@@ -384,6 +438,7 @@ def build_package(
         classifiers=classifiers,
         authors=authors,
         urls=urls,
+        dependencies=dependencies,
     )
 
     if run_build:
