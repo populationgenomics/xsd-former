@@ -125,6 +125,16 @@ can only raise the floor, never lower it below what the code requires.
 `build.dependencies` appends extra requirements; restating `protobuf` or
 `pydantic` raises.
 
+A consequence worth stating for consumers: a toolchain bump moves the published
+floor. `uv lock --upgrade` from `grpcio-tools` 1.81.0 to 1.83.0 changes the stamp
+from 6.33.5 to 7.35.1, so a regenerated package's requirement goes from
+`protobuf>=6.33.5` to `protobuf>=7.35.1` — a major bump in every downstream
+dependency surface, arriving through a lockfile change rather than a decision.
+Because `min_protobuf_runtime` can only raise the floor, it cannot hold a 6.x
+floor against a 7.x stamp; holding one means pinning `grpcio-tools`, with
+`min_protobuf_runtime` as the tripwire that fails the build when the toolchain
+outruns the promise.
+
 ## Text utilities
 
 [`xsd/text.py`](src/xsdformer/xsd/text.py) — `snake_case`, `pascal_case`, and
