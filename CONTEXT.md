@@ -110,6 +110,21 @@ implements `IGenerator`:
 Python package from a schema: generated proto (compiled to `_pb2.py`), the XML
 converter, and Pydantic models, wrapped in a generated `pyproject.toml`.
 
+The generated package's `protobuf>=` floor is read out of the
+`ValidateProtobufRuntimeVersion` call protoc stamps into the `_pb2` (via `ast`,
+not a regex), because that call is the assertion the protobuf runtime evaluates
+on import — the runtime refuses gencode newer than itself, so any lower floor
+makes the package unimportable. The gencode is a property of the protoc bundled
+in `grpcio-tools`, and that pin stays the caller's: `grpcio-tools`' own metadata
+is not a usable substitute (1.66.2 and 1.71.0 both declare `protobuf>=5.26.1`
+while emitting gencode 5.27.2 and 5.29.0).
+
+`build.min_protobuf_runtime` declares the oldest runtime the package is meant to
+support. It is checked against the stamped gencode before being emitted, so it
+can only raise the floor, never lower it below what the code requires.
+`build.dependencies` appends extra requirements; restating `protobuf` or
+`pydantic` raises.
+
 ## Text utilities
 
 [`xsd/text.py`](src/xsdformer/xsd/text.py) — `snake_case`, `pascal_case`, and
