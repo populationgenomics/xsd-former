@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 import subprocess
 import sys
 import tomllib
@@ -10,8 +11,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from xsdformer import transforms
-from xsdformer.build import build_package
+from xsdformer import build, transforms
 from xsdformer.xsd import xsd
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ def built_package(
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    package_dir = build_package(
+    package_dir = build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='book_proto',
@@ -119,6 +119,27 @@ def test_pyproject_toml(built_package: tuple[pathlib.Path, pathlib.Path]) -> Non
     assert 'defusedxml' not in pyproject
 
 
+def test_pyproject_protobuf_floor_is_the_stamped_gencode(
+    built_package: tuple[pathlib.Path, pathlib.Path],
+) -> None:
+    """The declared protobuf floor equals the gencode protoc stamped into the _pb2.
+
+    Reads the stamp here rather than calling `_gencode_version`, so a misread by
+    the extractor cannot agree with itself and keep this green. Still derived from
+    the same build, so it holds under any grpcio-tools version instead of pinning
+    a value that would drift.
+    """
+    out_dir, package_dir = built_package
+    header = re.search(
+        r'^# Protobuf Python Version: (\d+\.\d+\.\d+)',
+        (package_dir / 'book_pb2.py').read_text(),
+        re.MULTILINE,
+    )
+    assert header is not None
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    assert f'protobuf>={header[1]}' in data['project']['dependencies']
+
+
 def test_pyproject_minimal_omits_optional_metadata(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     """With no metadata configured, the optional [project] fields are absent."""
     out_dir, _ = built_package
@@ -136,7 +157,7 @@ def test_pyproject_metadata(tmp_path: pathlib.Path) -> None:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    build_package(
+    build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='book_proto',
@@ -172,7 +193,7 @@ def test_pyproject_readme_and_license_file(tmp_path: pathlib.Path) -> None:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    build_package(
+    build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='book_proto',
@@ -194,7 +215,7 @@ def test_pyproject_distribution_name(tmp_path: pathlib.Path) -> None:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    package_dir = build_package(
+    package_dir = build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='pubmed_proto',
@@ -302,3 +323,237 @@ assert pydantic_converter.Book_to_proto(model) == proto
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+_VALIDATE_POSITIONAL = """\
+# Protobuf Python Version: 6.31.1
+from google.protobuf import runtime_version as _runtime_version
+_runtime_version.ValidateProtobufRuntimeVersion(
+    _runtime_version.Domain.PUBLIC,
+    6,
+    31,
+    1,
+    '',
+    'pkg/t.proto'
+)
+"""
+
+_VALIDATE_KEYWORD = """\
+# Protobuf Python Version: 6.31.1
+from google.protobuf import runtime_version as _runtime_version
+_runtime_version.ValidateProtobufRuntimeVersion(
+    gen_domain=_runtime_version.Domain.PUBLIC,
+    gen_major=6, gen_minor=31, gen_patch=1,
+    gen_suffix='', location='pkg/t.proto'
+)
+"""
+
+_VALIDATE_BARE_NAME = """\
+# Protobuf Python Version: 5.27.2
+from google.protobuf.runtime_version import Domain, ValidateProtobufRuntimeVersion
+ValidateProtobufRuntimeVersion(Domain.PUBLIC, 5, 27, 2, '', 'pkg/t.proto')
+"""
+
+
+class TestGencodeVersion:
+    """Reading the stamped gencode version out of a generated _pb2."""
+
+    @pytest.mark.parametrize(
+        ('source', 'expected'),
+        [
+            (_VALIDATE_POSITIONAL, (6, 31, 1)),
+            (_VALIDATE_KEYWORD, (6, 31, 1)),
+            (_VALIDATE_BARE_NAME, (5, 27, 2)),
+        ],
+        ids=['positional', 'keyword', 'bare-name'],
+    )
+    def test_reads_version(
+        self,
+        tmp_path: pathlib.Path,
+        source: str,
+        expected: tuple[int, int, int],
+    ) -> None:
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(source)
+        assert build._gencode_version(pb2) == expected
+
+    def test_raises_when_header_absent(self, tmp_path: pathlib.Path) -> None:
+        """Without the header the positional read has nothing to check it against."""
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(_VALIDATE_POSITIONAL.replace('# Protobuf Python Version: 6.31.1\n', ''))
+        with pytest.raises(RuntimeError, match='cannot be corroborated'):
+            build._gencode_version(pb2)
+
+    def test_raises_when_sources_disagree(self, tmp_path: pathlib.Path) -> None:
+        """An inserted positional argument is the one deformation the AST read cannot see.
+
+        `ValidateProtobufRuntimeVersion(Domain.PUBLIC, 1, 6, 33, 5, ...)` yields
+        (1, 6, 33) from the positional indices, a plausible wrong version rather
+        than an error. The independent header is what catches it.
+        """
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(
+            '# Protobuf Python Version: 6.33.5\n'
+            'from google.protobuf import runtime_version as _runtime_version\n'
+            '_runtime_version.ValidateProtobufRuntimeVersion(\n'
+            "    _runtime_version.Domain.PUBLIC, 1, 6, 33, 5, '', 'a.proto'\n"
+            ')\n',
+        )
+        with pytest.raises(RuntimeError, match=r'says 1\.6\.33 but the header comment says 6\.33\.5'):
+            build._gencode_version(pb2)
+
+    def test_raises_when_absent(self, tmp_path: pathlib.Path) -> None:
+        """A protoc older than the protobuf 5.27 line emits no assertion to read."""
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text('DESCRIPTOR = None\n')
+        with pytest.raises(RuntimeError, match='found 0'):
+            build._gencode_version(pb2)
+
+    def test_raises_when_ambiguous(self, tmp_path: pathlib.Path) -> None:
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(_VALIDATE_POSITIONAL + _VALIDATE_POSITIONAL)
+        with pytest.raises(RuntimeError, match='found 2'):
+            build._gencode_version(pb2)
+
+    def test_raises_on_unreadable_argument(self, tmp_path: pathlib.Path) -> None:
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(_VALIDATE_POSITIONAL.replace('    31,', '    _MINOR,'))
+        with pytest.raises(RuntimeError, match='gen_minor'):
+            build._gencode_version(pb2)
+
+
+class TestParseVersion:
+    @pytest.mark.parametrize(
+        ('value', 'expected'),
+        [('6', (6, 0, 0)), ('6.34', (6, 34, 0)), ('6.34.1', (6, 34, 1))],
+    )
+    def test_zero_fills_absent_components(self, value: str, expected: tuple[int, int, int]) -> None:
+        assert build._parse_version(value, 'test') == expected
+
+    @pytest.mark.parametrize('value', ['', '6.', '6.x', '6.34.1.2', 'v6.34', '-1'])
+    def test_rejects_malformed(self, value: str) -> None:
+        with pytest.raises(ValueError, match='dot-separated integers'):
+            build._parse_version(value, 'test')
+
+
+class TestResolveProtobufFloor:
+    """The declared floor is the gencode unless the caller promises a higher one."""
+
+    def test_defaults_to_gencode(self) -> None:
+        assert build._resolve_protobuf_floor((6, 31, 1), None) == '6.31.1'
+
+    @pytest.mark.parametrize('promise', ['6.31.1', '6.31.2', '6.32', '7'])
+    def test_promise_at_or_above_gencode_becomes_the_floor(self, promise: str) -> None:
+        assert build._resolve_protobuf_floor((6, 31, 1), promise) == promise
+
+    @pytest.mark.parametrize('promise', ['6.31.0', '6.30', '6', '5.29.0'])
+    def test_promise_below_gencode_raises(self, promise: str) -> None:
+        with pytest.raises(RuntimeError, match='refuses gencode newer than itself'):
+            build._resolve_protobuf_floor((6, 31, 1), promise)
+
+    def test_error_names_the_toolchain_and_both_versions(self) -> None:
+        """The message has to say which pin to move, not just that it is wrong."""
+        with pytest.raises(RuntimeError) as excinfo:
+            build._resolve_protobuf_floor((6, 33, 5), '6.30')
+        message = str(excinfo.value)
+        assert 'grpcio-tools' in message
+        assert '6.33.5' in message
+        assert '6.30' in message
+
+
+def test_pyproject_honours_min_protobuf_runtime(tmp_path: pathlib.Path) -> None:
+    """A promise above the stamped gencode is emitted as the floor verbatim."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    # Derived from the toolchain in use rather than hardcoded, so the promise is
+    # above the stamped gencode under any grpcio-tools version.
+    probe = tmp_path / 'probe'
+    probe.mkdir()
+    build.build_package(type_defs=type_defs, namespace='book', package_name='book_proto', out_dir=probe)
+    major, minor, _ = build._gencode_version(probe / 'book_proto' / 'book_pb2.py')
+    promise = f'{major}.{minor + 1}'
+
+    build.build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='book_proto',
+        out_dir=out_dir,
+        min_protobuf_runtime=promise,
+    )
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    assert f'protobuf>={promise}' in data['project']['dependencies']
+
+
+def test_build_fails_when_min_protobuf_runtime_is_below_gencode(tmp_path: pathlib.Path) -> None:
+    """A promise the toolchain cannot meet fails the build instead of shipping it."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    with pytest.raises(RuntimeError, match=r'would not import at 4\.0'):
+        build.build_package(
+            type_defs=type_defs,
+            namespace='book',
+            package_name='book_proto',
+            out_dir=out_dir,
+            min_protobuf_runtime='4.0',
+        )
+
+
+class TestCheckDependencies:
+    @pytest.mark.parametrize(
+        'requirement',
+        ['protobuf>=6.30', 'PROTOBUF', 'pydantic>=2', 'Pydantic ==2.5'],
+        ids=['protobuf', 'uppercase', 'pydantic', 'spaced-specifier'],
+    )
+    def test_rejects_reserved_names(self, requirement: str) -> None:
+        """Names are compared PEP 503 normalized, so case and specifiers cannot slip past."""
+        with pytest.raises(ValueError, match='already declares'):
+            build._check_dependencies([requirement])
+
+    @pytest.mark.parametrize(
+        'requirement',
+        ['defusedxml>=0.7', 'lxml', 'zstandard>=0.22,<1', 'proto_buf'],
+        # proto_buf normalizes to proto-buf, which is simply not protobuf. It is a
+        # different project, not a spelling of the reserved one.
+        ids=['specifier', 'bare', 'range', 'name-that-is-not-protobuf'],
+    )
+    def test_accepts_unrelated_requirements(self, requirement: str) -> None:
+        build._check_dependencies([requirement])
+
+    def test_rejects_unreadable_requirement(self) -> None:
+        with pytest.raises(ValueError, match='distribution name'):
+            build._check_dependencies(['>=1.0'])
+
+
+def test_pyproject_extra_dependencies(tmp_path: pathlib.Path) -> None:
+    """Extra requirements are emitted alongside the ones always declared."""
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    build.build_package(
+        type_defs=type_defs,
+        namespace='book',
+        package_name='book_proto',
+        out_dir=out_dir,
+        dependencies=('defusedxml>=0.7', 'zstandard>=0.22'),
+    )
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    deps = data['project']['dependencies']
+    assert deps[-2:] == ['defusedxml>=0.7', 'zstandard>=0.22']
+    assert any(dep.startswith('protobuf>=') for dep in deps)
+    assert 'pydantic>=2' in deps
+
+
+def test_build_rejects_dependency_restating_protobuf(tmp_path: pathlib.Path) -> None:
+    type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
+    out_dir = tmp_path / 'out'
+    out_dir.mkdir()
+    with pytest.raises(ValueError, match='min_protobuf_runtime'):
+        build.build_package(
+            type_defs=type_defs,
+            namespace='book',
+            package_name='book_proto',
+            out_dir=out_dir,
+            dependencies=('protobuf>=6.30',),
+        )

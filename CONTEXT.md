@@ -110,6 +110,31 @@ implements `IGenerator`:
 Python package from a schema: generated proto (compiled to `_pb2.py`), the XML
 converter, and Pydantic models, wrapped in a generated `pyproject.toml`.
 
+The generated package's `protobuf>=` floor is read out of the
+`ValidateProtobufRuntimeVersion` call protoc stamps into the `_pb2` (via `ast`,
+not a regex), because that call is the assertion the protobuf runtime evaluates
+on import — the runtime refuses gencode newer than itself, so any lower floor
+makes the package unimportable. The gencode is a property of the protoc bundled
+in `grpcio-tools`, and that pin stays the caller's: `grpcio-tools`' own metadata
+is not a usable substitute (1.66.2 and 1.71.0 both declare `protobuf>=5.26.1`
+while emitting gencode 5.27.2 and 5.29.0).
+
+`build.min_protobuf_runtime` declares the oldest runtime the package is meant to
+support. It is checked against the stamped gencode before being emitted, so it
+can only raise the floor, never lower it below what the code requires.
+`build.dependencies` appends extra requirements; restating `protobuf` or
+`pydantic` raises.
+
+A consequence worth stating for consumers: a toolchain bump moves the published
+floor. `uv lock --upgrade` from `grpcio-tools` 1.81.0 to 1.83.0 changes the stamp
+from 6.33.5 to 7.35.1, so a regenerated package's requirement goes from
+`protobuf>=6.33.5` to `protobuf>=7.35.1` — a major bump in every downstream
+dependency surface, arriving through a lockfile change rather than a decision.
+Because `min_protobuf_runtime` can only raise the floor, it cannot hold a 6.x
+floor against a 7.x stamp; holding one means pinning `grpcio-tools`, with
+`min_protobuf_runtime` as the tripwire that fails the build when the toolchain
+outruns the promise.
+
 ## Text utilities
 
 [`xsd/text.py`](src/xsdformer/xsd/text.py) — `snake_case`, `pascal_case`, and

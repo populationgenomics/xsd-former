@@ -23,7 +23,11 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.1",
-    "grpcio-tools>=1.60",
+    # Floor: the generated package's protobuf requirement is read from the
+    # ValidateProtobufRuntimeVersion call protoc stamps into the _pb2. 1.66.2 is
+    # exactly the boundary -- on Python 3.11, 1.65.5 installs but emits no such call
+    # (gencode 5.26.1), and 1.66.2 is the first that emits one.
+    "grpcio-tools>=1.66.2",
     "jinja2>=3.1.6",
     "lxml>=5.0",
     "protobuf>=6.32.1",
