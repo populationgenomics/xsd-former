@@ -31,7 +31,7 @@ _RECORDS = sorted(_RECORDS_DIR.glob('*.xml'))
 @pytest.fixture(scope='module')
 def pubmed_package(tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
     """Build the full pubmed suite once, under the production transform config."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / 'pubmed_transforms.yaml')
+    config = TransformConfig.from_yaml(_SCHEMAS_DIR / 'pubmed_transforms.yaml')
     type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / 'pubmed.dtd')), config)
     out_dir = tmp_path_factory.mktemp('pubmed_build')
     build_package(type_defs=type_defs, namespace='pubmed', package_name='pubmed_proto', out_dir=out_dir)

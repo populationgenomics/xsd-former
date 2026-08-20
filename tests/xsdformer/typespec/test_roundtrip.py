@@ -196,18 +196,17 @@ def test_book_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
 # round-trip over patterns the book fixture lacks: `xs:date`/`Timestamp`, deep
 # nesting, and nested enums whose values collide at proto's package scope.
 _SCHEMAS_DIR = pathlib.Path(__file__).parent / 'schemas'
-_REPO_ROOT = pathlib.Path(__file__).parents[3]
 
 
 def test_clinvar_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
     """ClinVar `xsd->proto` ≡ `xsd->tsp->proto` (ADR 0001 slice 7)."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / 'clinvar_transforms.yaml')
+    config = TransformConfig.from_yaml(_SCHEMAS_DIR / 'clinvar_transforms.yaml')
     type_defs = apply_transforms(xsd.process_xsd(str(_SCHEMAS_DIR / 'ClinVar_VCV.xsd')), config)
     _assert_round_trips(type_defs, 'clinvar', tmp_path)
 
 
 def test_pubmed_dtd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
     """PubMed `dtd->proto` ≡ `dtd->tsp->proto` (ADR 0001 slice 7)."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / 'pubmed_transforms.yaml')
+    config = TransformConfig.from_yaml(_SCHEMAS_DIR / 'pubmed_transforms.yaml')
     type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / 'pubmed.dtd')), config)
     _assert_round_trips(type_defs, 'pubmed', tmp_path)

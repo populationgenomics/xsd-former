@@ -50,7 +50,6 @@ pytestmark = pytest.mark.skipif(
 )
 
 _SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / 'typespec' / 'schemas'
-_REPO_ROOT = pathlib.Path(__file__).parents[3]
 
 
 def _load_module(code: str, name: str, tmp_path: pathlib.Path) -> types.ModuleType:
@@ -99,15 +98,15 @@ def test_book_equivalent(tmp_path: pathlib.Path) -> None:
 
 
 def test_clinvar_equivalent(tmp_path: pathlib.Path) -> None:
-    """ClinVar: IR-pydantic ≡ tsp contract under the production transforms."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / 'clinvar_transforms.yaml')
+    """ClinVar: IR-pydantic ≡ tsp contract under the fixture transforms."""
+    config = TransformConfig.from_yaml(_SCHEMAS_DIR / 'clinvar_transforms.yaml')
     type_defs = apply_transforms(xsd.process_xsd(str(_SCHEMAS_DIR / 'ClinVar_VCV.xsd')), config)
     _assert_equivalent(type_defs, 'clinvar', tmp_path)
 
 
 def test_pubmed_equivalent(tmp_path: pathlib.Path) -> None:
-    """PubMed: IR-pydantic ≡ tsp contract under the production transforms."""
-    config = TransformConfig.from_yaml(_REPO_ROOT / 'pubmed_transforms.yaml')
+    """PubMed: IR-pydantic ≡ tsp contract under the fixture transforms."""
+    config = TransformConfig.from_yaml(_SCHEMAS_DIR / 'pubmed_transforms.yaml')
     type_defs = apply_transforms(dtd.process_dtd(str(_SCHEMAS_DIR / 'pubmed.dtd')), config)
     _assert_equivalent(type_defs, 'pubmed', tmp_path)
 

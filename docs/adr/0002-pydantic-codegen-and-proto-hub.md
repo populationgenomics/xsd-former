@@ -240,7 +240,8 @@ Vertical, independently landable, each its own commit.
    artifacts) — no Makefile change needed; `xsdformer build` (slice 4) already does
    so unconditionally, and `generated/` is a gitignored build artifact. The
    acceptance gate lives in `tests/xsdformer/pydantic/test_roundtrip.py`: it builds
-   the pubmed suite from `tests/.../schemas/pubmed.dtd` under `pubmed_transforms.yaml`
+   the pubmed suite from `tests/.../schemas/pubmed.dtd` under
+   `tests/.../schemas/pubmed_transforms.yaml`
    via `build_package`, then over real NLM PubMed records (`records/*.xml`, `efetch`
    output) asserts `XML→proto→pydantic→proto` is identical in the proto and
    `proto→pydantic→JSON→pydantic` round-trips in pydantic — exercising the whole

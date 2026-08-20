@@ -1,0 +1,13 @@
+# Test fixture, not a production config. The maintained ClinVar transform config
+# lives in the clinvar-proto repo, which is what publishes the package; this keeps
+# only enough to exercise the transform passes over a real schema.
+inline_wrappers: true
+flatten_list_wrappers: true
+# A handful of entries, covering a message field, an enum type, and a folded
+# multi-line scalar. The prose is fixture text, not ClinVar documentation.
+comments:
+  Accession.value: Accession of the deleted SCV.
+  AggregatedGermlineClassification.review_status: Aggregate review status for this variant.
+  AggregateGermlineReviewStatusValue: >-
+    Aggregate review status across germline submissions, written as a folded
+    scalar so comment wrapping is exercised too.

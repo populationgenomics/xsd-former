@@ -22,7 +22,9 @@ def main() -> None:
     xml_path = pathlib.Path(sys.argv[2])
     max_records = int(sys.argv[3]) if len(sys.argv) > 3 else 3
 
-    transforms_path = pathlib.Path(__file__).parent.parent / 'clinvar_transforms.yaml'
+    transforms_path = (
+        pathlib.Path(__file__).parents[1] / 'tests' / 'xsdformer' / 'typespec' / 'schemas' / 'clinvar_transforms.yaml'
+    )
     config = TransformConfig.from_yaml(transforms_path)
 
     type_defs = xsd.process_xsd(str(xsd_path))
