@@ -478,7 +478,9 @@ class TestCheckDependencies:
     @pytest.mark.parametrize(
         'requirement',
         ['defusedxml>=0.7', 'lxml', 'zstandard>=0.22,<1', 'proto_buf'],
-        ids=['specifier', 'bare', 'range', 'distinct-name-normalizing-differently'],
+        # proto_buf normalizes to proto-buf, which is simply not protobuf. It is a
+        # different project, not a spelling of the reserved one.
+        ids=['specifier', 'bare', 'range', 'name-that-is-not-protobuf'],
     )
     def test_accepts_unrelated_requirements(self, requirement: str) -> None:
         build._check_dependencies([requirement])

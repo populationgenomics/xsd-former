@@ -70,6 +70,112 @@ def _resolve_asset(config_path: pathlib.Path, value: str | None) -> pathlib.Path
     return (config_path.parent / value).resolve() if value else None
 
 
+def _build_str(build: dict[str, Any], key: str) -> str | None:
+    """Reads a string-valued `build:` key, rejecting YAML types that resemble one.
+
+    An unquoted `6.30` is a YAML float and an unquoted `6` an int, so a
+    version-like value silently loses information unless the config quotes it.
+
+    Args:
+        build: The `build:` mapping.
+        key: Key to read.
+
+    Returns:
+        The string value, or None when absent or null.
+
+    Raises:
+        ValueError: If the value is present and not a string.
+    """
+    value = build.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(
+            f'build.{key} must be a string, got {type(value).__name__} ({value!r}). '
+            'Quote it in the config; YAML reads an unquoted 6.30 as the number 6.3, '
+            'so the original text is not recoverable here.',
+        )
+    return value
+
+
+def _build_str_or(build: dict[str, Any], key: str, default: str) -> str:
+    """Reads a string-valued `build:` key that has a non-null default."""
+    value = _build_str(build, key)
+    return default if value is None else value
+
+
+def _required_build_str(build: dict[str, Any], key: str) -> str:
+    """Reads a required string-valued `build:` key.
+
+    Raises:
+        ValueError: If the key is absent, null, or not a string.
+    """
+    value = _build_str(build, key)
+    if value is None:
+        raise ValueError(f'build.{key} is required.')
+    return value
+
+
+def _build_str_list(build: dict[str, Any], key: str) -> tuple[str, ...]:
+    """Reads a list-of-strings `build:` key.
+
+    A bare string is rejected rather than iterated: `dependencies: defusedxml`
+    would otherwise yield one requirement per character, each a valid
+    distribution name, and land in the published metadata.
+
+    Raises:
+        ValueError: If the value is not a list, or any entry is not a string.
+    """
+    value = build.get(key)
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise ValueError(
+            f'build.{key} must be a list of strings, got {type(value).__name__} ({value!r}).',
+        )
+    for entry in value:
+        if not isinstance(entry, str):
+            raise ValueError(
+                f'build.{key} entries must be strings, got {type(entry).__name__} ({entry!r}).',
+            )
+    return tuple(value)
+
+
+def _build_mapping(build: dict[str, Any], key: str) -> dict[str, Any]:
+    """Reads a mapping-valued `build:` key.
+
+    Raises:
+        ValueError: If the value is not a mapping.
+    """
+    value = build.get(key)
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError(
+            f'build.{key} must be a mapping, got {type(value).__name__} ({value!r}).',
+        )
+    return value
+
+
+def _build_authors(build: dict[str, Any]) -> tuple[Author, ...]:
+    """Reads the `build.authors` list.
+
+    Raises:
+        ValueError: If the value is not a list of mappings with a `name`.
+    """
+    value = build.get('authors')
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise ValueError(f'build.authors must be a list of mappings, got {type(value).__name__} ({value!r}).')
+    authors = []
+    for entry in value:
+        if not isinstance(entry, dict) or 'name' not in entry:
+            raise ValueError(f'build.authors entries must be mappings with a name, got {entry!r}.')
+        authors.append(Author(name=entry['name'], email=entry.get('email')))
+    return tuple(authors)
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class BuildConfig:
     namespace: str
@@ -107,20 +213,20 @@ class BuildConfig:
         if not build:
             return None
         return cls(
-            namespace=build['namespace'],
-            package_name=build['package_name'],
-            distribution_name=build.get('distribution_name'),
-            version=build.get('version', '0.1.0'),
-            description=build.get('description'),
-            license_expr=build.get('license'),
-            keywords=tuple(build.get('keywords', [])),
-            classifiers=tuple(build.get('classifiers', [])),
-            authors=tuple(Author(name=a['name'], email=a.get('email')) for a in build.get('authors', [])),
-            urls=tuple((label, url) for label, url in (build.get('urls') or {}).items()),
-            readme=_resolve_asset(path, build.get('readme')),
-            license_file=_resolve_asset(path, build.get('license_file')),
-            min_protobuf_runtime=build.get('min_protobuf_runtime'),
-            dependencies=tuple(build.get('dependencies', [])),
+            namespace=_required_build_str(build, 'namespace'),
+            package_name=_required_build_str(build, 'package_name'),
+            distribution_name=_build_str(build, 'distribution_name'),
+            version=_build_str_or(build, 'version', '0.1.0'),
+            description=_build_str(build, 'description'),
+            license_expr=_build_str(build, 'license'),
+            keywords=_build_str_list(build, 'keywords'),
+            classifiers=_build_str_list(build, 'classifiers'),
+            authors=_build_authors(build),
+            urls=tuple(_build_mapping(build, 'urls').items()),
+            readme=_resolve_asset(path, _build_str(build, 'readme')),
+            license_file=_resolve_asset(path, _build_str(build, 'license_file')),
+            min_protobuf_runtime=_build_str(build, 'min_protobuf_runtime'),
+            dependencies=_build_str_list(build, 'dependencies'),
         )
 
 

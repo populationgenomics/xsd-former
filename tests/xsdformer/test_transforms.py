@@ -861,6 +861,70 @@ class TestBuildConfigFromYaml:
         assert cfg is not None
         assert cfg.dependencies == ('defusedxml>=0.7', 'zstandard>=0.22')
 
+    @pytest.mark.parametrize(
+        ('line', 'match'),
+        [
+            ('  dependencies: defusedxml\n', 'must be a list of strings'),
+            ('  dependencies: [1, 2]\n', 'entries must be strings'),
+            ('  keywords: pubmed\n', 'must be a list of strings'),
+            ('  classifiers: "Typing :: Typed"\n', 'must be a list of strings'),
+        ],
+        ids=['scalar-dependency', 'non-string-dependency', 'scalar-keywords', 'scalar-classifiers'],
+    )
+    def test_rejects_scalar_where_a_list_belongs(
+        self,
+        tmp_path: pathlib.Path,
+        line: str,
+        match: str,
+    ) -> None:
+        """A bare string must not be iterated into per-character entries.
+
+        `dependencies: defusedxml` would otherwise publish requirements on the
+        distributions `d`, `e`, `f`, ... each of which is a valid name.
+        """
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text('build:\n  namespace: book\n  package_name: book_proto\n' + line)
+        with pytest.raises(ValueError, match=match):
+            BuildConfig.from_yaml(yaml_path)
+
+    @pytest.mark.parametrize(
+        'line',
+        ['  min_protobuf_runtime: 6.30\n', '  min_protobuf_runtime: 6\n', '  version: 1.0\n'],
+        ids=['float', 'int', 'version-float'],
+    )
+    def test_rejects_unquoted_version_like_scalar(self, tmp_path: pathlib.Path, line: str) -> None:
+        """Unquoted `6.30` is a YAML float and arrives as 6.3, losing the trailing digit."""
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text('build:\n  namespace: book\n  package_name: book_proto\n' + line)
+        with pytest.raises(ValueError, match='must be a string'):
+            BuildConfig.from_yaml(yaml_path)
+
+    def test_rejects_missing_required_key(self, tmp_path: pathlib.Path) -> None:
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text('build:\n  namespace: book\n')
+        with pytest.raises(ValueError, match=r'build\.package_name is required'):
+            BuildConfig.from_yaml(yaml_path)
+
+    @pytest.mark.parametrize(
+        ('line', 'match'),
+        [
+            ('  urls: https://example.org\n', 'urls must be a mapping'),
+            ('  authors: Alice\n', 'authors must be a list'),
+            ('  authors:\n    - Alice\n', 'mappings with a name'),
+        ],
+        ids=['scalar-urls', 'scalar-authors', 'author-without-name'],
+    )
+    def test_rejects_malformed_structured_metadata(
+        self,
+        tmp_path: pathlib.Path,
+        line: str,
+        match: str,
+    ) -> None:
+        yaml_path = tmp_path / 'transforms.yaml'
+        yaml_path.write_text('build:\n  namespace: book\n  package_name: book_proto\n' + line)
+        with pytest.raises(ValueError, match=match):
+            BuildConfig.from_yaml(yaml_path)
+
     def test_resolves_asset_paths_relative_to_config(self, tmp_path: pathlib.Path) -> None:
         yaml_path = tmp_path / 'transforms.yaml'
         yaml_path.write_text(
