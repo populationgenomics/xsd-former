@@ -93,6 +93,14 @@ _GENCODE_VALIDATOR = 'ValidateProtobufRuntimeVersion'
 # well so the extraction survives a change of emission style.
 _GENCODE_ARGS = (('gen_major', 1), ('gen_minor', 2), ('gen_patch', 3))
 
+# protoc writes this alongside the validator call. Independent of it, so it can
+# corroborate the positional read the AST does.
+_GENCODE_HEADER = re.compile(r'^# Protobuf Python Version: (\d+)\.(\d+)\.(\d+)', re.MULTILINE)
+
+
+def _format_version(version: tuple[int, int, int]) -> str:
+    return '.'.join(str(part) for part in version)
+
 
 def _called_name(call: ast.Call) -> str | None:
     match call.func:
@@ -102,26 +110,15 @@ def _called_name(call: ast.Call) -> str | None:
             return None
 
 
-def _gencode_version(pb2_path: pathlib.Path) -> tuple[int, int, int]:
-    """Reads the protobuf gencode version protoc stamped into a generated `_pb2.py`.
-
-    Taken from the `ValidateProtobufRuntimeVersion` call rather than the
-    `# Protobuf Python Version:` header comment: that call is the assertion the
-    protobuf runtime evaluates on import, so it is the constraint itself rather
-    than a description of it.
-
-    Args:
-        pb2_path: Path to a `_pb2.py` emitted by protoc.
-
-    Returns:
-        The gencode `(major, minor, patch)`.
+def _gencode_from_validator(source: str, pb2_path: pathlib.Path) -> tuple[int, int, int]:
+    """Reads the gencode version from the `ValidateProtobufRuntimeVersion` call.
 
     Raises:
-        RuntimeError: If the file does not contain exactly one such call (protoc
+        RuntimeError: If the source does not contain exactly one such call (protoc
             older than the protobuf 5.27 line does not emit it at all), or passes
             its version arguments in an unrecognised shape.
     """
-    tree = ast.parse(pb2_path.read_text(), filename=str(pb2_path))
+    tree = ast.parse(source, filename=str(pb2_path))
     calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and _called_name(n) == _GENCODE_VALIDATOR]
     if len(calls) != 1:
         raise RuntimeError(
@@ -141,6 +138,54 @@ def _gencode_version(pb2_path: pathlib.Path) -> tuple[int, int, int]:
         version.append(node.value)
     major, minor, patch = version
     return major, minor, patch
+
+
+def _gencode_from_header(source: str, pb2_path: pathlib.Path) -> tuple[int, int, int]:
+    """Reads the gencode version from protoc's `# Protobuf Python Version:` header.
+
+    Raises:
+        RuntimeError: If the header is absent, leaving the validator read
+            uncorroborated.
+    """
+    match = _GENCODE_HEADER.search(source)
+    if match is None:
+        raise RuntimeError(
+            f'No "# Protobuf Python Version:" header in {pb2_path}, so the version read from '
+            f'{_GENCODE_VALIDATOR} cannot be corroborated.',
+        )
+    return int(match[1]), int(match[2]), int(match[3])
+
+
+def _gencode_version(pb2_path: pathlib.Path) -> tuple[int, int, int]:
+    """Reads the protobuf gencode version protoc stamped into a generated `_pb2.py`.
+
+    The `ValidateProtobufRuntimeVersion` call is authoritative — it is the assertion
+    the protobuf runtime evaluates on import, so it is the constraint itself rather
+    than a description of it. Its arguments are read positionally, though, which is
+    the one deformation that could pass silently: an inserted or reordered integer
+    argument yields a plausible wrong version rather than an error. The independent
+    header comment is read as corroboration and a disagreement raises.
+
+    Args:
+        pb2_path: Path to a `_pb2.py` emitted by protoc.
+
+    Returns:
+        The gencode `(major, minor, patch)`.
+
+    Raises:
+        RuntimeError: If either source cannot be read, or they disagree.
+    """
+    source = pb2_path.read_text()
+    from_validator = _gencode_from_validator(source, pb2_path)
+    from_header = _gencode_from_header(source, pb2_path)
+    if from_validator != from_header:
+        raise RuntimeError(
+            f'Disagreement about the gencode version in {pb2_path}: {_GENCODE_VALIDATOR} says '
+            f'{_format_version(from_validator)} but the header comment says '
+            f'{_format_version(from_header)}. protoc emits a shape this code does not read '
+            f'correctly, so the protobuf floor cannot be derived.',
+        )
+    return from_validator
 
 
 def _toolchain_version() -> str:
@@ -181,7 +226,7 @@ def _resolve_protobuf_floor(
             which the protobuf runtime would refuse to load.
         ValueError: If `min_protobuf_runtime` is not a dotted version.
     """
-    gencode = '.'.join(str(part) for part in gencode_version)
+    gencode = _format_version(gencode_version)
     if min_protobuf_runtime is None:
         return gencode
     if gencode_version > _parse_version(min_protobuf_runtime, 'min_protobuf_runtime'):

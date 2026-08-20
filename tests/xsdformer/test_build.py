@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 import subprocess
 import sys
 import tomllib
@@ -123,13 +124,20 @@ def test_pyproject_protobuf_floor_is_the_stamped_gencode(
 ) -> None:
     """The declared protobuf floor equals the gencode protoc stamped into the _pb2.
 
-    Both sides come from the same build, so this holds under any grpcio-tools
-    version rather than pinning an expected value that would drift.
+    Reads the stamp here rather than calling `_gencode_version`, so a misread by
+    the extractor cannot agree with itself and keep this green. Still derived from
+    the same build, so it holds under any grpcio-tools version instead of pinning
+    a value that would drift.
     """
     out_dir, package_dir = built_package
-    major, minor, patch = build._gencode_version(package_dir / 'book_pb2.py')
+    header = re.search(
+        r'^# Protobuf Python Version: (\d+\.\d+\.\d+)',
+        (package_dir / 'book_pb2.py').read_text(),
+        re.MULTILINE,
+    )
+    assert header is not None
     data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
-    assert f'protobuf>={major}.{minor}.{patch}' in data['project']['dependencies']
+    assert f'protobuf>={header[1]}' in data['project']['dependencies']
 
 
 def test_pyproject_minimal_omits_optional_metadata(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
@@ -318,6 +326,7 @@ assert pydantic_converter.Book_to_proto(model) == proto
 
 
 _VALIDATE_POSITIONAL = """\
+# Protobuf Python Version: 6.31.1
 from google.protobuf import runtime_version as _runtime_version
 _runtime_version.ValidateProtobufRuntimeVersion(
     _runtime_version.Domain.PUBLIC,
@@ -330,6 +339,7 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 """
 
 _VALIDATE_KEYWORD = """\
+# Protobuf Python Version: 6.31.1
 from google.protobuf import runtime_version as _runtime_version
 _runtime_version.ValidateProtobufRuntimeVersion(
     gen_domain=_runtime_version.Domain.PUBLIC,
@@ -339,6 +349,7 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 """
 
 _VALIDATE_BARE_NAME = """\
+# Protobuf Python Version: 5.27.2
 from google.protobuf.runtime_version import Domain, ValidateProtobufRuntimeVersion
 ValidateProtobufRuntimeVersion(Domain.PUBLIC, 5, 27, 2, '', 'pkg/t.proto')
 """
@@ -365,6 +376,31 @@ class TestGencodeVersion:
         pb2 = tmp_path / 'x_pb2.py'
         pb2.write_text(source)
         assert build._gencode_version(pb2) == expected
+
+    def test_raises_when_header_absent(self, tmp_path: pathlib.Path) -> None:
+        """Without the header the positional read has nothing to check it against."""
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(_VALIDATE_POSITIONAL.replace('# Protobuf Python Version: 6.31.1\n', ''))
+        with pytest.raises(RuntimeError, match='cannot be corroborated'):
+            build._gencode_version(pb2)
+
+    def test_raises_when_sources_disagree(self, tmp_path: pathlib.Path) -> None:
+        """An inserted positional argument is the one deformation the AST read cannot see.
+
+        `ValidateProtobufRuntimeVersion(Domain.PUBLIC, 1, 6, 33, 5, ...)` yields
+        (1, 6, 33) from the positional indices, a plausible wrong version rather
+        than an error. The independent header is what catches it.
+        """
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(
+            '# Protobuf Python Version: 6.33.5\n'
+            'from google.protobuf import runtime_version as _runtime_version\n'
+            '_runtime_version.ValidateProtobufRuntimeVersion(\n'
+            "    _runtime_version.Domain.PUBLIC, 1, 6, 33, 5, '', 'a.proto'\n"
+            ')\n',
+        )
+        with pytest.raises(RuntimeError, match=r'says 1\.6\.33 but the header comment says 6\.33\.5'):
+            build._gencode_version(pb2)
 
     def test_raises_when_absent(self, tmp_path: pathlib.Path) -> None:
         """A protoc older than the protobuf 5.27 line emits no assertion to read."""
