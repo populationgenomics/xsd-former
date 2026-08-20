@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from xsdformer import transforms
-from xsdformer.build import build_package
+from xsdformer import build, transforms
 from xsdformer.xsd import xsd
 
 if TYPE_CHECKING:
@@ -77,7 +76,7 @@ def built_package(
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    package_dir = build_package(
+    package_dir = build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='book_proto',
@@ -119,6 +118,20 @@ def test_pyproject_toml(built_package: tuple[pathlib.Path, pathlib.Path]) -> Non
     assert 'defusedxml' not in pyproject
 
 
+def test_pyproject_protobuf_floor_is_the_stamped_gencode(
+    built_package: tuple[pathlib.Path, pathlib.Path],
+) -> None:
+    """The declared protobuf floor equals the gencode protoc stamped into the _pb2.
+
+    Both sides come from the same build, so this holds under any grpcio-tools
+    version rather than pinning an expected value that would drift.
+    """
+    out_dir, package_dir = built_package
+    major, minor, patch = build._gencode_version(package_dir / 'book_pb2.py')
+    data = tomllib.loads((out_dir / 'pyproject.toml').read_text())
+    assert f'protobuf>={major}.{minor}.{patch}' in data['project']['dependencies']
+
+
 def test_pyproject_minimal_omits_optional_metadata(built_package: tuple[pathlib.Path, pathlib.Path]) -> None:
     """With no metadata configured, the optional [project] fields are absent."""
     out_dir, _ = built_package
@@ -136,7 +149,7 @@ def test_pyproject_metadata(tmp_path: pathlib.Path) -> None:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    build_package(
+    build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='book_proto',
@@ -172,7 +185,7 @@ def test_pyproject_readme_and_license_file(tmp_path: pathlib.Path) -> None:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    build_package(
+    build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='book_proto',
@@ -194,7 +207,7 @@ def test_pyproject_distribution_name(tmp_path: pathlib.Path) -> None:
     type_defs = xsd.process_xsd(io.StringIO(_BOOK_XSD))
     out_dir = tmp_path / 'out'
     out_dir.mkdir()
-    package_dir = build_package(
+    package_dir = build.build_package(
         type_defs=type_defs,
         namespace='book',
         package_name='pubmed_proto',
@@ -302,3 +315,72 @@ assert pydantic_converter.Book_to_proto(model) == proto
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+_VALIDATE_POSITIONAL = """\
+from google.protobuf import runtime_version as _runtime_version
+_runtime_version.ValidateProtobufRuntimeVersion(
+    _runtime_version.Domain.PUBLIC,
+    6,
+    31,
+    1,
+    '',
+    'pkg/t.proto'
+)
+"""
+
+_VALIDATE_KEYWORD = """\
+from google.protobuf import runtime_version as _runtime_version
+_runtime_version.ValidateProtobufRuntimeVersion(
+    gen_domain=_runtime_version.Domain.PUBLIC,
+    gen_major=6, gen_minor=31, gen_patch=1,
+    gen_suffix='', location='pkg/t.proto'
+)
+"""
+
+_VALIDATE_BARE_NAME = """\
+from google.protobuf.runtime_version import Domain, ValidateProtobufRuntimeVersion
+ValidateProtobufRuntimeVersion(Domain.PUBLIC, 5, 27, 2, '', 'pkg/t.proto')
+"""
+
+
+class TestGencodeVersion:
+    """Reading the stamped gencode version out of a generated _pb2."""
+
+    @pytest.mark.parametrize(
+        ('source', 'expected'),
+        [
+            (_VALIDATE_POSITIONAL, (6, 31, 1)),
+            (_VALIDATE_KEYWORD, (6, 31, 1)),
+            (_VALIDATE_BARE_NAME, (5, 27, 2)),
+        ],
+        ids=['positional', 'keyword', 'bare-name'],
+    )
+    def test_reads_version(
+        self,
+        tmp_path: pathlib.Path,
+        source: str,
+        expected: tuple[int, int, int],
+    ) -> None:
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(source)
+        assert build._gencode_version(pb2) == expected
+
+    def test_raises_when_absent(self, tmp_path: pathlib.Path) -> None:
+        """A protoc older than the protobuf 5.27 line emits no assertion to read."""
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text('DESCRIPTOR = None\n')
+        with pytest.raises(RuntimeError, match='found 0'):
+            build._gencode_version(pb2)
+
+    def test_raises_when_ambiguous(self, tmp_path: pathlib.Path) -> None:
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(_VALIDATE_POSITIONAL + _VALIDATE_POSITIONAL)
+        with pytest.raises(RuntimeError, match='found 2'):
+            build._gencode_version(pb2)
+
+    def test_raises_on_unreadable_argument(self, tmp_path: pathlib.Path) -> None:
+        pb2 = tmp_path / 'x_pb2.py'
+        pb2.write_text(_VALIDATE_POSITIONAL.replace('    31,', '    _MINOR,'))
+        with pytest.raises(RuntimeError, match='gen_minor'):
+            build._gencode_version(pb2)

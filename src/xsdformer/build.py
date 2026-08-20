@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import pathlib
@@ -63,7 +64,8 @@ def _compile_proto(
     namespace: str,
     package_dir: pathlib.Path,
     out_dir: pathlib.Path,
-) -> None:
+) -> pathlib.Path:
+    """Compiles the emitted `.proto`, returning the path of the generated `_pb2.py`."""
     proto_include = _proto_include_path()
     subprocess.run(  # noqa: S603
         [
@@ -78,6 +80,65 @@ def _compile_proto(
         ],
         check=True,
     )
+    return package_dir / f'{namespace}_pb2.py'
+
+
+_GENCODE_VALIDATOR = 'ValidateProtobufRuntimeVersion'
+
+# Argument name and positional index of each version component in
+# ValidateProtobufRuntimeVersion(gen_domain, gen_major, gen_minor, gen_patch,
+# gen_suffix, location). protoc emits them positionally; keywords are read as
+# well so the extraction survives a change of emission style.
+_GENCODE_ARGS = (('gen_major', 1), ('gen_minor', 2), ('gen_patch', 3))
+
+
+def _called_name(call: ast.Call) -> str | None:
+    match call.func:
+        case ast.Attribute(attr=name) | ast.Name(id=name):
+            return name
+        case _:
+            return None
+
+
+def _gencode_version(pb2_path: pathlib.Path) -> tuple[int, int, int]:
+    """Reads the protobuf gencode version protoc stamped into a generated `_pb2.py`.
+
+    Taken from the `ValidateProtobufRuntimeVersion` call rather than the
+    `# Protobuf Python Version:` header comment: that call is the assertion the
+    protobuf runtime evaluates on import, so it is the constraint itself rather
+    than a description of it.
+
+    Args:
+        pb2_path: Path to a `_pb2.py` emitted by protoc.
+
+    Returns:
+        The gencode `(major, minor, patch)`.
+
+    Raises:
+        RuntimeError: If the file does not contain exactly one such call (protoc
+            older than the protobuf 5.27 line does not emit it at all), or passes
+            its version arguments in an unrecognised shape.
+    """
+    tree = ast.parse(pb2_path.read_text(), filename=str(pb2_path))
+    calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and _called_name(n) == _GENCODE_VALIDATOR]
+    if len(calls) != 1:
+        raise RuntimeError(
+            f'Expected exactly one {_GENCODE_VALIDATOR} call in {pb2_path}, found {len(calls)}. '
+            'The protobuf gencode version cannot be determined, so the generated '
+            "package's protobuf requirement cannot be derived.",
+        )
+    call = calls[0]
+    keywords = {kw.arg: kw.value for kw in call.keywords if kw.arg is not None}
+    version: list[int] = []
+    for name, index in _GENCODE_ARGS:
+        node = keywords.get(name)
+        if node is None and index < len(call.args):
+            node = call.args[index]
+        if not isinstance(node, ast.Constant) or not isinstance(node.value, int):
+            raise RuntimeError(f'Could not read {name} from {_GENCODE_VALIDATOR} in {pb2_path}.')
+        version.append(node.value)
+    major, minor, patch = version
+    return major, minor, patch
 
 
 def _write_converter(
@@ -131,6 +192,7 @@ def _write_pyproject(
     distribution_name: str,
     version: str,
     out_dir: pathlib.Path,
+    gencode_version: tuple[int, int, int],
     *,
     description: str | None = None,
     readme: str | None = None,
@@ -168,7 +230,8 @@ def _write_pyproject(
         project.append('classifiers = [')
         project.extend(f'  {_toml_str(c)},' for c in classifiers)
         project.append(']')
-    project.append('dependencies = ["protobuf>=6.32.1", "pydantic>=2"]')
+    protobuf_floor = '.'.join(str(part) for part in gencode_version)
+    project.append(f'dependencies = ["protobuf>={protobuf_floor}", "pydantic>=2"]')
     if urls:
         project.append('')
         project.append('[project.urls]')
@@ -217,9 +280,12 @@ def build_package(
     package_dir = out_dir / package_name
     package_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate and compile the proto.
+    # Generate and compile the proto. The gencode version protoc stamps into the
+    # _pb2 sets the generated package's protobuf floor: the runtime refuses
+    # gencode newer than itself, so a lower floor is unimportable.
     _write_proto(namespace, type_defs, package_dir)
-    _compile_proto(namespace, package_dir, out_dir)
+    pb2_path = _compile_proto(namespace, package_dir, out_dir)
+    gencode_version = _gencode_version(pb2_path)
 
     # Generate the XML converter.
     _write_converter(namespace, type_defs, package_name, package_dir)
@@ -250,6 +316,7 @@ def build_package(
         distribution_name,
         version,
         out_dir,
+        gencode_version,
         description=description,
         readme=readme_name,
         license_expr=license_expr,
