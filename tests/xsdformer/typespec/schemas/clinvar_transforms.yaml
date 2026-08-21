@@ -4,10 +4,11 @@
 inline_wrappers: true
 flatten_list_wrappers: true
 # A handful of entries, covering a message field, an enum type, and a folded
-# multi-line scalar. The prose is fixture text, not ClinVar documentation.
+# scalar long enough to exercise comment wrapping in the emitters. yamlfmt keeps
+# folded scalars on one source line; the parsed string is what matters here.
+# The prose is fixture text, not ClinVar documentation.
 comments:
   Accession.value: Accession of the deleted SCV.
   AggregatedGermlineClassification.review_status: Aggregate review status for this variant.
   AggregateGermlineReviewStatusValue: >-
-    Aggregate review status across germline submissions, written as a folded
-    scalar so comment wrapping is exercised too.
+    Aggregate review status across germline submissions, written as a folded scalar so comment wrapping is exercised too.
