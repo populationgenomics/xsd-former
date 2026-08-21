@@ -66,7 +66,9 @@ qualified position in the type graph.
 - [`transforms.py`](src/xsdformer/transforms.py) — optional IR-level
   simplifications (dropping fields, inlining single-field wrapper types,
   collapsing a type to a plain string) applied before generation, driven by a
-  YAML transform spec (see `clinvar_transforms.yaml`, `pubmed_transforms.yaml`).
+  YAML transform spec (see the fixtures under
+  `tests/xsdformer/typespec/schemas/`; the maintained configs for published
+  packages live in their own `*-proto` repos).
 
 ## Back ends (generators)
 

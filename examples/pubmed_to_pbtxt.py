@@ -20,7 +20,9 @@ def main() -> None:
     dtd_path = pathlib.Path(sys.argv[1])
     xml_paths = [pathlib.Path(p) for p in sys.argv[2:]]
 
-    transforms_path = pathlib.Path(__file__).parent.parent / 'pubmed_transforms.yaml'
+    transforms_path = (
+        pathlib.Path(__file__).parents[1] / 'tests' / 'xsdformer' / 'typespec' / 'schemas' / 'pubmed_transforms.yaml'
+    )
     config = TransformConfig.from_yaml(transforms_path)
 
     type_defs = dtd.process_dtd(str(dtd_path))
