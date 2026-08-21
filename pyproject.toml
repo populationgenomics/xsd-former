@@ -1,6 +1,6 @@
 [project]
 name = "xsd-former"
-version = "1.3.0"
+version = "1.4.0"
 description = "Generate Protobuf definitions, JSON Schema, and Python XML-to-protobuf converters from XSD and DTD schemas."
 readme = "README.md"
 requires-python = ">=3.11"
