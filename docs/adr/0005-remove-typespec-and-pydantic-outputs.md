@@ -36,16 +36,18 @@ Remove both outputs in 2.0.0:
 Kept: the protobuf generator, the Python XML→protobuf converter, JSON Schema, the
 `build` package (proto, `_pb2`, XML converter), and ADRs 0003 and 0004.
 
-Two pieces of ADR 0002 outlive the pydantic emitters:
+Two pieces of the removed work outlive the emitters:
 
 - **R1, proto3 `optional` on `(0,1)` singular scalar and enum fields.** Without a
   hasbit a reader cannot tell an omitted XML element or attribute from one that
   carried the type default; `HasField` can. Dropping it would change every
   generated `.proto` and remove `HasField` from fields consumers may call it on.
-- **The conflicting-duplicate check (`xsd.register_field`).** The removed emitters
-  raised when a field name recurs across Choice branches with a different type or
-  cardinality. `build` ran them on every package, so the check guarded the proto
-  too. The protobuf generator now calls it.
+- **The conflicting-duplicate check (`xsd.register_field`),** added with the
+  TypeSpec emitter and shared by the pydantic ones. They raised when a field name
+  recurs across Choice branches with a different type or cardinality, where the
+  protobuf generator kept the first branch's field. `build` ran the pydantic
+  emitters on every package, so it already refused such schemas; the protobuf
+  generator now calls the check itself.
 
 The ClinVar XSD and PubMed DTD fixtures, and the PubMed records, move to
 `tests/xsdformer/schemas/` and `tests/xsdformer/records/`;
@@ -60,4 +62,11 @@ real-schema coverage the removed round-trips carried.
   module rows in their READMEs when they adopt it.
 - A consumer that wants pydantic models generates them from the `.proto` or the
   JSON Schema output with a third-party tool.
+- `xsdformer xsd`/`dtd` with `--proto-out` or `--json-schema-out` now raise on a
+  Choice whose branches share a field name with a different type or cardinality.
+  1.x emitted the first branch's field. Valid XSD can trigger it: a branch
+  `a` and a branch `b, a*`.
+- Generated packages no longer pull in `pydantic` transitively; a consumer that
+  relied on that declares it. Themis's smoke test of the pydantic modules breaks
+  when Themis takes a pubmed-proto or clinvar-proto built with 2.0.0.
 - CI no longer installs Node.

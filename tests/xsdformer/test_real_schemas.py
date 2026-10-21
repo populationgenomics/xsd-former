@@ -1,9 +1,9 @@
 """`build_package` over the real ClinVar XSD and PubMed DTD, under their fixture transforms.
 
-These schemas carry what the book fixture lacks: `xs:date`/`Timestamp`, deep
-nesting, nested enums, markdown content serialization, and the transform passes
-at the scale of a real schema. The records in `records/` are real NLM PubMed XML
-(`efetch` output).
+The ClinVar package is checked to generate, compile and import; there is no
+ClinVar record fixture. The PubMed records in `records/` are real NLM PubMed XML
+(`efetch` output) and are converted, which runs the DTD front end, the transform
+passes and the markdown serializer at the scale of a real schema.
 """
 
 from __future__ import annotations

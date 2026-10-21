@@ -133,6 +133,27 @@ def test_conflicting_choice_branches_raise() -> None:
         '\n'.join(generator.generate('demo', (message,)))
 
 
+def test_choice_branches_differing_in_cardinality_raise() -> None:
+    # Valid XSD: the second branch repeats `a`. "First wins" dedup would emit a
+    # singular `a`, which cannot hold the second branch's values.
+    schema = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Rec"><xs:complexType>
+    <xs:choice>
+      <xs:element name="a" type="xs:string"/>
+      <xs:sequence>
+        <xs:element name="b" type="xs:string"/>
+        <xs:element name="a" type="xs:string" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType></xs:element>
+</xs:schema>
+"""
+    type_defs = xsd.process_xsd(io.StringIO(schema))
+    with pytest.raises(ValueError, match='cardinality'):
+        '\n'.join(generator.generate('demo', type_defs))
+
+
 def test_duplicate_same_shape_field_is_deduped() -> None:
     message = _choice_message(_leaf('x', xsd.AtomicType.STRING), _leaf('x', xsd.AtomicType.STRING))
     proto_text = '\n'.join(generator.generate('demo', (message,)))

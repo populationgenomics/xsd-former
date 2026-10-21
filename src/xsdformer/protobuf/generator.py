@@ -18,8 +18,9 @@ def _needs_proto3_optional(field_def: xsd.Field) -> bool:
 
     Left alone: message-typed fields (including `xs:date`→`Timestamp`), which
     already carry presence, and maps and repeated fields, where absent and empty
-    are the same value. Fields inside a proto `oneof` likewise get presence from the oneof and
-    cannot carry `optional` (a proto3 syntax error), so the caller suppresses it.
+    are the same value. Fields inside a proto `oneof` likewise get presence from
+    the oneof and cannot carry `optional` (a proto3 syntax error), so the caller
+    suppresses it.
     """
     if field_def.is_repeated or field_def.computed_occurs[0] != 0:
         return False
