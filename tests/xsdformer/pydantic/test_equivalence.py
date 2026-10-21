@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 pytestmark = pytest.mark.skipif(
     not _tsp.json_schema_available(),
-    reason='TypeSpec toolchain unavailable (run `npm install` in tests/xsdformer/typespec/tsp_project)',
+    reason='TypeSpec toolchain unavailable (run `npm ci` in tests/xsdformer/typespec/tsp_project)',
 )
 
 _SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / 'typespec' / 'schemas'
