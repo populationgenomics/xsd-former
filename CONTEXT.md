@@ -84,7 +84,10 @@ implements `IGenerator`:
   params are typed against a structural `_Element` Protocol (not `lxml.etree._Element`),
   so the consumer picks the parser — lxml, stdlib `xml.etree.ElementTree`, or
   defusedxml. Runtime helpers (e.g. `_xml_bool`, `_consume`) are embedded into
-  the generated output via `inspect.getsource`.
+  the generated output via `inspect.getsource`. `_serialize_markdown` (the
+  `serialize_content: markdown` serializer) backslash-escapes literal marker
+  characters in text, and the exported `markdown_to_plain_text` inverts it; see
+  [ADR 0004](docs/adr/0004-markdown-serializer-escaping.md).
 - [`jsonschema/generator.py`](src/xsdformer/jsonschema/generator.py) — compiles
   proto (from the IR or an existing `.proto` file) via `grpc_tools.protoc` into
   a `FileDescriptorSet`, then walks the Protobuf descriptors to emit JSON

@@ -148,37 +148,88 @@ def _parse_date_element(element: _Element) -> datetime.datetime:
 
 
 def _serialize_markdown(element: _Element) -> str:
+    r"""Render an element's mixed content as markdown.
+
+    Inline markup becomes markers: `b` -> `**...**`, `i` -> `*...*`,
+    `u` -> `__...__`, `sup` -> `^(...)`, `sub` -> `~(...)`, matching tag names
+    case-insensitively. Any other child element contributes its text only.
+
+    Text is backslash-escaped wherever a literal character could be read as a
+    marker: `\`, `*`, `_`, `^` and `~` everywhere, and `)` inside a `^(...)` or
+    `~(...)`, where an unescaped `)` closes the script. `(` is never escaped: it
+    opens a script only after an unescaped `^` or `~`. Markers themselves are
+    never escaped. The escapes are CommonMark backslash escapes, so a
+    CommonMark renderer shows those characters literally. Other CommonMark
+    syntax in the text (backticks, `<`, `&` entities, a line-leading `#`) is
+    not neutralised.
+
+    `markdown_to_plain_text` inverts this to the element's text content. The
+    markup tree is not recoverable: `<i>a</i><i>b</i>` gives `*a**b*`.
+    """
     tags = {
         'b': ('**', '**'),
-        'B': ('**', '**'),
         'i': ('*', '*'),
-        'I': ('*', '*'),
         'u': ('__', '__'),
-        'U': ('__', '__'),
         'sup': ('^(', ')'),
-        'Sup': ('^(', ')'),
         'sub': ('~(', ')'),
-        'Sub': ('~(', ')'),
     }
+    script_tags = frozenset({'sup', 'sub'})
+    text_escapes = str.maketrans({c: '\\' + c for c in '\\*_^~'})
+    script_text_escapes = str.maketrans({c: '\\' + c for c in '\\*_^~)'})
     parts: list[str] = []
 
-    def _walk(el: _Element) -> None:
-        pair = tags.get(el.tag)
+    def _text(value: str, *, in_script: bool) -> str:
+        return value.translate(script_text_escapes if in_script else text_escapes)
+
+    def _walk(el: _Element, *, in_script: bool) -> None:
+        # lxml gives a comment or processing instruction a callable `tag`, not a name.
+        name = el.tag.casefold() if isinstance(el.tag, str) else ''
+        pair = tags.get(name)
+        in_own_script = in_script or name in script_tags
         if pair:
             parts.append(pair[0])
         if el.text:
-            parts.append(el.text)
+            parts.append(_text(el.text, in_script=in_own_script))
         for child in el:
-            _walk(child)
+            _walk(child, in_script=in_own_script)
         if pair:
             parts.append(pair[1])
         if el.tail:
-            parts.append(el.tail)
+            parts.append(_text(el.tail, in_script=in_script))
 
     if element.text:
-        parts.append(element.text)
+        parts.append(_text(element.text, in_script=False))
     for child in element:
-        _walk(child)
+        _walk(child, in_script=False)
+    return ''.join(parts)
+
+
+def markdown_to_plain_text(markdown: str) -> str:
+    r"""Recover the text content from a value `_serialize_markdown` produced.
+
+    One left-to-right scan: `\` followed by a character is that literal
+    character; an unescaped `*` or `_` is dropped; `^(` or `~(` opens a script
+    and is dropped; an unescaped `)` closes the innermost open script and is
+    dropped, and is literal when no script is open. For example,
+    `*SERPINC1* (p.R391\*), Ca^(2+)` gives `SERPINC1 (p.R391*), Ca2+`.
+    """
+    parts: list[str] = []
+    open_scripts = 0
+    pos = 0
+    for match in re.finditer(r'\\(.)|[*_]|[\^~]\(|\)', markdown, re.DOTALL):
+        parts.append(markdown[pos : match.start()])
+        pos = match.end()
+        marker = match.group()
+        if match.group(1) is not None:
+            parts.append(match.group(1))
+        elif marker == ')':
+            if open_scripts:
+                open_scripts -= 1
+            else:
+                parts.append(marker)
+        elif marker in ('^(', '~('):
+            open_scripts += 1
+    parts.append(markdown[pos:])
     return ''.join(parts)
 
 
@@ -192,6 +243,7 @@ _PROTO_PY_CONVERTER_METHODS: tuple[Callable[..., Any], ...] = (
     _find_child,
     _parse_date_element,
     _serialize_markdown,
+    markdown_to_plain_text,
 )
 
 _PROTO_PY_CONVERTER_TYPES: tuple[type, ...] = (_Attrib, _Element)
