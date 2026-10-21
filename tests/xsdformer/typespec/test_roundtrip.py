@@ -23,7 +23,7 @@ from xsdformer.xsd import text, xsd
 
 pytestmark = pytest.mark.skipif(
     not _tsp.tsp_available(),
-    reason='TypeSpec toolchain unavailable (run `npm install` in tests/xsdformer/typespec/tsp_project)',
+    reason='TypeSpec toolchain unavailable (run `npm ci` in tests/xsdformer/typespec/tsp_project)',
 )
 
 # proto-compat enum form: proto value names as members, explicit integers, zero first.
