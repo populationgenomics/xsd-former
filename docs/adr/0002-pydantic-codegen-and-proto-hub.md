@@ -4,7 +4,14 @@ Date: 2026-06-26
 
 ## Status
 
-Accepted
+Superseded by [ADR 0005](0005-remove-typespec-and-pydantic-outputs.md), except R1
+(proto3 `optional`), which ADR 0005 keeps.
+
+Removed in 2.0.0 (2026-10-22): the pydantic generator and converter,
+`--pydantic-out`, the `models.py` and `pydantic_converter.py` that `xsdformer
+build` put in every generated package, and the equivalence gate. Their only user
+was a stale smoke test in Themis, which stores binary protos. The text below
+records the design as it was.
 
 ## Context
 

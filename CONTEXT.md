@@ -78,7 +78,10 @@ types at the top level (the enclosing type emits them). Each generator
 implements `IGenerator`:
 
 - [`protobuf/generator.py`](src/xsdformer/protobuf/generator.py) — emits
-  `.proto` syntax.
+  `.proto` syntax. `(0,1)` singular scalar and enum fields carry proto3
+  `optional` for presence, and a field name that recurs across Choice branches
+  with a different shape raises; see
+  [ADR 0005](docs/adr/0005-remove-typespec-and-pydantic-outputs.md).
 - [`py/xml_converter.py`](src/xsdformer/py/xml_converter.py) — emits Python code
   that converts parsed XML elements into Protobuf message instances. Element
   params are typed against a structural `_Element` Protocol (not `lxml.etree._Element`),

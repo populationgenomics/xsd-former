@@ -17,7 +17,7 @@ def test_generate_protobufs(book_pb2: types.ModuleType) -> None:
 
 
 def test_proto3_optional_on_singular_scalars_and_enums() -> None:
-    """`(0,1)` singular scalar/enum fields get the proto3 `optional` keyword (ADR 0002 R1)."""
+    """`(0,1)` singular scalar/enum fields get the proto3 `optional` keyword (ADR 0005)."""
     type_defs = xsd.process_xsd(io.StringIO(conftest._BOOK_XSD))
     proto_text = '\n'.join(generator.generate('book', type_defs))
 

@@ -9,7 +9,7 @@ from xsdformer.xsd import text, xsd
 
 
 def _needs_proto3_optional(field_def: xsd.Field) -> bool:
-    """Whether a singular field needs the proto3 `optional` keyword (ADR 0002 R1).
+    """Whether a singular field needs the proto3 `optional` keyword (ADR 0005).
 
     proto3 gives singular scalar and enum fields no field presence: an absent
     value is indistinguishable from the type default (`""`/`0`/`false`/the zero

@@ -4,7 +4,13 @@ Date: 2026-06-19
 
 ## Status
 
-Accepted
+Superseded by [ADR 0005](0005-remove-typespec-and-pydantic-outputs.md).
+
+Removed in 2.0.0 (2026-10-22): the TypeSpec generator, `--typespec-out`,
+`--proto-compat`, and the Node-gated round-trip tests. No consumer used the
+`.tsp`; its only roles were the round-trip below and the oracle for ADR 0002's
+pydantic equivalence gate, which went with it. The text below records the design
+as it was.
 
 ## Context
 
