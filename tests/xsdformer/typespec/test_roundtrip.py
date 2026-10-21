@@ -195,7 +195,7 @@ def test_book_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:
 # configs — the same pipeline `examples/` uses. These exercise the proto-compat
 # round-trip over patterns the book fixture lacks: `xs:date`/`Timestamp`, deep
 # nesting, and nested enums whose values collide at proto's package scope.
-_SCHEMAS_DIR = pathlib.Path(__file__).parent / 'schemas'
+_SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / 'schemas'
 
 
 def test_clinvar_xsd_proto_round_trips_via_tsp(tmp_path: pathlib.Path) -> None:

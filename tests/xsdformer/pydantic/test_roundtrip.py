@@ -23,8 +23,8 @@ from xsdformer.dtd import dtd
 from xsdformer.transforms import TransformConfig, apply_transforms
 
 _REPO_ROOT = pathlib.Path(__file__).parents[3]
-_SCHEMAS_DIR = _REPO_ROOT / 'tests' / 'xsdformer' / 'typespec' / 'schemas'
-_RECORDS_DIR = pathlib.Path(__file__).parent / 'records'
+_SCHEMAS_DIR = _REPO_ROOT / 'tests' / 'xsdformer' / 'schemas'
+_RECORDS_DIR = _REPO_ROOT / 'tests' / 'xsdformer' / 'records'
 _RECORDS = sorted(_RECORDS_DIR.glob('*.xml'))
 
 

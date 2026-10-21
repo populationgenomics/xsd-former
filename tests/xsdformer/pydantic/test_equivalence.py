@@ -49,7 +49,7 @@ pytestmark = pytest.mark.skipif(
     reason='TypeSpec toolchain unavailable (run `npm ci` in tests/xsdformer/typespec/tsp_project)',
 )
 
-_SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / 'typespec' / 'schemas'
+_SCHEMAS_DIR = pathlib.Path(__file__).parents[1] / 'schemas'
 
 
 def _load_module(code: str, name: str, tmp_path: pathlib.Path) -> types.ModuleType:

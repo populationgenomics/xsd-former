@@ -67,7 +67,7 @@ qualified position in the type graph.
   simplifications (dropping fields, inlining single-field wrapper types,
   collapsing a type to a plain string) applied before generation, driven by a
   YAML transform spec (see the fixtures under
-  `tests/xsdformer/typespec/schemas/`; the maintained configs for published
+  `tests/xsdformer/schemas/`; the maintained configs for published
   packages live in their own `*-proto` repos).
 
 ## Back ends (generators)
