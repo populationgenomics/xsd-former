@@ -7,9 +7,9 @@ repos:
       - id: end-of-file-fixer
         # Vendored schemas (NLM DTD, ClinVar XSD) and real efetch record fixtures
         # are kept byte-faithful to their upstream form; don't normalize them.
-        exclude: '^tests/xsdformer/(typespec/schemas|pydantic/records)/'
+        exclude: '^tests/xsdformer/(schemas|records)/'
       - id: trailing-whitespace
-        exclude: '\.txt$|\.tsv$|^tests/xsdformer/(typespec/schemas|pydantic/records)/'
+        exclude: '\.txt$|\.tsv$|^tests/xsdformer/(schemas|records)/'
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: detect-private-key

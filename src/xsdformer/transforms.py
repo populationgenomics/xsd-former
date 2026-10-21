@@ -200,8 +200,8 @@ class BuildConfig:
     # Oldest protobuf runtime the generated package is declared to support. Unset
     # -> the floor is whatever gencode the build's protoc stamps.
     min_protobuf_runtime: str | None = None
-    # Extra runtime requirements, on top of the protobuf and pydantic ones every
-    # generated package declares.
+    # Extra runtime requirements, on top of the protobuf one every generated
+    # package declares.
     dependencies: tuple[str, ...] = ()
 
     @classmethod

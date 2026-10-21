@@ -16,8 +16,6 @@ from collections.abc import Sequence
 from xsdformer import transforms
 from xsdformer.protobuf import generator as proto_generator
 from xsdformer.py import xml_converter
-from xsdformer.pydantic import converter as pydantic_converter
-from xsdformer.pydantic import generator as pydantic_generator
 from xsdformer.xsd import xsd
 
 # The static tail of the generated pyproject.toml. The [project] table is
@@ -37,8 +35,6 @@ packages = ["{package_name}"]
 
 _INIT_TEMPLATE = """\
 from {package_name} import {namespace}_pb2 as {namespace}_pb2
-from {package_name} import models as models
-from {package_name} import pydantic_converter as pydantic_converter
 from {package_name} import xml_converter as xml_converter
 """
 
@@ -245,7 +241,6 @@ def _resolve_protobuf_floor(
 # cannot restate them: two sources for one requirement is ambiguous.
 _RESERVED_DEPENDENCIES = {
     'protobuf': 'its floor is set by min_protobuf_runtime',
-    'pydantic': 'the generated models require pydantic v2',
 }
 
 _DEPENDENCY_NAME = re.compile(r'^([A-Za-z0-9][A-Za-z0-9._-]*)')
@@ -266,7 +261,7 @@ def _check_dependencies(dependencies: Sequence[str]) -> None:
         dependencies: Extra PEP 508 requirement strings from the caller.
 
     Raises:
-        ValueError: If a requirement names protobuf or pydantic, or has no
+        ValueError: If a requirement names protobuf, or has no
             readable distribution name.
     """
     for requirement in dependencies:
@@ -288,29 +283,6 @@ def _write_converter(
     module = f'{package_name}.{namespace}_pb2'
     with open(package_dir / 'xml_converter.py', 'w') as f:
         for line in xml_converter.generate(namespace, type_defs, module):
-            f.write(line + '\n')
-
-
-def _write_pydantic_models(
-    namespace: str,
-    type_defs: tuple[xsd.TypeDefinition, ...],
-    package_dir: pathlib.Path,
-) -> None:
-    with open(package_dir / 'models.py', 'w') as f:
-        for line in pydantic_generator.generate(namespace, type_defs):
-            f.write(line + '\n')
-
-
-def _write_pydantic_converter(
-    namespace: str,
-    type_defs: tuple[xsd.TypeDefinition, ...],
-    package_name: str,
-    package_dir: pathlib.Path,
-) -> None:
-    proto_module = f'{package_name}.{namespace}_pb2'
-    models_module = f'{package_name}.models'
-    with open(package_dir / 'pydantic_converter.py', 'w') as f:
-        for line in pydantic_converter.generate(namespace, type_defs, proto_module, models_module):
             f.write(line + '\n')
 
 
@@ -369,7 +341,7 @@ def _write_pyproject(
         project.append('classifiers = [')
         project.extend(f'  {_toml_str(c)},' for c in classifiers)
         project.append(']')
-    all_dependencies = [f'protobuf>={protobuf_floor}', 'pydantic>=2', *dependencies]
+    all_dependencies = [f'protobuf>={protobuf_floor}', *dependencies]
     if dependencies:
         project.append('dependencies = [')
         project.extend(f'  {_toml_str(dep)},' for dep in all_dependencies)
@@ -424,7 +396,7 @@ def build_package(
     When unset, the floor is the stamped gencode.
 
     `dependencies` are extra runtime requirements for the generated package,
-    declared alongside the protobuf and pydantic requirements it always carries.
+    declared alongside the protobuf requirement it always carries.
 
     Returns the package directory path.
     """
@@ -447,10 +419,6 @@ def build_package(
 
     # Generate the XML converter.
     _write_converter(namespace, type_defs, package_name, package_dir)
-
-    # Generate the pydantic models and the proto <-> pydantic converter.
-    _write_pydantic_models(namespace, type_defs, package_dir)
-    _write_pydantic_converter(namespace, type_defs, package_name, package_dir)
 
     # Write package metadata files.
     (package_dir / '__init__.py').write_text(

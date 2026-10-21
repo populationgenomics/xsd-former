@@ -2,6 +2,7 @@ import io
 import types
 from collections.abc import Iterable
 
+import pytest
 from google.protobuf import descriptor_pb2
 
 from tests.xsdformer import conftest
@@ -16,7 +17,7 @@ def test_generate_protobufs(book_pb2: types.ModuleType) -> None:
 
 
 def test_proto3_optional_on_singular_scalars_and_enums() -> None:
-    """`(0,1)` singular scalar/enum fields get the proto3 `optional` keyword (ADR 0002 R1)."""
+    """`(0,1)` singular scalar/enum fields get the proto3 `optional` keyword (ADR 0005)."""
     type_defs = xsd.process_xsd(io.StringIO(conftest._BOOK_XSD))
     proto_text = '\n'.join(generator.generate('book', type_defs))
 
@@ -100,3 +101,60 @@ def test_documentation_in_generated_protobuf(
     # 0: index of the field
     location = _find_location(file_desc, [4, 0, 2, 0])
     assert location.leading_comments.strip() == 'This is a documented field.'
+
+
+def _leaf(name: str, proto_type: xsd.AtomicType) -> xsd.Elem:
+    elem = xsd.Elem(
+        documentation=None,
+        name=name,
+        occurs=(1, 1),
+        proto_type=proto_type,
+        default=None,
+        source=xsd.XMLElemSource(elem=name),
+    )
+    elem.computed_occurs = (1, 1)
+    return elem
+
+
+def _choice_message(*branches: xsd.Elem) -> xsd.Message:
+    return xsd.Message(
+        documentation=None,
+        name='Rec',
+        content=(xsd.Choice(documentation=None, occurs=(1, 1), content=branches),),
+    )
+
+
+def test_conflicting_choice_branches_raise() -> None:
+    # Valid XSD can't give two Choice branches one name with different types (the
+    # EDC constraint), but a rename transform can. "First wins" dedup would drop
+    # the second branch's type from the message.
+    message = _choice_message(_leaf('x', xsd.AtomicType.STRING), _leaf('x', xsd.AtomicType.INT32))
+    with pytest.raises(ValueError, match='conflicting type'):
+        '\n'.join(generator.generate('demo', (message,)))
+
+
+def test_choice_branches_differing_in_cardinality_raise() -> None:
+    # Valid XSD: the second branch repeats `a`. "First wins" dedup would emit a
+    # singular `a`, which cannot hold the second branch's values.
+    schema = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Rec"><xs:complexType>
+    <xs:choice>
+      <xs:element name="a" type="xs:string"/>
+      <xs:sequence>
+        <xs:element name="b" type="xs:string"/>
+        <xs:element name="a" type="xs:string" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType></xs:element>
+</xs:schema>
+"""
+    type_defs = xsd.process_xsd(io.StringIO(schema))
+    with pytest.raises(ValueError, match='cardinality'):
+        '\n'.join(generator.generate('demo', type_defs))
+
+
+def test_duplicate_same_shape_field_is_deduped() -> None:
+    message = _choice_message(_leaf('x', xsd.AtomicType.STRING), _leaf('x', xsd.AtomicType.STRING))
+    proto_text = '\n'.join(generator.generate('demo', (message,)))
+    assert proto_text.count(' x = ') == 1
