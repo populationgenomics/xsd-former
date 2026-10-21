@@ -553,21 +553,33 @@ def _(field: xsd.ValueElem) -> Iterable[str]:
             raise ValueError('repeated ValueElem')
 
 
+def _tag_set_literal(first_set: set[str | None]) -> str:
+    """Renders a first set's tags as a Python set literal in sorted order.
+
+    `repr` of a set follows string hashing, which `PYTHONHASHSEED` randomises
+    per process, so it would make the generated module differ between runs.
+    `None` (the set's marker for an optional group) is not a tag and is left out.
+    """
+    tags = sorted(tag for tag in first_set if tag is not None)
+    if not tags:
+        return 'set()'
+    return '{' + ', '.join(repr(tag) for tag in tags) + '}'
+
+
 @_handle_field_definition.register
 def _(field: xsd.Seq) -> Iterable[str]:
     body = itertools.chain.from_iterable(_handle_field_definition(f) for f in field.content)
 
-    fst = xsd.first(field)
-    fst.discard(None)
+    fst = _tag_set_literal(xsd.first(field))
 
     match field.occurs:
         case (1, 1):
             yield from body
         case (0, 1):
-            yield f'if children and children[0].tag in {fst!r}:'
+            yield f'if children and children[0].tag in {fst}:'
             yield from text.indent(body)
         case _:
-            yield f'while children and children[0].tag in {fst!r}:'
+            yield f'while children and children[0].tag in {fst}:'
             yield from text.indent(body)
 
 
@@ -592,17 +604,16 @@ def _(field: xsd.Choice) -> Iterable[str]:
 
     body = _consume_choice_once()
 
-    fst = xsd.first(field)
-    fst.discard(None)
+    fst = _tag_set_literal(xsd.first(field))
 
     match field.occurs:
         case (1, 1):
             yield from body
         case (0, 1):
-            yield f'if children and children[0].tag in {fst!r}:'
+            yield f'if children and children[0].tag in {fst}:'
             yield from text.indent(body)
         case _:
-            yield f'while children and children[0].tag in {fst!r}:'
+            yield f'while children and children[0].tag in {fst}:'
             yield from text.indent(body)
 
 

@@ -1,3 +1,6 @@
+import os
+import subprocess
+import sys
 import types
 import xml.etree.ElementTree as ET
 
@@ -525,3 +528,50 @@ def test_map_type(
     proto = module.Document(root)
     expected_proto = text_format.Parse(_MAP_TYPE_PROTO, pb2_module.Document())
     assert proto == expected_proto
+
+
+# A repeated choice of several elements, so the converter tests membership in
+# a first set of many tags.
+_MANY_TAG_CHOICE_XSD = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Doc"><xs:complexType>
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="alpha" type="xs:string"/>
+      <xs:element name="bravo" type="xs:string"/>
+      <xs:element name="charlie" type="xs:string"/>
+      <xs:element name="delta" type="xs:string"/>
+      <xs:element name="echo" type="xs:string"/>
+      <xs:element name="foxtrot" type="xs:string"/>
+    </xs:choice>
+  </xs:complexType></xs:element>
+</xs:schema>
+"""
+
+_GENERATE_CONVERTER_SCRIPT = """
+import io
+import sys
+from xsdformer.py import xml_converter
+from xsdformer.xsd import xsd
+
+type_defs = xsd.process_xsd(io.StringIO(sys.stdin.read()))
+print('\\n'.join(xml_converter.generate('doc', type_defs, 'doc_pb2')))
+"""
+
+
+def _generate_converter_with_hash_seed(seed: str) -> str:
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, '-c', _GENERATE_CONVERTER_SCRIPT],
+        input=_MANY_TAG_CHOICE_XSD,
+        env={**os.environ, 'PYTHONHASHSEED': seed},
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
+
+
+def test_generated_converter_is_independent_of_hash_seed() -> None:
+    # String hashing, and with it set iteration order, varies with PYTHONHASHSEED.
+    outputs = {seed: _generate_converter_with_hash_seed(seed) for seed in ('0', '1', '2', '3')}
+    assert len(set(outputs.values())) == 1
+    assert "{'alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'}" in outputs['0']
