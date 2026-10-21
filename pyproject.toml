@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Toby Sargeant" }]
-keywords = ["xsd", "dtd", "protobuf", "json-schema", "typespec", "code-generation", "xml", "clinvar", "bioc"]
+keywords = ["xsd", "dtd", "protobuf", "json-schema", "code-generation", "xml", "clinvar", "bioc"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",

@@ -1,7 +1,7 @@
 # xsdformer development notes
 
-xsdformer converts an XSD or DTD schema into Protobuf, JSON Schema, TypeSpec,
-and Python XML-to-protobuf converters. See
+xsdformer converts an XSD or DTD schema into Protobuf, JSON Schema, and Python
+XML-to-protobuf converters. See
 [`CONTEXT.md`](CONTEXT.md) for the domain model and language, and
 [`README.md`](README.md) for usage.
 
@@ -41,8 +41,7 @@ uv run pytest tests/xsdformer/xsd/test_xsd.py::test_name -x   # single test
 uv run pre-commit run --all-files   # the full static-check gate (see below)
 ```
 
-Some tests are gated on a TypeSpec (Node) toolchain and skip when it is absent;
-CI installs it. See [`CONTEXT.md`](CONTEXT.md) for what each module does.
+See [`CONTEXT.md`](CONTEXT.md) for what each module does.
 
 ## Code style
 

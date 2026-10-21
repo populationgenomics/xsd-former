@@ -2,8 +2,8 @@
 
 xsdformer converts an XML schema — an **XSD** or a **DTD** — into code that
 describes and processes the same data in other ecosystems: Protobuf
-definitions, JSON Schema, TypeSpec, and Python code that parses conforming
-XML into Protobuf messages.
+definitions, JSON Schema, and Python code that parses conforming XML into
+Protobuf messages.
 
 It supports enough of XSD/DTD to convert the
 [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) and
@@ -92,15 +92,13 @@ implements `IGenerator`:
   proto (from the IR or an existing `.proto` file) via `grpc_tools.protoc` into
   a `FileDescriptorSet`, then walks the Protobuf descriptors to emit JSON
   Schema.
-- [`typespec/generator.py`](src/xsdformer/typespec/generator.py) — emits
-  TypeSpec (`.tsp`). See [ADR 0001](docs/adr/0001-typespec-output-format.md).
 
 ## CLI
 
 [`tool.py`](src/xsdformer/tool.py) exposes a Click group with three commands:
 
 - `xsdformer xsd <file>` — XSD front end; emit any combination of proto, Python
-  converter, JSON Schema, and TypeSpec outputs (one `--*-out` flag each).
+  converter, and JSON Schema outputs (one `--*-out` flag each).
 - `xsdformer dtd <file>` — DTD front end; same output flags.
 - `xsdformer proto <file> <namespace>` — Proto-to-JSON-Schema only, bypassing
   the XSD/DTD front end.
