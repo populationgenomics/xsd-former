@@ -151,8 +151,8 @@ def _serialize_markdown(element: _Element) -> str:
     r"""Render an element's mixed content as markdown.
 
     Inline markup becomes markers: `b` -> `**...**`, `i` -> `*...*`,
-    `u` -> `__...__`, `sup` -> `^(...)`, `sub` -> `~(...)`. Any other child
-    element contributes its text only.
+    `u` -> `__...__`, `sup` -> `^(...)`, `sub` -> `~(...)`, matching tag names
+    case-insensitively. Any other child element contributes its text only.
 
     Text is backslash-escaped wherever a literal character could be read as a
     marker: `\`, `*`, `_`, `^` and `~` everywhere, and `)` inside a `^(...)` or
@@ -168,17 +168,12 @@ def _serialize_markdown(element: _Element) -> str:
     """
     tags = {
         'b': ('**', '**'),
-        'B': ('**', '**'),
         'i': ('*', '*'),
-        'I': ('*', '*'),
         'u': ('__', '__'),
-        'U': ('__', '__'),
         'sup': ('^(', ')'),
-        'Sup': ('^(', ')'),
         'sub': ('~(', ')'),
-        'Sub': ('~(', ')'),
     }
-    script_tags = frozenset({'sup', 'Sup', 'sub', 'Sub'})
+    script_tags = frozenset({'sup', 'sub'})
     text_escapes = str.maketrans({c: '\\' + c for c in '\\*_^~'})
     script_text_escapes = str.maketrans({c: '\\' + c for c in '\\*_^~)'})
     parts: list[str] = []
@@ -187,8 +182,10 @@ def _serialize_markdown(element: _Element) -> str:
         return value.translate(script_text_escapes if in_script else text_escapes)
 
     def _walk(el: _Element, *, in_script: bool) -> None:
-        pair = tags.get(el.tag)
-        in_own_script = in_script or el.tag in script_tags
+        # lxml gives a comment or processing instruction a callable `tag`, not a name.
+        name = el.tag.casefold() if isinstance(el.tag, str) else ''
+        pair = tags.get(name)
+        in_own_script = in_script or name in script_tags
         if pair:
             parts.append(pair[0])
         if el.text:

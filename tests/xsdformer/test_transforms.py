@@ -489,6 +489,29 @@ class TestSerializeMarkdownDirect:
         el = etree.fromstring(b'<t><b>Bold <i>and italic</i></b> text</t>')
         assert _serialize_markdown(el) == '**Bold *and italic*** text'
 
+    @pytest.mark.parametrize(
+        ('xml', 'expected', 'plain'),
+        [
+            (b'<t><i>ital <b>bold</b></i></t>', '*ital **bold***', 'ital bold'),
+            (b'<t><b><i>both</i></b></t>', '***both***', 'both'),
+            (b'<t><b>p.R391* <i>BRCA1</i></b></t>', r'**p.R391\* *BRCA1***', 'p.R391* BRCA1'),
+        ],
+        ids=['bold-in-italic', 'both-on-one-run', 'escape-inside-nesting'],
+    )
+    def test_nesting_escapes_text_at_every_depth(self, xml: bytes, expected: str, plain: str) -> None:
+        markdown = _serialize_markdown(etree.fromstring(xml))
+        assert markdown == expected
+        assert markdown_to_plain_text(markdown) == plain
+
+    @pytest.mark.parametrize('tag', ['sup', 'Sup', 'SUP'])
+    def test_tag_names_match_case_insensitively(self, tag: str) -> None:
+        el = etree.fromstring(f'<t>x<{tag}>2</{tag}></t>'.encode())
+        assert _serialize_markdown(el) == 'x^(2)'
+
+    def test_a_comment_contributes_no_marker(self) -> None:
+        el = etree.fromstring(b'<t>a <!-- note --> <b>b</b></t>')
+        assert '**b**' in _serialize_markdown(el)
+
     def test_tail_text(self) -> None:
         el = etree.fromstring(b'<t>a <b>b</b> c <i>d</i> e</t>')
         assert _serialize_markdown(el) == 'a **b** c *d* e'
