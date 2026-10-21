@@ -14,7 +14,7 @@ from tests.xsdformer.conftest import PyConverterModuleFactory
 from xsdformer.dtd import dtd
 from xsdformer.protobuf import generator as proto_gen
 from xsdformer.py import xml_converter
-from xsdformer.py.xml_converter import _parse_date_element, _serialize_markdown
+from xsdformer.py.xml_converter import _parse_date_element, _serialize_markdown, markdown_to_plain_text
 from xsdformer.transforms import (
     Author,
     BuildConfig,
@@ -458,6 +458,12 @@ class TestSerializeContent:
         result4 = converter.Article(etree.fromstring(xml4))
         assert result4.title.value == 'x^(2) + y'
 
+        # Literal marker characters in text are escaped
+        xml6 = b'<article id="a6"><title>Stop Codon (p.R391*) in <i>SERPINC1</i></title></article>'
+        result6 = converter.Article(etree.fromstring(xml6))
+        assert result6.title.value == r'Stop Codon (p.R391\*) in *SERPINC1*'
+        assert converter.markdown_to_plain_text(result6.title.value) == 'Stop Codon (p.R391*) in SERPINC1'
+
         # Unknown tags: text extracted
         xml5 = b'<article id="a5"><title>See <unknown>content</unknown> here</title></article>'
         result5 = converter.Article(etree.fromstring(xml5))
@@ -498,6 +504,48 @@ class TestSerializeMarkdownDirect:
     def test_unknown_tag_extracts_text(self) -> None:
         el = etree.fromstring(b'<t>See <math>x=1</math> here</t>')
         assert _serialize_markdown(el) == 'See x=1 here'
+
+    @pytest.mark.parametrize(
+        ('xml', 'expected'),
+        [
+            # PMID 34207366 title: a stop codon beside italic gene names.
+            (
+                b'<t><i>Cis</i>-Segregation of c.1171C&gt;T Stop Codon (p.R391*) in <i>SERPINC1</i> Gene</t>',
+                r'*Cis*-Segregation of c.1171C>T Stop Codon (p.R391\*) in *SERPINC1* Gene',
+            ),
+            # PMID 26586665 abstract.
+            (b'<t>BRCA2*c.9976A&gt;T; p.Lys3326*</t>', r'BRCA2\*c.9976A>T; p.Lys3326\*'),
+            # PMID 39705914 abstract: an HGVS range underscore and a frameshift stop.
+            (b'<t>(c.2568_2569del p.Gly857Alafs*27)</t>', r'(c.2568\_2569del p.Gly857Alafs\*27)'),
+            (b'<t>Ca<sup>2+</sup> at 10^3 cells, ~5%</t>', r'Ca^(2+) at 10\^3 cells, \~5%'),
+            (b'<t>a\\b <i>c</i></t>', r'a\\b *c*'),
+            (b'<t><i>p.R391*</i></t>', r'*p.R391\**'),
+        ],
+    )
+    def test_escapes_literal_marker_characters(self, xml: bytes, expected: str) -> None:
+        assert _serialize_markdown(etree.fromstring(xml)) == expected
+
+    def test_escapes_closing_parentheses_only_inside_scripts(self) -> None:
+        el = etree.fromstring(b'<t>Mice (n = 3), Pax6<sup>(+/-)</sup> and CO<sub>2</sub>(g)</t>')
+        assert _serialize_markdown(el) == r'Mice (n = 3), Pax6^((+/-\)) and CO~(2)(g)'
+
+    def test_escapes_closing_parentheses_in_markup_nested_in_a_script(self) -> None:
+        el = etree.fromstring(b'<t>x<sup>a<i>(b)</i>c)</sup>)</t>')
+        assert _serialize_markdown(el) == r'x^(a*(b\)*c\)))'
+
+    @pytest.mark.parametrize(
+        'xml',
+        [
+            b'<t><i>Cis</i>-Segregation (p.R391*) in <i>SERPINC1</i> Gene</t>',
+            b'<t>BRCA2*c.9976A&gt;T; p.Lys3326*; (c.2568_2569del p.Gly857Alafs*27)</t>',
+            b'<t>Ca<sup>2+</sup> at 10^3, H<sub>2</sub>O ~5% (n = 3)) a\\b \\*</t>',
+            b'<t><b>Bold <i>and *italic*</i></b> <u>__init__</u> x<sup>(a<sub>b)</sub>)</sup>)</t>',
+            b'<t>See <math>x^(2)</math> here</t>',
+        ],
+    )
+    def test_markdown_to_plain_text_recovers_the_text_content(self, xml: bytes) -> None:
+        el = etree.fromstring(xml)
+        assert markdown_to_plain_text(_serialize_markdown(el)) == ''.join(map(str, el.itertext()))
 
 
 def _build_dtd_converter(
