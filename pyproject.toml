@@ -45,7 +45,7 @@ Issues = "https://github.com/populationgenomics/xsd-former/issues"
 exclude-newer = "7 days"
 
 [dependency-groups]
-test = ["datamodel-code-generator", "jsonschema", "pydantic>=2", "pytest>=8.4.1"]
+test = ["jsonschema", "pytest>=8.4.1"]
 # pre-commit and pyright are in the lint group because CI runs the whole
 # static-check gate via `uv run pre-commit run --all-files`. pyright checks
 # src/ + tests/, so the group carries the test deps for those imports to resolve.
@@ -53,9 +53,7 @@ lint = [
     "ruff",
     "pyright",
     "pre-commit",
-    "datamodel-code-generator",
     "jsonschema",
-    "pydantic>=2",
     "pytest>=8.4.1",
     "lxml-stubs>=0.5.1",
 ]

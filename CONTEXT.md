@@ -2,8 +2,8 @@
 
 xsdformer converts an XML schema — an **XSD** or a **DTD** — into code that
 describes and processes the same data in other ecosystems: Protobuf
-definitions, JSON Schema, TypeSpec, Pydantic models, and Python code that
-parses conforming XML into Protobuf messages.
+definitions, JSON Schema, TypeSpec, and Python code that parses conforming
+XML into Protobuf messages.
 
 It supports enough of XSD/DTD to convert the
 [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/) and
@@ -94,17 +94,13 @@ implements `IGenerator`:
   Schema.
 - [`typespec/generator.py`](src/xsdformer/typespec/generator.py) — emits
   TypeSpec (`.tsp`). See [ADR 0001](docs/adr/0001-typespec-output-format.md).
-- [`pydantic/`](src/xsdformer/pydantic) — emits Pydantic models
-  (`generator.py`) and a converter (`converter.py`), sharing naming logic in
-  `_naming.py`. See [ADR 0002](docs/adr/0002-pydantic-codegen-and-proto-hub.md).
 
 ## CLI
 
 [`tool.py`](src/xsdformer/tool.py) exposes a Click group with three commands:
 
 - `xsdformer xsd <file>` — XSD front end; emit any combination of proto, Python
-  converter, JSON Schema, TypeSpec, and Pydantic outputs (one `--*-out` flag
-  each).
+  converter, JSON Schema, and TypeSpec outputs (one `--*-out` flag each).
 - `xsdformer dtd <file>` — DTD front end; same output flags.
 - `xsdformer proto <file> <namespace>` — Proto-to-JSON-Schema only, bypassing
   the XSD/DTD front end.
@@ -112,8 +108,8 @@ implements `IGenerator`:
 ## Package builder
 
 [`build.py`](src/xsdformer/build.py) assembles a standalone, pip-installable
-Python package from a schema: generated proto (compiled to `_pb2.py`), the XML
-converter, and Pydantic models, wrapped in a generated `pyproject.toml`.
+Python package from a schema: generated proto (compiled to `_pb2.py`) and the
+XML converter, wrapped in a generated `pyproject.toml`.
 
 The generated package's `protobuf>=` floor is read out of the
 `ValidateProtobufRuntimeVersion` call protoc stamps into the `_pb2` (via `ast`,
@@ -127,8 +123,7 @@ while emitting gencode 5.27.2 and 5.29.0).
 `build.min_protobuf_runtime` declares the oldest runtime the package is meant to
 support. It is checked against the stamped gencode before being emitted, so it
 can only raise the floor, never lower it below what the code requires.
-`build.dependencies` appends extra requirements; restating `protobuf` or
-`pydantic` raises.
+`build.dependencies` appends extra requirements; restating `protobuf` raises.
 
 A consequence worth stating for consumers: a toolchain bump moves the published
 floor. `uv lock --upgrade` from `grpcio-tools` 1.81.0 to 1.83.0 changes the stamp

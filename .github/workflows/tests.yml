@@ -28,10 +28,8 @@ jobs:
           # `fs/promises`, added in Node 22). On Node 20 the toolchain crashes at
           # runtime instead of skipping, failing the gated tsp tests.
           node-version: '22'
-      # Enables the skipif-gated Node tests: the xsd->tsp->proto round-trip
-      # (`_tsp.tsp_available()`) and the pydantic equivalence gate
-      # (`_tsp.json_schema_available()`, via `@typespec/json-schema`). Without it
-      # both skip.
+      # Enables the skipif-gated xsd->tsp->proto round-trip
+      # (`_tsp.tsp_available()`). Without it the round-trip skips.
       - name: Install TypeSpec toolchain
         working-directory: tests/xsdformer/typespec/tsp_project
         run: npm ci

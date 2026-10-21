@@ -11,7 +11,6 @@ from xsdformer.dtd import dtd
 from xsdformer.jsonschema import generator as jsonschema_generator
 from xsdformer.protobuf import generator
 from xsdformer.py import xml_converter
-from xsdformer.pydantic import generator as pydantic_generator
 from xsdformer.typespec import generator as typespec_generator
 from xsdformer.xsd import xsd
 
@@ -35,7 +34,6 @@ class _Outputs:
     py_module: str | None
     json_schema_out: str | None
     typespec_out: str | None
-    pydantic_out: str | None
     proto_compat: bool
     main_message: str | None
     preserving_proto_field_name: bool
@@ -62,11 +60,6 @@ def _emit_proto(type_defs: tuple[xsd.TypeDefinition, ...], proto_out: str, out: 
 def _emit_typespec(type_defs: tuple[xsd.TypeDefinition, ...], typespec_out: str, out: _Outputs) -> None:
     namespace = out.proto_package or pathlib.Path(typespec_out).stem
     _write_lines(typespec_out, typespec_generator.generate(namespace, type_defs, proto_compat=out.proto_compat))
-
-
-def _emit_pydantic(type_defs: tuple[xsd.TypeDefinition, ...], pydantic_out: str, out: _Outputs) -> None:
-    namespace = out.proto_package or pathlib.Path(pydantic_out).stem
-    _write_lines(pydantic_out, pydantic_generator.generate(namespace, type_defs))
 
 
 def _emit_py_converter(type_defs: tuple[xsd.TypeDefinition, ...], py_out: str, input_path: str, out: _Outputs) -> None:
@@ -103,15 +96,13 @@ def _emit_outputs(
     """
     if out.proto_compat and not out.typespec_out:
         raise click.UsageError('--proto-compat requires --typespec-out')
-    if not any((out.proto_out, out.py_out, out.json_schema_out, out.typespec_out, out.pydantic_out)):
+    if not any((out.proto_out, out.py_out, out.json_schema_out, out.typespec_out)):
         _emit_stdout(type_defs, input_path, out)
         return
     if out.proto_out:
         _emit_proto(type_defs, out.proto_out, out)
     if out.typespec_out:
         _emit_typespec(type_defs, out.typespec_out, out)
-    if out.pydantic_out:
-        _emit_pydantic(type_defs, out.pydantic_out, out)
     if out.py_out:
         _emit_py_converter(type_defs, out.py_out, input_path, out)
     if out.json_schema_out:
@@ -134,7 +125,6 @@ def cli() -> None:
 )
 @click.option('--json-schema-out', type=click.Path(), help='Output JSON schema file.')
 @click.option('--typespec-out', type=click.Path(), help='Output TypeSpec (.tsp) file.')
-@click.option('--pydantic-out', type=click.Path(), help='Output pydantic models (.py) file.')
 @click.option(
     '--proto-compat',
     is_flag=True,
@@ -168,7 +158,6 @@ def xsd_command(
     py_module: str,
     json_schema_out: str,
     typespec_out: str,
-    pydantic_out: str,
     proto_compat: bool,
     main_message: str,
     preserving_proto_field_name: bool,
@@ -186,7 +175,6 @@ def xsd_command(
             py_module=py_module,
             json_schema_out=json_schema_out,
             typespec_out=typespec_out,
-            pydantic_out=pydantic_out,
             proto_compat=proto_compat,
             main_message=main_message,
             preserving_proto_field_name=preserving_proto_field_name,
@@ -256,7 +244,6 @@ def proto(
 )
 @click.option('--json-schema-out', type=click.Path(), help='Output JSON schema file.')
 @click.option('--typespec-out', type=click.Path(), help='Output TypeSpec (.tsp) file.')
-@click.option('--pydantic-out', type=click.Path(), help='Output pydantic models (.py) file.')
 @click.option(
     '--proto-compat',
     is_flag=True,
@@ -290,7 +277,6 @@ def dtd_command(
     py_module: str,
     json_schema_out: str,
     typespec_out: str,
-    pydantic_out: str,
     proto_compat: bool,
     main_message: str,
     preserving_proto_field_name: bool,
@@ -308,7 +294,6 @@ def dtd_command(
             py_module=py_module,
             json_schema_out=json_schema_out,
             typespec_out=typespec_out,
-            pydantic_out=pydantic_out,
             proto_compat=proto_compat,
             main_message=main_message,
             preserving_proto_field_name=preserving_proto_field_name,

@@ -13,14 +13,12 @@ def _needs_proto3_optional(field_def: xsd.Field) -> bool:
 
     proto3 gives singular scalar and enum fields no field presence: an absent
     value is indistinguishable from the type default (`""`/`0`/`false`/the zero
-    enum member). The dialect renders a `(0,1)` field as pydantic `T | None`, so
-    without a hasbit a `pydantic→proto→pydantic` round-trip collapses `None` into
-    the default. Emitting `optional` gives `HasField`/`ClearField`, making the
-    round-trip lossless.
+    enum member), so a reader cannot tell an omitted XML element or attribute from
+    one that carried the default. Emitting `optional` gives `HasField`/`ClearField`.
 
-    Left alone, because they already carry presence or have no `None`:
-    message-typed fields (including `xs:date`→`Timestamp`), maps, and repeated
-    fields. Fields inside a proto `oneof` likewise get presence from the oneof and
+    Left alone: message-typed fields (including `xs:date`→`Timestamp`), which
+    already carry presence, and maps and repeated fields, where absent and empty
+    are the same value. Fields inside a proto `oneof` likewise get presence from the oneof and
     cannot carry `optional` (a proto3 syntax error), so the caller suppresses it.
     """
     if field_def.is_repeated or field_def.computed_occurs[0] != 0:
@@ -124,9 +122,8 @@ class ProtobufGenerator:
     def _(self, field_def: xsd.Field, path: tuple[str, ...], *, in_oneof: bool = False) -> Iterable[str]:
         if field_def.transform_hint is transforms.TransformHint.DROPPED:
             return
-        if field_def.name in self._emitted_fields:
+        if not xsd.register_field(self._emitted_fields, field_def, '.'.join(path)):
             return
-        self._emitted_fields.add(field_def.name)
         if field_def.documentation:
             yield from text.render_comment(field_def.documentation)
         type_str = field_def.proto_type_str(path)
@@ -135,7 +132,7 @@ class ProtobufGenerator:
 
     def message(self, msg_def: xsd.Message) -> Iterable[str]:
         saved = getattr(self, '_emitted_fields', None)
-        self._emitted_fields: set[str | None] = set()
+        self._emitted_fields: dict[str | None, xsd.Field] = {}
         if msg_def.documentation:
             yield from text.render_comment(msg_def.documentation)
         yield f'message {msg_def.name} {{'
@@ -144,7 +141,7 @@ class ProtobufGenerator:
         for field_def in msg_def.content:
             yield from text.indent(self.message_field(field_def, msg_def.path))
         yield '}'
-        self._emitted_fields = saved or set()
+        self._emitted_fields = saved or {}
 
 
 def generate(

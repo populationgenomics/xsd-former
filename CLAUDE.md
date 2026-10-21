@@ -1,7 +1,7 @@
 # xsdformer development notes
 
 xsdformer converts an XSD or DTD schema into Protobuf, JSON Schema, TypeSpec,
-Pydantic models, and Python XML-to-protobuf converters. See
+and Python XML-to-protobuf converters. See
 [`CONTEXT.md`](CONTEXT.md) for the domain model and language, and
 [`README.md`](README.md) for usage.
 
